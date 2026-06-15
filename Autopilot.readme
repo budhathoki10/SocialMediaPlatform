@@ -1,26 +1,3 @@
-# Social Media Automation
-
-Next.js app with MongoDB schemas for users, connected accounts, preferences, posts, publishing targets, auto replies, GitHub events, and analytics.
-
-## Getting Started
-
-```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-Check the MongoDB connection at:
-
-```text
-http://localhost:3000/api/health
-```
-
-
-MONGODB_URI=mongodb+srv://budhathokikushal170_db_user:OJeythqA57MwTewC@autopilot.mfffydr.mongodb.net/?appName=AutoPilot
-MONGODB_DB=social_media_automation
-PORT=3000
 # AutoPilot — Social Media Automation SaaS
 ### Full Project Documentation
 
