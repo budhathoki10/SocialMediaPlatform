@@ -1,0 +1,62 @@
+<svg width="1376" height="768" viewBox="0 0 1376 768" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1376" height="768" fill="#F8FAFC"/>
+  <rect x="64" y="54" width="1248" height="660" rx="44" fill="url(#bg)"/>
+  <path d="M63 582C234 493 339 644 516 556C698 466 715 207 918 210C1089 212 1109 390 1312 317V714H64L63 582Z" fill="url(#wave)" opacity=".78"/>
+  <path d="M113 137C288 99 422 187 563 156C735 118 764 25 918 55C1057 82 1128 202 1281 147" stroke="white" stroke-width="3" opacity=".7"/>
+  <path d="M161 599C337 526 448 620 619 531C780 447 802 277 972 289C1098 298 1158 397 1282 357" stroke="white" stroke-width="3" opacity=".55"/>
+
+  <g filter="url(#shadow)">
+    <rect x="640" y="234" width="548" height="182" rx="28" fill="white"/>
+    <rect x="640" y="234" width="548" height="182" rx="28" stroke="#D8B4FE" stroke-width="5"/>
+    <text x="688" y="289" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">AI caption draft</text>
+    <rect x="688" y="315" width="414" height="16" rx="8" fill="#CBD5E1"/>
+    <rect x="688" y="348" width="348" height="16" rx="8" fill="#E0E7FF"/>
+    <rect x="688" y="381" width="244" height="16" rx="8" fill="#C7D2FE"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <rect x="234" y="390" width="340" height="152" rx="22" fill="white"/>
+    <text x="266" y="442" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700">LinkedIn tone</text>
+    <rect x="266" y="470" width="244" height="13" rx="6.5" fill="#CBD5E1"/>
+    <rect x="266" y="500" width="184" height="13" rx="6.5" fill="#E0E7FF"/>
+  </g>
+
+  <g filter="url(#softShadow)">
+    <rect x="1062" y="126" width="190" height="124" rx="20" fill="white"/>
+    <text x="1090" y="171" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">X thread</text>
+    <rect x="1090" y="195" width="116" height="12" rx="6" fill="#CBD5E1"/>
+    <rect x="1090" y="220" width="92" height="12" rx="6" fill="#E0E7FF"/>
+  </g>
+
+  <circle cx="534" cy="339" r="36" fill="#0A66C2"/>
+  <text x="514" y="353" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800">in</text>
+  <circle cx="1082" cy="493" r="36" fill="url(#ig)"/>
+  <rect x="1064" y="475" width="36" height="36" rx="10" stroke="white" stroke-width="5"/>
+  <circle cx="1082" cy="493" r="9" stroke="white" stroke-width="5"/>
+  <path d="M490 219L507 257L548 263L518 292L525 333L490 313L454 333L461 292L431 263L472 257L490 219Z" fill="#FBBF24"/>
+  <path d="M389 270L399 293L424 297L406 314L410 339L389 327L367 339L371 314L353 297L378 293L389 270Z" fill="#FDE68A"/>
+
+  <defs>
+    <linearGradient id="bg" x1="64" y1="54" x2="1266" y2="733" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF2FF"/>
+      <stop offset=".48" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#E0E7FF"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="257" y1="697" x2="1117" y2="171" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A78BFA"/>
+      <stop offset=".5" stop-color="#C4B5FD"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="ig" x1="1046" y1="529" x2="1118" y2="457" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F97316"/>
+      <stop offset=".5" stop-color="#EC4899"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <filter id="shadow" x="596" y="202" width="636" height="270" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#4F46E5" flood-opacity=".18"/>
+    </filter>
+    <filter id="softShadow" x="190" y="94" width="1106" height="492" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0F172A" flood-opacity=".14"/>
+    </filter>
+  </defs>
+</svg>

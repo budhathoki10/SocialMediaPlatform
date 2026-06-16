@@ -1,0 +1,81 @@
+<svg width="1376" height="768" viewBox="0 0 1376 768" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1376" height="768" fill="#F8FAFC"/>
+  <rect x="64" y="54" width="1248" height="660" rx="44" fill="url(#bg)"/>
+  <circle cx="1094" cy="170" r="230" fill="#DBEAFE" opacity=".9"/>
+  <circle cx="288" cy="600" r="260" fill="#CCFBF1" opacity=".7"/>
+  <path d="M158 546C354 404 534 674 729 512C918 354 1045 482 1216 316" stroke="#C7D2FE" stroke-width="4"/>
+  <path d="M158 607C366 486 535 666 734 569C897 489 1010 536 1216 419" stroke="#99F6E4" stroke-width="4"/>
+
+  <g filter="url(#panelShadow)">
+    <rect x="244" y="154" width="888" height="460" rx="34" fill="white"/>
+    <rect x="244" y="154" width="888" height="76" rx="34" fill="#EEF2FF"/>
+    <rect x="244" y="198" width="888" height="32" fill="#EEF2FF"/>
+    <circle cx="300" cy="192" r="12" fill="#4F46E5"/>
+    <circle cx="338" cy="192" r="12" fill="#A5B4FC"/>
+    <circle cx="376" cy="192" r="12" fill="#A5F3FC"/>
+    <text x="812" y="199" fill="#475569" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700">Best posting window</text>
+
+    <g font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#64748B">
+      <text x="296" y="277">Mon</text>
+      <text x="416" y="277">Tue</text>
+      <text x="536" y="277">Wed</text>
+      <text x="656" y="277">Thu</text>
+      <text x="776" y="277">Fri</text>
+      <text x="896" y="277">Sat</text>
+      <text x="1016" y="277">Sun</text>
+    </g>
+
+    <g>
+      <rect x="286" y="314" width="84" height="58" rx="14" fill="#F1F5F9"/>
+      <rect x="406" y="314" width="84" height="58" rx="14" fill="#E0F2FE"/>
+      <rect x="526" y="314" width="84" height="58" rx="14" fill="#EEF2FF"/>
+      <rect x="646" y="314" width="84" height="58" rx="14" fill="#DCFCE7"/>
+      <rect x="766" y="314" width="84" height="58" rx="14" fill="#EEF2FF"/>
+      <rect x="886" y="314" width="84" height="58" rx="14" fill="#F1F5F9"/>
+      <rect x="1006" y="314" width="84" height="58" rx="14" fill="#F1F5F9"/>
+      <rect x="286" y="404" width="84" height="58" rx="14" fill="#EEF2FF"/>
+      <rect x="406" y="404" width="84" height="58" rx="14" fill="#DCFCE7"/>
+      <rect x="526" y="404" width="84" height="58" rx="14" fill="#4F46E5"/>
+      <rect x="646" y="404" width="84" height="58" rx="14" fill="#C7D2FE"/>
+      <rect x="766" y="404" width="84" height="58" rx="14" fill="#E0F2FE"/>
+      <rect x="886" y="404" width="84" height="58" rx="14" fill="#F1F5F9"/>
+      <rect x="1006" y="404" width="84" height="58" rx="14" fill="#DCFCE7"/>
+      <rect x="286" y="494" width="84" height="58" rx="14" fill="#F1F5F9"/>
+      <rect x="406" y="494" width="84" height="58" rx="14" fill="#EEF2FF"/>
+      <rect x="526" y="494" width="84" height="58" rx="14" fill="#E0F2FE"/>
+      <rect x="646" y="494" width="84" height="58" rx="14" fill="#DCFCE7"/>
+      <rect x="766" y="494" width="84" height="58" rx="14" fill="#EEF2FF"/>
+      <rect x="886" y="494" width="84" height="58" rx="14" fill="#C7D2FE"/>
+      <rect x="1006" y="494" width="84" height="58" rx="14" fill="#F1F5F9"/>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <rect x="824" y="448" width="344" height="130" rx="26" fill="#0F172A"/>
+    <text x="856" y="496" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="800">Schedule queued</text>
+    <rect x="856" y="524" width="230" height="12" rx="6" fill="#A5B4FC"/>
+    <rect x="856" y="550" width="168" height="12" rx="6" fill="#67E8F9"/>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <rect x="160" y="428" width="218" height="116" rx="24" fill="white"/>
+    <circle cx="210" cy="486" r="26" fill="#4F46E5"/>
+    <path d="M210 468V486L224 495" stroke="white" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="254" y="480" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="800">2:30 PM</text>
+    <text x="254" y="510" fill="#64748B" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">Peak reach</text>
+  </g>
+
+  <defs>
+    <linearGradient id="bg" x1="64" y1="54" x2="1212" y2="739" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ECFEFF"/>
+      <stop offset=".48" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#EEF2FF"/>
+    </linearGradient>
+    <filter id="panelShadow" x="198" y="120" width="980" height="552" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#0F172A" flood-opacity=".12"/>
+    </filter>
+    <filter id="cardShadow" x="116" y="396" width="1096" height="226" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#0F172A" flood-opacity=".18"/>
+    </filter>
+  </defs>
+</svg>
