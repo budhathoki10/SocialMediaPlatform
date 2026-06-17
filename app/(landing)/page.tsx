@@ -138,7 +138,7 @@ function HeroSection() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/login?callbackUrl=/dashboard"
+                href="/login?callbackUrl=/login"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-indigo-600 px-6 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-500"
               >
                 Get Started Free
@@ -194,13 +194,13 @@ function SiteNav() {
         </div>
         <div className="flex shrink-0 items-center gap-6">
           <Link
-            href="/login?callbackUrl=/dashboard"
+            href="/login?callbackUrl=/login"
             className="hidden text-sm font-semibold text-slate-500 transition hover:text-slate-950 sm:inline"
           >
             Log In
           </Link>
           <Link
-            href="/login?callbackUrl=/dashboard"
+            href="/login?callbackUrl=hboard"
             className="inline-flex h-10 items-center justify-center rounded-lg bg-indigo-600 px-6 text-sm font-bold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-500"
           >
             Get Started Free
@@ -411,7 +411,7 @@ function CtaSection() {
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
-            href="/login?callbackUrl=/dashboard"
+            href="/login?callbackUrl=/login"
             className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
           >
             Get Started Free
