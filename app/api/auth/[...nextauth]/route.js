@@ -3,8 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 
 import { connectDB } from "../../../../lib/db";
 import { User } from "../../../../lib/models";
-
-const dashboardPath = "/dashboard";
+const onboardingPath = "/onboarding";
 
 /** @type {import("next-auth").AuthOptions} */
 export const authOptions = {
@@ -76,10 +75,10 @@ export const authOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      const dashboardUrl = `${baseUrl}${dashboardPath}`;
+      const onboardingUrl = `${baseUrl}${onboardingPath}`;
 
       if (url === baseUrl || url === `${baseUrl}/`) {
-        return dashboardUrl;
+        return onboardingUrl;
       }
 
       if (url.startsWith("/")) {
@@ -93,10 +92,10 @@ export const authOptions = {
           return url;
         }
       } catch {
-        return dashboardUrl;
+        return onboardingUrl;
       }
 
-      return dashboardUrl;
+      return onboardingUrl;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,

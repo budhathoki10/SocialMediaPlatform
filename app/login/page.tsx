@@ -29,7 +29,7 @@ function GoogleLogo() {
 }
 
 function getCallbackUrl() {
-  const fallback = "/dashboard";
+  const fallback = "/onboarding";
 
   if (typeof window === "undefined") {
     return fallback;
@@ -96,11 +96,12 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          disabled={isLoading || status === "loading" || status === "authenticated"}
-          className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+          // disabled={isLoading || status === "loading" || status === "authenticated"}
+          className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-1400 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
         >
           <GoogleLogo />
-          {isLoading || status === "authenticated" ? "Opening dashboard..." : "Continue with Google"}
+          {/* {isLoading || status === "authenticated" ? "Onboarding..." : "Continue with Google"} */}
+          Continue with Google
         </button>
 
         <div className="mt-12 border-t border-slate-100 pt-5">
