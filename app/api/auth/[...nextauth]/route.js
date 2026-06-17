@@ -21,7 +21,9 @@ export const authOptions = {
   ],
   session: {
     strategy: "jwt",
+    NEXTAUTH_JWT_EXPIRES_IN: 60 * 60 * 24 * 90, // 7 daysT
   },
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
   },
@@ -62,7 +64,10 @@ export const authOptions = {
           token.picture = dbUser.avatar_url;
         }
       }
-
+//  console.log("  token.id: ", token.id);
+//   console.log("  token.email: ", token.email);
+//   console.log("  token.name: ", token.name);
+//   console.log("  token.picture: ", token.picture);
       return token;
     },
     async session({ session, token }) {

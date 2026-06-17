@@ -17,6 +17,17 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]/route";
+import { connectDB } from "@/lib/db";
+import { User } from "@/lib/models";
+import { redirect } from "next/navigation";
+
+type DashboardUser = {
+  name?: string | null;
+  avatar_url?: string | null;
+  plan?: string | null;
+};
 
 const sidebarItems = [
   {
@@ -54,16 +65,15 @@ const sidebarItems = [
   },
 ];
 
-const UserAvatar = () => (
-  <svg aria-label="Alex Rivera" className="h-10 w-10 rounded-full" viewBox="0 0 40 40">
-    <rect width="40" height="40" rx="20" fill="#D7E8FF" />
-    <circle cx="20" cy="15" r="7" fill="#7C4F2C" />
-    <path d="M9 34c1.8-7 6-10.5 11-10.5S29.2 27 31 34" fill="#1E293B" />
-    <path d="M13.5 16.5c1.3-5 4.1-7.5 8.6-7.5 3.5 0 6.1 2.1 7 5.4-4.8-.6-8.5-1.8-11-3.7-.8 2.7-2.3 4.6-4.6 5.8Z" fill="#334155" />
-    <circle cx="17.3" cy="17.5" r="1" fill="#111827" />
-    <circle cx="23.4" cy="17.5" r="1" fill="#111827" />
-    <path d="M17.5 21.8c1.7 1 3.5 1 5.1 0" stroke="#111827" strokeLinecap="round" strokeWidth="1.4" />
-  </svg>
+const UserAvatar = ({ imageSrc, name }: { imageSrc?: string | null; name?: string | null }) => (
+  <Image
+    src={imageSrc || "/landing/testimonial-avatar.png"}
+    alt={name ? `${name} avatar` : "User avatar"}
+    width={40}
+    height={40}
+    className="h-10 w-10 rounded-full object-cover ring-2 ring-white"
+  />
+
 );
 
 const Sidebar = () => (
@@ -125,7 +135,9 @@ const Sidebar = () => (
   </aside>
 );
 
-const Toolbar = () => (
+const Toolbar = ({ user }: { user: DashboardUser | null }) => (
+
+
   <header
     className="dashboard-reveal dashboard-reveal-down flex h-[64px] items-center justify-between border-b border-slate-200 bg-white px-6"
     style={{ animationDelay: "170ms" }}
@@ -152,16 +164,29 @@ const Toolbar = () => (
 
       <div className="flex items-center gap-3">
         <div className="text-right">
-          <p className="text-sm font-bold leading-4 text-slate-700">Alex Rivera</p>
-          <p className="mt-1 text-xs text-slate-500">Pro Member</p>
+          <p className="text-sm font-bold leading-4 text-slate-700">{user?.name || "User"}</p>
+          <p className="mt-1 text-xs capitalize text-slate-500">{user?.plan || "free"} Member</p>
         </div>
-        <UserAvatar />
+        <UserAvatar imageSrc={user?.avatar_url} name={user?.name} />
       </div>
     </div>
   </header>
 );
 
-const DashboardPage = () => {
+const DashboardPage =  async () => {
+  await connectDB()
+const session = await getServerSession(authOptions);
+const sessionUser = session?.user as { id?: string } | undefined;
+const userid = sessionUser?.id;
+
+if(!userid) {
+return redirect("/login");
+}
+  const user = await User.findById(userid)
+    .select("name avatar_url plan")
+    .lean<DashboardUser>(); // convert to plain JavaScript object
+
+
   return (
     <main
       className="min-h-screen p-1 text-slate-950"
@@ -175,7 +200,7 @@ const DashboardPage = () => {
           <Sidebar />
 
           <section className="flex min-w-0 flex-1 flex-col">
-            <Toolbar />
+            <Toolbar user={user} />
 
             <div className="flex-1 px-7 py-6">
               <div className="dashboard-reveal flex items-start justify-between gap-4" style={{ animationDelay: "420ms" }}>
