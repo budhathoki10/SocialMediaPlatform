@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 
 type OnboardingPlatform = {
@@ -284,19 +285,22 @@ const OnboardingPage = () => {
                 Back
               </button>
 
-              <button
-                type="button"
+
+
+
+              <Link
+        href={`/dashboard`}
                 className="inline-flex h-10 items-center gap-2 rounded-md bg-[#4338ca] px-7 text-sm font-bold text-white transition hover:bg-[#3730a3]"
               >
                 Continue
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Link>
             </div>
           </section>
 
           <p className="mt-6 text-xs text-slate-500">
             Need help setting up?{" "}
-            <a href="mailto:support@example.com" className="font-medium text-[#4338ca] hover:text-[#3730a3]">
+            <a href="mailto:budhathokikushal170@gmail.com" className="font-medium text-[#4338ca] hover:text-[#3730a3]">
               Contact our support team
             </a>
           </p>

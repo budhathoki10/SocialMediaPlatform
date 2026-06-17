@@ -122,21 +122,32 @@ function HeroSection() {
           <span />
         </div>
       </div>
-      <SiteNav />
+      <div className="landing-reveal landing-reveal-down" style={{ animationDelay: "80ms" }}>
+        <SiteNav />
+      </div>
       <div className="relative mx-auto flex min-h-[calc(100vh-76px)] w-full max-w-7xl flex-col justify-center px-5 py-16 sm:px-8 lg:px-10">
         <div className="grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-white/70 px-3 py-1 text-xs font-medium text-indigo-700 shadow-sm shadow-indigo-100/40 backdrop-blur">
+            <div
+              className="landing-reveal inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-white/70 px-3 py-1 text-xs font-medium text-indigo-700 shadow-sm shadow-indigo-100/40 backdrop-blur"
+              style={{ animationDelay: "220ms" }}
+            >
               <Workflow size={14} />
               AI growth engine for social automation
             </div>
-            <h1 className="mt-6 text-5xl font-black leading-[0.95] sm:text-6xl lg:text-7xl">
+            <h1
+              className="landing-reveal mt-6 text-5xl font-black leading-[0.95] sm:text-6xl lg:text-7xl"
+              style={{ animationDelay: "320ms" }}
+            >
               Automate your entire <span className="text-indigo-600">social presence.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
+            <p
+              className="landing-reveal mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg"
+              style={{ animationDelay: "420ms" }}
+            >
               Automate LinkedIn presence, powered by GitHub activity, AI captions, smart scheduling, and meaningful analytics.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="landing-reveal mt-8 flex flex-col gap-3 sm:flex-row" style={{ animationDelay: "520ms" }}>
               <Link
                 href="/login?callbackUrl=/login"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-indigo-600 px-6 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-500"
@@ -152,14 +163,18 @@ function HeroSection() {
                 Watch Demo
               </a>
             </div>
-            <div className="mt-8 flex flex-wrap items-center gap-4 text-sm text-slate-600">
+            <div className="landing-reveal mt-8 flex flex-wrap items-center gap-4 text-sm text-slate-600" style={{ animationDelay: "620ms" }}>
               <AvatarStack />
               <span>Join 50,000+ creators growing on autopilot</span>
             </div>
           </div>
-          <HeroVisual />
+          <div className="landing-reveal landing-reveal-right" style={{ animationDelay: "420ms" }}>
+            <HeroVisual />
+          </div>
         </div>
-        <TrustBar />
+        <div className="landing-reveal landing-reveal-scale" style={{ animationDelay: "760ms" }}>
+          <TrustBar />
+        </div>
       </div>
     </section>
   );
@@ -434,6 +449,7 @@ function SiteFooter() {
   return (
     <footer className="bg-[#f7f8fb] px-5 py-16 sm:px-8 lg:px-10">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.4fr_2fr]">
+        <ScrollReveal>
         <div>
           <a href="#" className="flex items-center gap-2 text-sm font-bold text-slate-950">
             <Image
@@ -452,30 +468,35 @@ function SiteFooter() {
             <GitBranch size={18} />
           </div>
         </div>
+        </ScrollReveal>
         <div className="grid gap-8 sm:grid-cols-4">
-          {footerColumns.map(([title, ...items]) => (
-            <div key={title}>
-              <h3 className="text-sm font-semibold text-slate-950">{title}</h3>
-              <ul className="mt-4 space-y-3 text-sm text-slate-500">
-                {items.map((item) => (
-                  <li key={item}>
-                    <a href="#" className="transition hover:text-slate-950">
-                      {item}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {footerColumns.map(([title, ...items], index) => (
+            <ScrollReveal key={title} delay={index * 70}>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-950">{title}</h3>
+                <ul className="mt-4 space-y-3 text-sm text-slate-500">
+                  {items.map((item) => (
+                    <li key={item}>
+                      <a href="#" className="transition hover:text-slate-950">
+                        {item}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </ScrollReveal>
           ))}
         </div>
       </div>
-      <div className="mx-auto mt-12 flex max-w-7xl flex-col gap-4 border-t border-slate-200 pt-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 AutoPilot Automation Suite. Designed to be invisible.</p>
-        <p className="flex items-center gap-2 text-emerald-600">
-          <Check size={14} />
-          All systems operational
-        </p>
-      </div>
+      <ScrollReveal className="mx-auto mt-12 flex max-w-7xl flex-col gap-4 border-t border-slate-200 pt-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <>
+          <p>© 2026 AutoPilot Automation Suite. Designed to be invisible.</p>
+          <p className="flex items-center gap-2 text-emerald-600">
+            <Check size={14} />
+            All systems operational
+          </p>
+        </>
+      </ScrollReveal>
     </footer>
   );
 }
