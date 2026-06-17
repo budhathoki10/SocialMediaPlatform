@@ -162,6 +162,58 @@ a {
   filter: blur(0);
 }
 
+.dashboard-reveal {
+  opacity: 0;
+  transform: translate3d(0, 24px, 0) scale(0.985);
+  filter: blur(12px);
+  animation: dashboardReveal 860ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform, filter;
+}
+
+.dashboard-reveal-left {
+  transform: translate3d(-24px, 0, 0) scale(0.99);
+}
+
+.dashboard-reveal-down {
+  transform: translate3d(0, -18px, 0) scale(0.99);
+}
+
+.dashboard-reveal-scale {
+  transform: translate3d(0, 18px, 0) scale(0.97);
+}
+
+.landing-reveal {
+  opacity: 0;
+  transform: translate3d(0, 30px, 0) scale(0.985);
+  filter: blur(14px);
+  animation: dashboardReveal 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform, filter;
+}
+
+.landing-reveal-left {
+  transform: translate3d(-30px, 0, 0) scale(0.99);
+}
+
+.landing-reveal-right {
+  transform: translate3d(30px, 0, 0) scale(0.99);
+}
+
+.landing-reveal-down {
+  transform: translate3d(0, -20px, 0) scale(0.99);
+}
+
+.landing-reveal-scale {
+  transform: translate3d(0, 20px, 0) scale(0.96);
+}
+
+@keyframes dashboardReveal {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
 .video-placeholder {
   position: relative;
   display: grid;
@@ -682,6 +734,20 @@ a {
     transform: none;
     filter: none;
     transition: none;
+  }
+
+  .dashboard-reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    animation: none;
+  }
+
+  .landing-reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    animation: none;
   }
 
   .shader-field::before,
