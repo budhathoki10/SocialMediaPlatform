@@ -58,9 +58,14 @@ async function main() {
   });
 
   expressApp.listen(port, hostname, () => {
-    const displayHost = hostname === "0.0.0.0" ? "localhost" : hostname;
+    const localUrl = `http://localhost:${port}`;
+    const publicUrl = process.env.NEXTAUTH_URL;
 
-    console.log(`> Server listening at http://${displayHost}:${port} as ${process.env.NODE_ENV}`);
+    console.log(`> Server listening locally at ${localUrl} as ${process.env.NODE_ENV}`);
+
+    if (publicUrl) {
+      console.log(`> Public URL: ${publicUrl}`);
+    }
   });
 }
 

@@ -9,12 +9,12 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [https://sasquatch-rickety-imaging.ngrok-free.dev](https://sasquatch-rickety-imaging.ngrok-free.dev).
 
 Check the MongoDB connection at:
 
 ```text
-http://localhost:3000/api/health
+https://sasquatch-rickety-imaging.ngrok-free.dev/api/health
 ```
 
 

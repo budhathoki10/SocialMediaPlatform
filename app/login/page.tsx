@@ -35,18 +35,26 @@ function getCallbackUrl() {
     return fallback;
   }
 
+  const normalizeCallbackPath = (url: string) => {
+    if (url === "/login" || url.startsWith("/login?")) {
+      return fallback;
+    }
+
+    return url;
+  };
+
   const params = new URLSearchParams(window.location.search);
   const callbackUrl = params.get("callbackUrl") || fallback;
 
   if (callbackUrl.startsWith("/")) {
-    return callbackUrl;
+    return normalizeCallbackPath(callbackUrl);
   }
 
   try {
     const targetUrl = new URL(callbackUrl);
 
     if (targetUrl.origin === window.location.origin) {
-      return `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
+      return normalizeCallbackPath(`${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`);
     }
   } catch {
     return fallback;
@@ -96,12 +104,11 @@ export default function LoginPage() {
         <button
           type="button"
           onClick={handleGoogleLogin}
-          // disabled={isLoading || status === "loading" || status === "authenticated"}
-          className="mt-8 flex h-11 w-full items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-1400 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+          disabled={isLoading || status === "authenticated"}
+          className="mt-8 flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-1400 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
         >
           <GoogleLogo />
-          {/* {isLoading || status === "authenticated" ? "Onboarding..." : "Continue with Google"} */}
-          Continue with Google
+          {isLoading || status === "authenticated" ? "Onboarding..." : "Continue with Google"}
         </button>
 
         <div className="mt-12 border-t border-slate-100 pt-5">

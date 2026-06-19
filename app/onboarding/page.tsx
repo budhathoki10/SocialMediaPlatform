@@ -128,8 +128,20 @@ const clickedInstagram=()=>{
 }
 
 
-const clickedGitHub=()=>{
-  alert("GitHub clicked");
+const clickedGitHub = async () => {
+  try {
+    const response = await fetch("/api/auth/github/connect");
+    const data = (await response.json()) as { url?: string };
+
+    if (!response.ok || !data.url) {
+      throw new Error("Unable to start GitHub connection");
+    }
+
+    window.location.assign(data.url);
+  } catch (error) {
+    console.error(error);
+    alert("Unable to connect GitHub right now. Please try again.");
+  }
 }
 
 const clickedMedium=()=>{
@@ -145,7 +157,7 @@ const clickedTwitter=()=>{
 }
 
 
-const handlePlatformClick = (SocialMedia: string) => {
+const handlePlatformClick = async (SocialMedia: string) => {
   switch (SocialMedia) {
     case "LinkedIn":
       clickedLinkedin();
@@ -154,7 +166,7 @@ const handlePlatformClick = (SocialMedia: string) => {
       clickedInstagram();
       break;
     case "GitHub":
-      clickedGitHub();
+      await clickedGitHub();
       break;
     case "Medium":
       clickedMedium();
@@ -224,7 +236,7 @@ const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
           <button
             key={name}
             type="button"
-            onClick={() => handlePlatformClick(name)}
+            onClick={() => void handlePlatformClick(name)}
             className={`flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center hover:cursor-pointer  transition ${
               isConnected
                 ? "border-indigo-100 bg-indigo-50/35 shadow-sm"
