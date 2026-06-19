@@ -77,6 +77,8 @@ async function shutdown() {
   process.exit(0);
 }
 
+
+
 main().catch((error) => {
   console.error("> Failed to start server");
   console.error(error);
