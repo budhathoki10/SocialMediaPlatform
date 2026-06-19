@@ -2,8 +2,80 @@ import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 import { connectDB } from "../../../../lib/db";
-import { User } from "../../../../lib/models";
+import { ConnectedAccount, User } from "../../../../lib/models";
+
 const onboardingPath = "/onboarding";
+const sessionMaxAge = 60 * 60 * 24 * 90;
+
+function normalizeAuthUser(profile) {
+  if (!profile?.email) {
+    return null;
+  }
+
+  return {
+    email: profile.email.toLowerCase(),
+    name: profile.name || profile.email.split("@")[0],
+    avatar_url: profile.image || profile.picture || null,
+    plan: "free",
+    timezone: "Asia/Kathmandu",
+  };
+}
+
+function formatConnectedAccounts(githubAccount) {
+  return {
+    github: githubAccount
+      ? {
+          connected: true,
+          username: githubAccount.platform_username,
+          connected_at: githubAccount.connected_at?.toISOString?.() || githubAccount.connected_at || null,
+        }
+      : null,
+  };
+}
+
+async function findOrCreateUser(profile) {
+  const authUser = normalizeAuthUser(profile);
+
+  if (!authUser) {
+    return null;
+  }
+
+  await connectDB();
+
+  return User.findOneAndUpdate(
+    { email: authUser.email },
+    {
+      $setOnInsert: {
+        email: authUser.email,
+        plan: authUser.plan,
+        timezone: authUser.timezone,
+      },
+      $set: {
+        name: authUser.name,
+        avatar_url: authUser.avatar_url,
+      },
+    },
+    { new: true, upsert: true, runValidators: true },
+  );
+}
+
+async function loadConnectedAccounts(userId) {
+  if (!userId) {
+    return { github: null };
+  }
+
+  await connectDB();
+
+  const githubAccount = await ConnectedAccount.findOne({
+    user_id: userId,
+    platform: "github",
+    status: "active",
+  })
+    .select("platform_username connected_at")
+    .lean();
+
+  return formatConnectedAccounts(githubAccount);
+}
 
 /** @type {import("next-auth").AuthOptions} */
 export const authOptions = {
@@ -14,14 +86,17 @@ export const authOptions = {
       authorization: {
         params: {
           scope: "openid email profile",
-            prompt: "select_account  ",
+          prompt: "select_account",
         },
       },
     }),
   ],
   session: {
     strategy: "jwt",
-    NEXTAUTH_JWT_EXPIRES_IN: 60 * 60 * 24 * 90, // 7 daysT
+    maxAge: sessionMaxAge,
+  },
+  jwt: {
+    maxAge: sessionMaxAge,
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
@@ -29,45 +104,47 @@ export const authOptions = {
   },
   callbacks: {
     async signIn({ user }) {
-      try {
-        await connectDB();
-
-        const existingUser = await User.findOne({ email: user.email });
-
-        if (!existingUser) {
-          const newUser = new User({
-            email: user.email,
-            name: user.name,
-            avatar_url: user.image,
-            plan: "free",
-            timezone: "Asia/Kathmandu",
-          });
-
-          await newUser.save();
-        }
-
-        return true;
-      } catch (error) {
-        console.error("Error during sign-in:", error);
+      if (!user?.email) {
+        console.error("Google sign-in denied because no email was returned.");
         return false;
       }
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        await connectDB();
-        const dbUser = await User.findOne({ email: user.email });
 
-        if (dbUser) {
-          token.id = dbUser._id.toString();
-          token.email = dbUser.email;
-          token.name = dbUser.name;
-          token.picture = dbUser.avatar_url;
+      return true;
+    },
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session?.connected_accounts) {
+        token.connected_accounts = session.connected_accounts;
+      }
+
+      const email = user?.email || token.email;
+
+      if (email && (!token.id || user)) {
+        try {
+          const dbUser = await findOrCreateUser({
+            email,
+            name: user?.name || token.name,
+            image: user?.image || token.picture,
+          });
+
+          if (dbUser) {
+            token.id = dbUser._id.toString();
+            token.email = dbUser.email;
+            token.name = dbUser.name;
+            token.picture = dbUser.avatar_url;
+            token.connected_accounts = await loadConnectedAccounts(dbUser._id);
+          }
+        } catch (error) {
+          console.error("Google sign-in succeeded, but Mongo user sync failed:", error);
+          token.email = email;
+          token.name = user?.name || token.name;
+          token.picture = user?.image || token.picture;
         }
       }
-//  console.log("  token.id: ", token.id);
-//   console.log("  token.email: ", token.email);
-//   console.log("  token.name: ", token.name);
-//   console.log("  token.picture: ", token.picture);
+
+      if (token.id && !token.connected_accounts) {
+        token.connected_accounts = await loadConnectedAccounts(token.id);
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -77,6 +154,8 @@ export const authOptions = {
         session.user.name = token.name;
         session.user.image = token.picture;
       }
+
+      session.connected_accounts = token.connected_accounts || { github: null };
 
       return session;
     },
@@ -104,7 +183,7 @@ export const authOptions = {
       return onboardingUrl;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
 };
+
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

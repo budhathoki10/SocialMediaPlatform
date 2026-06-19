@@ -1,7 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 
 type OnboardingPlatform = {
@@ -14,6 +16,18 @@ type OnboardingStep = {
   id: string;
   title: string;
   description: string;
+};
+
+type GithubConnection = {
+  connected: boolean;
+  username?: string | null;
+  connected_at?: string | null;
+};
+
+type AppSession = {
+  connected_accounts?: {
+    github?: GithubConnection | null;
+  };
 };
 
 const currentStepIndex = 0;
@@ -128,8 +142,8 @@ const clickedInstagram=()=>{
 }
 
 
-const clickedGitHub=()=>{
-  alert("GitHub clicked");
+const clickedGitHub = () => {
+  window.location.assign("/api/auth/github/connect");
 }
 
 const clickedMedium=()=>{
@@ -145,7 +159,7 @@ const clickedTwitter=()=>{
 }
 
 
-const handlePlatformClick = (SocialMedia: string) => {
+const handlePlatformClick = async (SocialMedia: string) => {
   switch (SocialMedia) {
     case "LinkedIn":
       clickedLinkedin();
@@ -154,7 +168,7 @@ const handlePlatformClick = (SocialMedia: string) => {
       clickedInstagram();
       break;
     case "GitHub":
-      clickedGitHub();
+      await clickedGitHub();
       break;
     case "Medium":
       clickedMedium();
@@ -224,7 +238,7 @@ const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
           <button
             key={name}
             type="button"
-            onClick={() => handlePlatformClick(name)}
+            onClick={() => void handlePlatformClick(name)}
             className={`flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center hover:cursor-pointer  transition ${
               isConnected
                 ? "border-indigo-100 bg-indigo-50/35 shadow-sm"
@@ -250,21 +264,68 @@ const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
   );
 };
 
-const OnboardingPage = () => {
+const OnboardingContent = () => {
+  const searchParams = useSearchParams();
+  const { data: session, update } = useSession();
+  const appSession = session as AppSession | null;
+  const sessionGithub = appSession?.connected_accounts?.github;
+  const sessionGithubConnected = Boolean(sessionGithub?.connected);
+  const [isGithubSavedConnected, setIsGithubSavedConnected] = useState(false);
+  const isGithubConnected = searchParams.get("github") === "connected" || sessionGithubConnected || isGithubSavedConnected;
   const currentStep = onboardingSteps[currentStepIndex];
+  const platforms = onboardingPlatforms.map((platform) => ({
+    ...platform,
+    status: platform.name === "GitHub" && isGithubConnected ? "connected" : platform.status,
+  }));
+
+  useEffect(() => {
+    if (sessionGithubConnected) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadGithubStatus() {
+      try {
+        const response = await fetch("/api/auth/github/status", { cache: "no-store" });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as GithubConnection;
+
+        if (!isMounted || !data.connected) {
+          return;
+        }
+
+        setIsGithubSavedConnected(true);
+        await update({
+          connected_accounts: {
+            github: {
+              connected: true,
+              username: data.username || null,
+              connected_at: data.connected_at || null,
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Unable to load GitHub connection status:", error);
+      }
+    }
+
+    void loadGithubStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sessionGithubConnected, update]);
 
   return (
     <main className="min-h-screen bg-[#f8fafc] px-6 py-8 text-slate-950">
       <div className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl rounded-xl border border-slate-200 bg-white/80 shadow-sm">
         <div className="mx-auto flex w-full max-w-[680px] flex-col items-center px-6 py-6 sm:py-8">
           <h1 className="text-xl font-bold tracking-tight">AutoPilot Onboarding</h1>
-
-          <ProgressBar currentStep={currentStepIndex + 1} totalSteps={onboardingSteps.length} />
-
-          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
-            Step {currentStepIndex + 1} of {onboardingSteps.length}
-          </p>
-
           <section className="mt-6 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="px-6 py-8">
               <div className="text-center">
@@ -272,7 +333,7 @@ const OnboardingPage = () => {
                 <p className="mt-2 text-sm text-slate-500">{currentStep.description}</p>
               </div>
 
-              <PlatformGrid platforms={onboardingPlatforms} />
+              <PlatformGrid platforms={platforms} />
             </div>
 
             <div className="flex items-center justify-between border-t border-slate-100 px-6 py-5">
@@ -309,5 +370,11 @@ const OnboardingPage = () => {
     </main>
   );
 };
+
+const OnboardingPage = () => (
+  <Suspense fallback={null}>
+    <OnboardingContent />
+  </Suspense>
+);
 
 export default OnboardingPage;
