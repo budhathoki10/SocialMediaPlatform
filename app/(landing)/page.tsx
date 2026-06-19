@@ -191,7 +191,8 @@ function SiteNav() {
               alt="AutoPilot"
               width={161}
               height={60}
-              className="h-15 w-auto mt-3"
+              className="mt-3 h-[60px] w-auto"
+              style={{ width: "auto" }}
               priority
             />
           </a>
@@ -458,6 +459,7 @@ function SiteFooter() {
               width={161}
               height={60}
               className="h-11 w-auto"
+              style={{ width: "auto" }}
             />
           </a>
           <p className="mt-5 max-w-sm text-sm leading-6 text-slate-500">

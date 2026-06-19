@@ -88,8 +88,7 @@ const Sidebar = () => (
         width={250}
         height={150}
         className="ml-0.95"
-
-  
+        style={{ height: "auto" }}
         priority
       />
       <p className="mt-1 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Automation Suite</p>
@@ -176,15 +175,20 @@ const Toolbar = ({ user }: { user: DashboardUser | null }) => (
 const DashboardPage =  async () => {
   await connectDB()
 const session = await getServerSession(authOptions);
-const sessionUser = session?.user as { id?: string } | undefined;
-const userid = sessionUser?.id;
+const sessionUser = session?.user as { id?: string; email?: string | null } | undefined;
 
-if(!userid) {
-return redirect("/login");
+if (!sessionUser?.id && !sessionUser?.email) {
+  return redirect("/login");
 }
-  const user = await User.findById(userid)
-    .select("name avatar_url plan")
-    .lean<DashboardUser>(); // convert to plain JavaScript object
+
+const userQuery = sessionUser.id ? { _id: sessionUser.id } : { email: sessionUser.email };
+const user = await User.findOne(userQuery)
+  .select("name avatar_url plan")
+  .lean<DashboardUser>();
+
+if (!user) {
+  return redirect("/login");
+}
 
 
   return (
