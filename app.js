@@ -71,6 +71,7 @@ async function main() {
   });
 }
 
+
 async function shutdown() {
   await disconnectRedis();
   process.exit(0);
