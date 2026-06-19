@@ -36,7 +36,9 @@ async function main() {
   // Prepare Next.js pages and API routes.
   await nextApp.prepare();
 
-  expressApp.use(express.json());
+  // Do not enable express.json() here. It consumes request bodies before Next.js
+  // API routes can read them, which breaks GitHub webhook payload parsing.
+  // expressApp.use(express.json());
 
   expressApp.get("/express-health", (req, res) => {
     res.json({
