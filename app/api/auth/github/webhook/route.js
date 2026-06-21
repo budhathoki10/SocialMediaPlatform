@@ -17,7 +17,7 @@ function parseGithubPayload(rawBody, contentType) {
 export async function GET() {
   return NextResponse.json({
     ok: true,
-    message: "GitHub webhook endpoint is alive. GitHub should call this URL with POST.",
+    message:"GitHub webhook endpoint is alive. GitHub should call this URL with POST.",
   });
 }
 
