@@ -35,7 +35,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("Unable to parse GitHub webhook payload:", error);
   }
-
+  if(payload.eventType=="pull_request"){
   console.log("Received GitHub webhook request");
   console.log("Event Type:", eventType);
   console.log("Delivery ID:", deliveryId);
@@ -45,7 +45,6 @@ export async function POST(req) {
 
   console.log("Full Payload:", payload);
 
-  
 if(payload.commits){
   await myQueue.add("generatePost",{
   repo: payload.repository.full_name,
@@ -53,5 +52,10 @@ if(payload.commits){
       commits: payload.commits.map(c => c.message),
   })
 }
+
 return new Response("ok", { status: 200 });
+  }
+  console.log("soryyyy_________________________________________________________________________________________________________")
+return new Response("ok", { status: 200 });
+
 }
