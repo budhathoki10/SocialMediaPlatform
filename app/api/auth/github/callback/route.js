@@ -75,25 +75,37 @@ export async function GET(req) {
   });
 
   const githubUser = await githubUserRes.json();
-
+  console.log("github user data:", githubUser);
   if (!githubUser?.login) {
     console.error("GitHub user lookup failed:", githubUser);
     return NextResponse.redirect(appUrl("/onboarding?error=github_user_failed"));
   }
 
-  await ConnectedAccount.findOneAndUpdate(
-    { user_id: currentUser._id, platform: "github" },
-    {
-      $set: {
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token || null,
-        platform_username: githubUser.login,
-        connected_at: new Date(),
-        status: "active",
-      },
+const existing = await ConnectedAccount.findOne({
+  user_id: currentUser._id,
+  platform: "github",
+});
+
+if (!existing) {
+  await ConnectedAccount.create({
+    user_id: currentUser._id,
+    platform: "github",
+    access_token: tokenData.access_token,
+    refresh_token: tokenData.refresh_token || null,
+    platform_username: githubUser.login,
+    connected_at: new Date(),
+    status: "active",
+  });
+}
+await ConnectedAccount.updateOne(
+  { user_id: currentUser._id, platform: "github" },
+  {
+    $set: {
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token || null,
     },
-    { new: true, upsert: true, runValidators: true },
-  );
+  }
+);
 
   return NextResponse.redirect(appUrl("/onboarding?github=connected"));
 }

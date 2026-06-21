@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -18,16 +19,19 @@ type OnboardingStep = {
   description: string;
 };
 
-type GithubConnection = {
+type PlatformConnection = {
   connected: boolean;
   username?: string | null;
   connected_at?: string | null;
 };
 
+type ConnectedAccounts = {
+  github?: PlatformConnection | null;
+  linkedin?: PlatformConnection | null;
+};
+
 type AppSession = {
-  connected_accounts?: {
-    github?: GithubConnection | null;
-  };
+  connected_accounts?: ConnectedAccounts;
 };
 
 const currentStepIndex = 0;
@@ -56,14 +60,13 @@ const onboardingSteps: OnboardingStep[] = [
 ];
 
 const LinkedInLogo = () => (
-  <svg aria-hidden="true" className="h-11 w-11" viewBox="0 0 44 44">
-    <rect width="44" height="44" rx="12" fill="#0A66C2" />
-    <circle cx="14" cy="14" r="3.3" fill="#FFFFFF" />
-    <path
-      fill="#FFFFFF"
-      d="M11.3 18.6h5.4v14.2h-5.4zM20.3 18.6h5.2v2c.9-1.3 2.5-2.3 5-2.3 3.7 0 6.2 2.4 6.2 7.3v7.2h-5.4v-6.7c0-2.1-.8-3.3-2.5-3.3-1.9 0-3 1.3-3 3.3v6.7h-5.5z"
-    />
-  </svg>
+  <Image
+    src="/landing/linkedin.png"
+    alt=""
+    width={44}
+    height={44}
+    className="h-11 w-11 object-contain"
+  />
 );
 
 const TwitterLogo = () => (
@@ -77,21 +80,13 @@ const TwitterLogo = () => (
 );
 
 const InstagramLogo = () => (
-  <svg aria-hidden="true" className="h-11 w-11" viewBox="0 0 44 44">
-    <defs>
-      <linearGradient id="instagramGradient" x1="6" x2="38" y1="38" y2="6" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#FEDA75" />
-        <stop offset="0.32" stopColor="#FA7E1E" />
-        <stop offset="0.58" stopColor="#D62976" />
-        <stop offset="0.78" stopColor="#962FBF" />
-        <stop offset="1" stopColor="#4F5BD5" />
-      </linearGradient>
-    </defs>
-    <rect width="44" height="44" rx="12" fill="url(#instagramGradient)" />
-    <rect x="12" y="12" width="20" height="20" rx="6" fill="none" stroke="#FFFFFF" strokeWidth="3" />
-    <circle cx="22" cy="22" r="5" fill="none" stroke="#FFFFFF" strokeWidth="3" />
-    <circle cx="29" cy="15.4" r="1.8" fill="#FFFFFF" />
-  </svg>
+  <Image
+    src="/landing/instagram.png"
+    alt=""
+    width={44}
+    height={44}
+    className="h-11 w-11 scale-150 object-contain"
+  />
 );
 
 const GitHubLogo = () => (
@@ -104,38 +99,28 @@ const GitHubLogo = () => (
   </svg>
 );
 
-const MediumLogo = () => (
-  <svg aria-hidden="true" className="h-11 w-11" viewBox="0 0 44 44">
-    <rect width="44" height="44" rx="12" fill="#00AB6C" />
-    <circle cx="16.5" cy="22" r="8.5" fill="#FFFFFF" />
-    <ellipse cx="28" cy="22" rx="4.5" ry="8.1" fill="#FFFFFF" opacity="0.88" />
-    <ellipse cx="35" cy="22" rx="1.9" ry="7.2" fill="#FFFFFF" opacity="0.72" />
-  </svg>
+const FacebookLogo = () => (
+  <Image
+    src="/landing/facebook.png"
+    alt=""
+    width={44}
+    height={44}
+    className="h-11 w-11 scale-150 object-contain"
+  />
 );
 
-const ThreadsLogo = () => (
-  <svg aria-hidden="true" className="h-11 w-11" viewBox="0 0 44 44">
-    <rect width="44" height="44" rx="12" fill="#111111" />
-    <path
-      fill="none"
-      stroke="#FFFFFF"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="3.2"
-      d="M28.2 18.2c-.8-3.1-3-4.9-6.4-4.9-4.5 0-7.5 3.5-7.5 8.8 0 5.5 3.1 8.9 8 8.9 4.2 0 7.2-2.2 7.2-5.4 0-2.7-2.2-4.6-5.7-4.6h-2.3c-2.4 0-3.8 1.1-3.8 2.8s1.4 2.7 3.5 2.7c2.7 0 4.6-1.7 4.6-4.8 0-1.1-.2-2.1-.5-3"
-    />
-    <path
-      fill="none"
-      stroke="#FFFFFF"
-      strokeLinecap="round"
-      strokeWidth="3.2"
-      d="M29.8 16.5c2.8.5 5 2.4 5.6 5.4"
-    />
-  </svg>
+const GmailLogo = () => (
+  <Image
+    src="/landing/gmail.png"
+    alt=""
+    width={44}
+    height={44}
+    className="h-11 w-11 scale-150 object-contain"
+  />
 );
 
 const clickedLinkedin=()=>{
-  alert("LinkedIn clicked");
+  window.location.assign("/api/auth/linkedin/connect");
 }
 const clickedInstagram=()=>{
   alert("Instagram clicked");
@@ -146,12 +131,12 @@ const clickedGitHub = () => {
   window.location.assign("/api/auth/github/connect");
 }
 
-const clickedMedium=()=>{
-  alert("Medium clicked");
+const clickedFacebook = () => {
+  alert("Facebook clicked");
 }
 
-const clickedThreads=()=>{
-  alert("Threads clicked");
+const clickedGmail = () => {
+  alert("Gmail clicked");
 }
 
 const clickedTwitter=()=>{
@@ -170,11 +155,11 @@ const handlePlatformClick = async (SocialMedia: string) => {
     case "GitHub":
       await clickedGitHub();
       break;
-    case "Medium":
-      clickedMedium();
+    case "Facebook":
+      clickedFacebook();
       break;
-    case "Threads":
-      clickedThreads();
+    case "Gmail":
+      clickedGmail();
       break;
     case "Twitter":
       clickedTwitter();
@@ -207,26 +192,16 @@ const onboardingPlatforms: OnboardingPlatform[] = [
     Logo: GitHubLogo,
   },
   {
-    name: "Medium",
+    name: "Facebook",
     status: "available",
-    Logo: MediumLogo,
+    Logo: FacebookLogo,
   },
   {
-    name: "Threads",
+    name: "Gmail",
     status: "available",
-    Logo: ThreadsLogo,
+    Logo: GmailLogo,
   },
 ];
-
-const ProgressBar = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
-  const progress = (currentStep / totalSteps) * 100;
-
-  return (
-    <div className="mt-5 h-1.5 w-full max-w-[560px] overflow-hidden rounded-full bg-slate-100">
-      <div className="h-full rounded-full bg-[#4338ca]" style={{ width: `${progress}%` }} />
-    </div>
-  );
-};
 
 const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
   return (
@@ -239,9 +214,10 @@ const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
             key={name}
             type="button"
             onClick={() => void handlePlatformClick(name)}
-            className={`flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center hover:cursor-pointer  transition ${
+            disabled={isConnected}
+            className={`flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center hover:cursor-pointer transition disabled:cursor-default ${
               isConnected
-                ? "border-indigo-100 bg-indigo-50/35 shadow-sm"
+                ? "border-slate-200 bg-slate-50 opacity-60 shadow-sm"
                 : "border-slate-200 bg-white hover:border-indigo-600 hover:bg-indigo-50/20"
             }`}
           >
@@ -268,58 +244,82 @@ const OnboardingContent = () => {
   const searchParams = useSearchParams();
   const { data: session, update } = useSession();
   const appSession = session as AppSession | null;
-  const sessionGithub = appSession?.connected_accounts?.github;
+  const sessionConnections = appSession?.connected_accounts;
+  const sessionGithub = sessionConnections?.github;
+  const sessionLinkedin = sessionConnections?.linkedin;
   const sessionGithubConnected = Boolean(sessionGithub?.connected);
-  const [isGithubSavedConnected, setIsGithubSavedConnected] = useState(false);
-  const isGithubConnected = searchParams.get("github") === "connected" || sessionGithubConnected || isGithubSavedConnected;
+  const sessionLinkedinConnected = Boolean(sessionLinkedin?.connected);
+  const [savedConnections, setSavedConnections] = useState<ConnectedAccounts>({});
+  const isGithubConnected =
+    searchParams.get("github") === "connected" || sessionGithubConnected || Boolean(savedConnections.github?.connected);
+  const isLinkedinConnected =
+    searchParams.get("linkedin") === "connected" || sessionLinkedinConnected || Boolean(savedConnections.linkedin?.connected);
   const currentStep = onboardingSteps[currentStepIndex];
   const platforms = onboardingPlatforms.map((platform) => ({
     ...platform,
-    status: platform.name === "GitHub" && isGithubConnected ? "connected" : platform.status,
+    status:
+      (platform.name === "GitHub" && isGithubConnected) ||
+      (platform.name === "LinkedIn" && isLinkedinConnected)
+        ? "connected"
+        : platform.status,
   }));
 
   useEffect(() => {
-    if (sessionGithubConnected) {
+    const platformsToLoad = [
+      { key: "github", endpoint: "/api/auth/github/status", connected: sessionGithubConnected },
+      { key: "linkedin", endpoint: "/api/auth/linkedin/status", connected: sessionLinkedinConnected },
+    ].filter((platform) => !platform.connected);
+
+    if (platformsToLoad.length === 0) {
       return;
     }
 
     let isMounted = true;
 
-    async function loadGithubStatus() {
-      try {
-        const response = await fetch("/api/auth/github/status", { cache: "no-store" });
+    async function loadConnectionStatuses() {
+      const nextConnections: ConnectedAccounts = {
+        github: sessionGithub || null,
+        linkedin: sessionLinkedin || null,
+      };
+      let foundDatabaseConnection = false;
 
-        if (!response.ok) {
-          return;
-        }
+      for (const platform of platformsToLoad) {
+        try {
+          const response = await fetch(platform.endpoint, { cache: "no-store" });
 
-        const data = (await response.json()) as GithubConnection;
+          if (!response.ok) {
+            continue;
+          }
 
-        if (!isMounted || !data.connected) {
-          return;
-        }
+          const data = (await response.json()) as PlatformConnection;
 
-        setIsGithubSavedConnected(true);
-        await update({
-          connected_accounts: {
-            github: {
+          if (data.connected) {
+            nextConnections[platform.key as keyof ConnectedAccounts] = {
               connected: true,
               username: data.username || null,
               connected_at: data.connected_at || null,
-            },
-          },
-        });
-      } catch (error) {
-        console.error("Unable to load GitHub connection status:", error);
+            };
+            foundDatabaseConnection = true;
+          }
+        } catch (error) {
+          console.error(`Unable to load ${platform.key} connection status:`, error);
+        }
       }
+
+      if (!isMounted || !foundDatabaseConnection) {
+        return;
+      }
+
+      setSavedConnections(nextConnections);
+      await update({ connected_accounts: nextConnections });
     }
 
-    void loadGithubStatus();
+    void loadConnectionStatuses();
 
     return () => {
       isMounted = false;
     };
-  }, [sessionGithubConnected, update]);
+  }, [sessionGithub, sessionGithubConnected, sessionLinkedin, sessionLinkedinConnected, update]);
 
   return (
     <main className="min-h-screen bg-[#f8fafc] px-6 py-8 text-slate-950">
