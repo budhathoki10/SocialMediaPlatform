@@ -42,6 +42,7 @@ export async function POST(req) {
   console.log("Repository:", payload?.repository?.full_name || null);
   console.log("Action:", payload?.action || null);
 
+  console.log("Full Payload:", payload);
   if (eventType === "ping") {
     return NextResponse.json({
       ok: true,
@@ -53,7 +54,7 @@ export async function POST(req) {
   }
 
 
-  
+
   return NextResponse.json({
     ok: true,
     message: "GitHub webhook received.",

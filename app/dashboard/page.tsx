@@ -34,6 +34,7 @@ const sidebarItems = [
     label: "Dashboard",
     Icon: LayoutDashboard,
     active: true,
+    href: "/dashboard",
   },
   {
     label: "Create Post",
@@ -54,6 +55,7 @@ const sidebarItems = [
   {
     label: "GitHub Automation",
     Icon: SquareTerminal,
+    href: "/dashboard/github",
   },
   {
     label: "Analytics",
@@ -95,10 +97,10 @@ const Sidebar = () => (
     </div>
 
     <nav className="mt-9 space-y-2">
-      {sidebarItems.map(({ label, Icon, active }, index) => (
+      {sidebarItems.map(({ label, Icon, active, href }, index) => (
         <a
           key={label}
-          href="#"
+          href={href || "#"}
           className={`dashboard-reveal flex h-10 items-center gap-3 rounded-lg px-4 text-sm font-medium transition ${
             active ? "bg-indigo-50 text-[#4338ca]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
           }`}
