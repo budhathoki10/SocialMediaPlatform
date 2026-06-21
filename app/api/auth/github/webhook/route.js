@@ -35,7 +35,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("Unable to parse GitHub webhook payload:", error);
   }
-  if(payload.eventType=="pull_request"){
+  if(eventType=="pull_request"){
   console.log("Received GitHub webhook request");
   console.log("Event Type:", eventType);
   console.log("Delivery ID:", deliveryId);
@@ -45,12 +45,14 @@ export async function POST(req) {
 
   console.log("Full Payload:", payload);
 
-if(payload.commits){
+if(payload.action === "closed" && payload.pull_request?.merged === true){
   await myQueue.add("generatePost",{
   repo: payload.repository.full_name,
-      type: "Pull Request",
-      commits: payload.commits.map(c => c.message),
+        type: "pull_request",
+        prTitle: payload.pull_request.title,
+        prBody: payload.pull_request.body,
   })
+    console.log("Job queued for merged PR:", payload.pull_request.title);
 }
 
 return new Response("ok", { status: 200 });
