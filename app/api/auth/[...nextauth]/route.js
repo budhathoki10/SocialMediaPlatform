@@ -6,6 +6,7 @@ import { ConnectedAccount, User } from "../../../../lib/models";
 
 const onboardingPath = "/onboarding";
 const sessionMaxAge = 60 * 60 * 24 * 90;
+const supportedPlatforms = ["github", "linkedin"];
 
 function normalizeAuthUser(profile) {
   if (!profile?.email) {
@@ -21,15 +22,24 @@ function normalizeAuthUser(profile) {
   };
 }
 
-function formatConnectedAccounts(githubAccount) {
+function formatConnection(account) {
+  if (!account) {
+    return null;
+  }
+
   return {
-    github: githubAccount
-      ? {
-          connected: true,
-          username: githubAccount.platform_username,
-          connected_at: githubAccount.connected_at?.toISOString?.() || githubAccount.connected_at || null,
-        }
-      : null,
+    connected: true,
+    username: account.platform_username,
+    connected_at: account.connected_at?.toISOString?.() || account.connected_at || null,
+  };
+}
+
+function formatConnectedAccounts(accounts) {
+  const accountsByPlatform = new Map(accounts.map((account) => [account.platform, account]));
+
+  return {
+    github: formatConnection(accountsByPlatform.get("github")),
+    linkedin: formatConnection(accountsByPlatform.get("linkedin")),
   };
 }
 
@@ -61,20 +71,20 @@ async function findOrCreateUser(profile) {
 
 async function loadConnectedAccounts(userId) {
   if (!userId) {
-    return { github: null };
+    return { github: null, linkedin: null };
   }
 
   await connectDB();
 
-  const githubAccount = await ConnectedAccount.findOne({
+  const accounts = await ConnectedAccount.find({
     user_id: userId,
-    platform: "github",
+    platform: { $in: supportedPlatforms },
     status: "active",
   })
-    .select("platform_username connected_at")
+    .select("platform platform_username connected_at")
     .lean();
 
-  return formatConnectedAccounts(githubAccount);
+  return formatConnectedAccounts(accounts);
 }
 
 /** @type {import("next-auth").AuthOptions} */
@@ -155,7 +165,7 @@ export const authOptions = {
         session.user.image = token.picture;
       }
 
-      session.connected_accounts = token.connected_accounts || { github: null };
+      session.connected_accounts = token.connected_accounts || { github: null, linkedin: null };
 
       return session;
     },
