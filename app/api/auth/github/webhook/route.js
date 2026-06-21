@@ -44,14 +44,14 @@ export async function POST(req) {
   console.log("Action:", payload?.action || null);
 
   console.log("Full Payload:", payload);
-if(payload.commits){
-  await myQueue.add("generatePost",{
-  repo: body.repository.full_name,
-      type: "Pull Request",
-      commits: body.commits.map(c => c.message),
-  })
-}
-
 
   
+if(payload.commits){
+  await myQueue.add("generatePost",{
+  repo: payload.repository.full_name,
+      type: "Pull Request",
+      commits: payload.commits.map(c => c.message),
+  })
+}
+return new Response("ok", { status: 200 });
 }
