@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import {myQueue} from "@/lib/queue";
 
 function parseGithubPayload(rawBody, contentType) {
   if (!rawBody) {
@@ -43,24 +44,14 @@ export async function POST(req) {
   console.log("Action:", payload?.action || null);
 
   console.log("Full Payload:", payload);
-  if (eventType === "ping") {
-    return NextResponse.json({
-      ok: true,
-      message: "GitHub webhook ping received.",
-      eventType,
-      deliveryId,
-      repository: payload?.repository?.full_name || null,
-    });
-  }
+if(payload.commits){
+  await myQueue.add("generatePost",{
+  repo: body.repository.full_name,
+      type: "Pull Request",
+      commits: body.commits.map(c => c.message),
+  })
+}
 
 
-
-  return NextResponse.json({
-    ok: true,
-    message: "GitHub webhook received.",
-    eventType,
-    deliveryId,
-    repository: payload?.repository?.full_name || null,
-    action: payload?.action || null,
-  });
+  
 }
