@@ -57,7 +57,7 @@ if(payload.action === "closed" && payload.pull_request?.merged === true){
 
 return new Response("ok", { status: 200 });
   }
-  console.log("soryyyy_________________________________________________________________________________________________________")
+  
 return new Response("ok", { status: 200 });
 
 }
