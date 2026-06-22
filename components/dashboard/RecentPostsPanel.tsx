@@ -5,6 +5,8 @@ import { useState } from "react";
 
 import PostShareMenu from "./PostShareMenu";
 
+const POST_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
+
 export type DashboardPost = {
   _id: string;
   content: string;
@@ -35,6 +37,11 @@ function getDatetimeLocalValue(value: string | null) {
   const date = new Date(value);
   const timezoneOffset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+}
+
+function getScheduleLimit(post: DashboardPost) {
+  const expirationDate = new Date(new Date(post.created_at).getTime() + POST_RETENTION_MS);
+  return getDatetimeLocalValue(expirationDate.toISOString());
 }
 
 function getPostStatusClasses(status: DashboardPost["status"]) {
@@ -73,6 +80,11 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
 
   async function savePost() {
     if (!editingPost) return;
+
+    if (scheduledTime && new Date(scheduledTime).getTime() > new Date(getScheduleLimit(editingPost)).getTime()) {
+      setSaveError("Posts can only be scheduled within 10 days of being created.");
+      return;
+    }
 
     setIsSaving(true);
     setSaveError(null);
@@ -180,9 +192,11 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
                   type="datetime-local"
                   value={scheduledTime}
                   onChange={(event) => setScheduledTime(event.target.value)}
+                  min={getDatetimeLocalValue(new Date().toISOString())}
+                  max={getScheduleLimit(editingPost)}
                   className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
-                <p className="mt-1.5 text-xs text-slate-500">Leave empty for no schedule.</p>
+                <p className="mt-1.5 text-xs text-slate-500">Leave empty for no schedule. Posts are kept for 10 days.</p>
               </label>
 
               {saveError && <p className="text-sm font-medium text-red-600">{saveError}</p>}

@@ -358,7 +358,7 @@ export default async function DashboardPage() {
               </div>
             </section>
 
-            <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.85fr)]">
+            <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.85fr)]">
               <RecentPostsPanel initialPosts={recentPosts} />
 
               <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">

@@ -22,14 +22,27 @@ const nextApp = next({
 const handleNextRequest = nextApp.getRequestHandler();
 const expressApp = express();
 let stopPostWorker;
+let postRetentionCleanupTimer;
 
 async function main() {
   const database = await connectDB();
   const redis = await connectRedis();
   const workerModule = await import("./lib/working.js");
+  const retentionModule = await import("./lib/post-retention.js");
 
   workerModule.startPostWorker();
   stopPostWorker = workerModule.stopPostWorker;
+  await retentionModule.initializePostRetention();
+
+  const cleanRetainedQueueJobs = () => {
+    retentionModule.cleanExpiredQueueJobs().catch((error) => {
+      console.error("Unable to clean expired Redis queue jobs:", error);
+    });
+  };
+
+  cleanRetainedQueueJobs();
+  postRetentionCleanupTimer = setInterval(cleanRetainedQueueJobs, 6 * 60 * 60 * 1000);
+  postRetentionCleanupTimer.unref?.();
 
   await nextApp.prepare();
 
@@ -64,6 +77,7 @@ async function main() {
 }
 
 async function shutdown() {
+  clearInterval(postRetentionCleanupTimer);
   await stopPostWorker?.();
   await disconnectRedis();
   process.exit(0);

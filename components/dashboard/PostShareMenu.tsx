@@ -68,7 +68,7 @@ export default function PostShareMenu({ title, content }: PostShareMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-10 z-20 w-40 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg" role="menu">
+        <div className="absolute bottom-0 right-10 z-20 w-40 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg" role="menu">
           {sharePlatforms.map((platform) => (
             <button
               key={platform.name}
