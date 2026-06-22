@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { Post, User } from "@/lib/models";
+import { getPostExpirationDate } from "@/lib/post-retention-config";
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -57,6 +58,13 @@ export async function PATCH(request, context) {
     return NextResponse.json({ error: "Post content is required." }, { status: 400 });
   }
 
+  const post = await Post.findOne({ _id: postId, user_id: currentUser._id });
+
+  if (!post) {
+    return NextResponse.json({ error: "Post not found." }, { status: 404 });
+  }
+
+  const expiresAt = post.expires_at || getPostExpirationDate(post.created_at);
   let scheduledTime = null;
 
   if (body.scheduled_time) {
@@ -65,16 +73,15 @@ export async function PATCH(request, context) {
     if (Number.isNaN(scheduledTime.getTime())) {
       return NextResponse.json({ error: "Schedule time is invalid." }, { status: 400 });
     }
-  }
 
-  const post = await Post.findOne({ _id: postId, user_id: currentUser._id });
-
-  if (!post) {
-    return NextResponse.json({ error: "Post not found." }, { status: 404 });
+    if (scheduledTime > expiresAt) {
+      return NextResponse.json({ error: "Posts can only be scheduled within their 10-day retention period." }, { status: 400 });
+    }
   }
 
   post.content = content;
   post.scheduled_time = scheduledTime;
+  post.expires_at = expiresAt;
 
   if (scheduledTime && ["draft", "scheduled"].includes(post.status)) {
     post.status = "scheduled";
