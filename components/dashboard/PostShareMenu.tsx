@@ -1,6 +1,6 @@
 "use client";
 
-import { Share2 } from "lucide-react";
+import { Check, Share2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
@@ -12,10 +12,15 @@ const sharePlatforms = [
 
 type PostShareMenuProps = {
   postId: string;
+  initialSharedPlatforms: string[];
+  onPostPublished: () => void;
 };
 
-export default function PostShareMenu({ postId }: PostShareMenuProps) {
+export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPublished }: PostShareMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [sharedPlatforms, setSharedPlatforms] = useState(initialSharedPlatforms);
+  const [sharingPlatform, setSharingPlatform] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,39 +41,35 @@ export default function PostShareMenu({ postId }: PostShareMenuProps) {
     };
   }, []);
 
-  async function handleLinkedIn() {
-  
-      const confirmed = window.confirm("Are you sure you want to share this post on LinkedIn?");
-  
-  if (!confirmed) {
-    return; // stop if user cancels
-  }
-  
-    const response = await fetch("/api/share/linkedin", {
+  async function sharePost(platform: (typeof sharePlatforms)[number]["action"]) {
+    const platformName = sharePlatforms.find((item) => item.action === platform)?.name || platform;
+    const confirmed = window.confirm(`Are you sure you want to share this post on ${platformName}?`);
+
+    if (!confirmed) return;
+
+    setSharingPlatform(platform);
+    setShareError(null);
+
+    try {
+      const response = await fetch(`/api/share/${platform}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId }),
     });
     const data = await response.json();
-    setIsOpen(false);
 
+      if (!response.ok) {
+        throw new Error(data.error || `Unable to share on ${platformName}.`);
+      }
+
+      setSharedPlatforms((current) => [...new Set([...current, platform])]);
+      onPostPublished();
+    } catch (error) {
+      setShareError(error instanceof Error ? error.message : `Unable to share on ${platformName}.`);
+    } finally {
+      setSharingPlatform(null);
+    }
   }
-
-  function handleInstagram() {
-    alert("clicked instagram");
-    setIsOpen(false);
-  }
-
-  function handleFacebook() {
-    alert("clicked facebook");
-    setIsOpen(false);
-  }
-
-  const platformHandlers = {
-    linkedin: handleLinkedIn,
-    instagram: handleInstagram,
-    facebook: handleFacebook,
-  };
 
   return (
     <div ref={menuRef} className="relative shrink-0">
@@ -83,16 +84,28 @@ export default function PostShareMenu({ postId }: PostShareMenuProps) {
       {isOpen && (
         <div className="absolute bottom-0 right-10 z-20 w-40 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg">
           {sharePlatforms.map((platform) => (
-            <button
-              key={platform.name}
-              type="button"
-              onClick={() => void platformHandlers[platform.action]()}
-              className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              <Image src={platform.image} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
-              <span>{platform.name}</span>
-            </button>
+            (() => {
+              const hasBeenShared = sharedPlatforms.includes(platform.action);
+              const isSharing = sharingPlatform === platform.action;
+
+              return (
+                <button
+                  key={platform.name}
+                  type="button"
+                  disabled={hasBeenShared || isSharing}
+                  onClick={() => void sharePost(platform.action)}
+                  title={hasBeenShared ? `Already posted on ${platform.name}` : undefined}
+                  className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:opacity-70"
+                >
+                  <Image src={platform.image} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
+                  <span className="flex-1">{platform.name}</span>
+                  {hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
+                  {isSharing && <span className="text-[10px] text-slate-500">Posting…</span>}
+                </button>
+              );
+            })()
           ))}
+          {shareError && <p className="px-2 pb-1 pt-1 text-xs font-medium text-red-600">{shareError}</p>}
         </div>
       )}
 

@@ -22,7 +22,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, GithubEvent, Post, User } from "@/lib/models";
+import { ConnectedAccount, GithubEvent, Post, PostPlatform, User } from "@/lib/models";
 import RecentPostsPanel, { type DashboardPost } from "@/components/dashboard/RecentPostsPanel";
 
 type DashboardUser = {
@@ -50,6 +50,11 @@ type PostSummary = {
   scheduled_time: Date | null;
   created_at: Date;
   source: string;
+};
+type PostPlatformSummary = {
+  post_id: { toString(): string };
+  platform: string;
+  status: "pending" | "published" | "failed";
 };
 type GithubEventSummary = {
   _id: string;
@@ -274,18 +279,34 @@ export default async function DashboardPage() {
       .select("platform platform_username status connected_at")
       .sort({ connected_at: -1 })
       .lean<ConnectedAccountSummary[]>(),
-    Post.find({ user_id: user._id })
+    Post.find({ 
+      user_id: user._id,
+      status:"published"
+     })
       .select("content pr_title pr_body status scheduled_time created_at source")
       .sort({ created_at: -1 })
-      .limit(3)
+      .limit(4)
       .lean<PostSummary[]>(),
     GithubEvent.find({ user_id: user._id })
       .select("repo_name event_type created_at")
       .sort({ created_at: -1 })
       .limit(5)
       .lean<GithubEventSummary[]>(),
-    Post.countDocuments({ user_id: user._id }),
+    Post.countDocuments({ user_id: user._id,  status:"published" }),
   ]);
+  const publishedPlatforms = posts.length
+    ? await PostPlatform.find({
+        post_id: { $in: posts.map((post) => post._id) },
+        status: "published",
+      })
+        .select("post_id platform")
+        .lean<PostPlatformSummary[]>()
+    : [];
+  const sharedPlatformsByPost = new Map<string, string[]>();
+  for (const publishedPlatform of publishedPlatforms) {
+    const id = publishedPlatform.post_id.toString();
+    sharedPlatformsByPost.set(id, [...(sharedPlatformsByPost.get(id) || []), publishedPlatform.platform]);
+  }
   const activeAccounts = accounts.filter((account) => account.status === "active");
   const greeting = getGreeting(user.timezone || undefined);
   const firstName = user.name?.trim().split(" ")[0] || "there";
@@ -298,6 +319,7 @@ export default async function DashboardPage() {
     scheduled_time: post.scheduled_time?.toISOString() || null,
     created_at: post.created_at.toISOString(),
     source: post.source,
+    shared_platforms: sharedPlatformsByPost.get(post._id.toString()) || [],
   }));
 
   return (
