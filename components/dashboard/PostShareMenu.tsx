@@ -29,6 +29,7 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
         setIsOpen(false);
       }
     }
+    
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") setIsOpen(false);
     }
