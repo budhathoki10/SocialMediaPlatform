@@ -11,11 +11,10 @@ const sharePlatforms = [
 ] as const;
 
 type PostShareMenuProps = {
-  title?: string | null;
-  content: string;
+  postId: string;
 };
 
-export default function PostShareMenu({ title, content }: PostShareMenuProps) {
+export default function PostShareMenu({ postId }: PostShareMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -37,9 +36,22 @@ export default function PostShareMenu({ title, content }: PostShareMenuProps) {
     };
   }, []);
 
-  function handleLinkedIn() {
-    alert("clicked linkedin");
+  async function handleLinkedIn() {
+  
+      const confirmed = window.confirm("Are you sure you want to share this post on LinkedIn?");
+  
+  if (!confirmed) {
+    return; // stop if user cancels
+  }
+  
+    const response = await fetch("/api/share/linkedin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId }),
+    });
+    const data = await response.json();
     setIsOpen(false);
+
   }
 
   function handleInstagram() {
@@ -74,7 +86,7 @@ export default function PostShareMenu({ title, content }: PostShareMenuProps) {
             <button
               key={platform.name}
               type="button"
-              onClick={platformHandlers[platform.action]}
+              onClick={() => void platformHandlers[platform.action]()}
               className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               <Image src={platform.image} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
@@ -83,6 +95,8 @@ export default function PostShareMenu({ title, content }: PostShareMenuProps) {
           ))}
         </div>
       )}
+
+   
     </div>
   );
 }
