@@ -16,6 +16,7 @@ export type DashboardPost = {
   scheduled_time: string | null;
   created_at: string;
   source: string;
+  shared_platforms: string[];
 };
 
 type RecentPostsPanelProps = {
@@ -54,6 +55,10 @@ function getPostStatusClasses(status: DashboardPost["status"]) {
   };
 
   return styles[status];
+}
+
+function getPostStatusLabel(status: DashboardPost["status"]) {
+  return status === "published" ? "posted" : status;
 }
 
 export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps) {
@@ -148,14 +153,20 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
                   <h3 className="mt-1 truncate text-sm font-bold text-slate-900">{post.pr_title || "Generated post"}</h3>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{post.content}</p>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className={`rounded-full px-2 py-0.5 font-semibold capitalize ${getPostStatusClasses(post.status)}`}>{post.status}</span>
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {post.scheduled_time ? formatDate(post.scheduled_time) : "No schedule"}
-                    </span>
+                    <span className={`rounded-full px-2 py-0.5 font-semibold capitalize ${getPostStatusClasses(post.status)}`}>{getPostStatusLabel(post.status)}</span>
+                    {post.status !== "published" && (
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {post.scheduled_time ? formatDate(post.scheduled_time) : "No schedule"}
+                      </span>
+                    )}
                   </div>
                 </button>
-                <PostShareMenu postId={post._id} />
+                <PostShareMenu
+                  postId={post._id}
+                  initialSharedPlatforms={post.shared_platforms}
+                  onPostPublished={() => setPosts((currentPosts) => currentPosts.map((item) => item._id === post._id ? { ...item, status: "published" } : item))}
+                />
               </article>
             ))}
           </div>

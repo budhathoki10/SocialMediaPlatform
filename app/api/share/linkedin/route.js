@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, Post, User } from "@/lib/models";
+import { ConnectedAccount, Post, PostPlatform, User } from "@/lib/models";
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -74,7 +74,7 @@ console.log("content is ",content)
     linkedinUserId,
     content,
   });
-const responses = await fetch("https://api.linkedin.com/rest/posts", {
+  const response = await fetch("https://api.linkedin.com/rest/posts", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${account.access_token}`,
@@ -95,13 +95,31 @@ const responses = await fetch("https://api.linkedin.com/rest/posts", {
       isReshareDisabledByAuthor: false,
     }),
   });
-if (!responses.ok) {
-    const error = await response.json();
+  if (!response.ok) {
+    const error = await response.text();
     throw new Error(`LinkedIn API failed: ${JSON.stringify(error)}`);
-    
   }
+
+  const publishedAt = new Date();
+  await Promise.all([
+    Post.updateOne({ _id: post._id, user_id: currentUser._id }, { $set: { status: "published" } }),
+    PostPlatform.findOneAndUpdate(
+      { post_id: post._id, platform: "linkedin" },
+      {
+        $set: {
+          platform_post_id: response.headers.get("x-restli-id"),
+          published_at: publishedAt,
+          status: "published",
+        },
+      },
+      { upsert: true, new: true },
+    ),
+  ]);
+
   return NextResponse.json({
     ok: true,
-    message: "LinkedIn share data logged on the server.",
+    platform: "linkedin",
+    status: "published",
+    message: "Post shared on LinkedIn.",
   });
 }
