@@ -82,6 +82,7 @@ export async function GET(req) {
       $set: {
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || null,
+        platform_user_id: linkedinUser.sub,
         platform_username: linkedinUser.name || linkedinUser.email || linkedinUser.sub,
         connected_at: new Date(),
         status: "active",

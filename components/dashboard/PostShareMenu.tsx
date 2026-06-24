@@ -1,23 +1,21 @@
 "use client";
 
-import { Check, Share2 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const sharePlatforms = [
-  { name: "LinkedIn", image: "/landing/linkedin.png" },
-  { name: "Instagram", image: "/landing/instagram.png" },
-  { name: "Facebook", image: "/landing/facebook.png" },
-];
+  { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin" },
+  { name: "Instagram", image: "/landing/instagram.png", action: "instagram" },
+  { name: "Facebook", image: "/landing/facebook.png", action: "facebook" },
+] as const;
 
 type PostShareMenuProps = {
-  title?: string | null;
-  content: string;
+  postId: string;
 };
 
-export default function PostShareMenu({ title, content }: PostShareMenuProps) {
+export default function PostShareMenu({ postId }: PostShareMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,41 +24,56 @@ export default function PostShareMenu({ title, content }: PostShareMenuProps) {
         setIsOpen(false);
       }
     }
-
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
+      if (event.key === "Escape") setIsOpen(false);
     }
 
     document.addEventListener("mousedown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
-
     return () => {
       document.removeEventListener("mousedown", closeOnOutsideClick);
       document.removeEventListener("keydown", closeOnEscape);
     };
   }, []);
 
-  async function selectPlatform(platform: string) {
-    const postText = [title, content].filter(Boolean).join("\n\n");
+  async function handleLinkedIn() {
+  
+      const confirmed = window.confirm("Are you sure you want to share this post on LinkedIn?");
+  
+  if (!confirmed) {
+    return; // stop if user cancels
+  }
+  
+    const response = await fetch("/api/share/linkedin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId }),
+    });
+    const data = await response.json();
+    setIsOpen(false);
 
-    try {
-      await navigator.clipboard.writeText(postText);
-      setSelectedPlatform(platform);
-    } catch {
-      setSelectedPlatform(null);
-    }
+  }
 
+  function handleInstagram() {
+    alert("clicked instagram");
     setIsOpen(false);
   }
+
+  function handleFacebook() {
+    alert("clicked facebook");
+    setIsOpen(false);
+  }
+
+  const platformHandlers = {
+    linkedin: handleLinkedIn,
+    instagram: handleInstagram,
+    facebook: handleFacebook,
+  };
 
   return (
     <div ref={menuRef} className="relative shrink-0">
       <button
         type="button"
-        aria-label="Share post"
-        title="Share post"
         onClick={() => setIsOpen((open) => !open)}
         className="grid h-9 w-9 place-items-center rounded-md text-slate-400 transition hover:bg-indigo-50 hover:text-[#4338ca]"
       >
@@ -68,22 +81,22 @@ export default function PostShareMenu({ title, content }: PostShareMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-0 right-10 z-20 w-40 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg" role="menu">
+        <div className="absolute bottom-0 right-10 z-20 w-40 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg">
           {sharePlatforms.map((platform) => (
             <button
               key={platform.name}
               type="button"
-              role="menuitem"
-              onClick={() => void selectPlatform(platform.name)}
+              onClick={() => void platformHandlers[platform.action]()}
               className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               <Image src={platform.image} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
               <span>{platform.name}</span>
-              {selectedPlatform === platform.name && <Check className="ml-auto h-3.5 w-3.5 text-emerald-600" />}
             </button>
           ))}
         </div>
       )}
+
+   
     </div>
   );
 }

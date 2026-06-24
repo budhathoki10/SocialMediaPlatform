@@ -155,7 +155,7 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
                     </span>
                   </div>
                 </button>
-                <PostShareMenu title={post.pr_title} content={post.content} />
+                <PostShareMenu postId={post._id} />
               </article>
             ))}
           </div>
