@@ -6,7 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, Post, PostPlatform, User } from "@/lib/models";
 
-async function getCurrentUser() {
+export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id && !session?.user?.email) {

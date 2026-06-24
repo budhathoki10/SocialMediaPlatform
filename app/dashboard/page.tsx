@@ -279,17 +279,20 @@ export default async function DashboardPage() {
       .select("platform platform_username status connected_at")
       .sort({ connected_at: -1 })
       .lean<ConnectedAccountSummary[]>(),
-    Post.find({ user_id: user._id })
+    Post.find({ 
+      user_id: user._id,
+      status:"published"
+     })
       .select("content pr_title pr_body status scheduled_time created_at source")
       .sort({ created_at: -1 })
-      .limit(3)
+      .limit(4)
       .lean<PostSummary[]>(),
     GithubEvent.find({ user_id: user._id })
       .select("repo_name event_type created_at")
       .sort({ created_at: -1 })
       .limit(5)
       .lean<GithubEventSummary[]>(),
-    Post.countDocuments({ user_id: user._id }),
+    Post.countDocuments({ user_id: user._id,  status:"published" }),
   ]);
   const publishedPlatforms = posts.length
     ? await PostPlatform.find({
