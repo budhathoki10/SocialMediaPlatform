@@ -22,8 +22,13 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, GithubEvent, Post, PostPlatform, User } from "@/lib/models";
-import RecentPostsPanel, { type DashboardPost } from "@/components/dashboard/RecentPostsPanel";
+import { ConnectedAccount, GithubEvent, Post, User } from "@/lib/models";
+import RecentPostsPanel from "@/components/dashboard/RecentPostsPanel";
+
+// The dashboard contains live post and webhook data, so it must not reuse a
+// previously rendered page payload on refresh.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type DashboardUser = {
   _id?: string;
@@ -41,21 +46,6 @@ type ConnectedAccountSummary = {
   connected_at: Date;
 };
 
-type PostSummary = {
-  _id: string;
-  content: string;
-  pr_title?: string | null;
-  pr_body?: string | null;
-  status: "draft" | "scheduled" | "published" | "failed" | "cancelled";
-  scheduled_time: Date | null;
-  created_at: Date;
-  source: string;
-};
-type PostPlatformSummary = {
-  post_id: { toString(): string };
-  platform: string;
-  status: "pending" | "published" | "failed";
-};
 type GithubEventSummary = {
   _id: string;
   repo_name: string;
@@ -274,54 +264,21 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [accounts, posts, activities, totalPostCount] = await Promise.all([
+  const [accounts, activities, totalPostCount] = await Promise.all([
     ConnectedAccount.find({ user_id: user._id })
       .select("platform platform_username status connected_at")
       .sort({ connected_at: -1 })
       .lean<ConnectedAccountSummary[]>(),
-    Post.find({ 
-      user_id: user._id,
-      status:"published"
-     })
-      .select("content pr_title pr_body status scheduled_time created_at source")
-      .sort({ created_at: -1 })
-      .limit(4)
-      .lean<PostSummary[]>(),
     GithubEvent.find({ user_id: user._id })
       .select("repo_name event_type created_at")
       .sort({ created_at: -1 })
       .limit(5)
       .lean<GithubEventSummary[]>(),
-    Post.countDocuments({ user_id: user._id,  status:"published" }),
+    Post.countDocuments({ user_id: user._id, status: "published" }),
   ]);
-  const publishedPlatforms = posts.length
-    ? await PostPlatform.find({
-        post_id: { $in: posts.map((post) => post._id) },
-        status: "published",
-      })
-        .select("post_id platform")
-        .lean<PostPlatformSummary[]>()
-    : [];
-  const sharedPlatformsByPost = new Map<string, string[]>();
-  for (const publishedPlatform of publishedPlatforms) {
-    const id = publishedPlatform.post_id.toString();
-    sharedPlatformsByPost.set(id, [...(sharedPlatformsByPost.get(id) || []), publishedPlatform.platform]);
-  }
   const activeAccounts = accounts.filter((account) => account.status === "active");
   const greeting = getGreeting(user.timezone || undefined);
   const firstName = user.name?.trim().split(" ")[0] || "there";
-  const recentPosts: DashboardPost[] = posts.map((post) => ({
-    _id: post._id.toString(),
-    content: post.content,
-    pr_title: post.pr_title || null,
-    pr_body: post.pr_body || null,
-    status: post.status,
-    scheduled_time: post.scheduled_time?.toISOString() || null,
-    created_at: post.created_at.toISOString(),
-    source: post.source,
-    shared_platforms: sharedPlatformsByPost.get(post._id.toString()) || [],
-  }));
-
   return (
     <main
       className="min-h-screen p-1 text-slate-950"
@@ -381,7 +338,7 @@ export default async function DashboardPage() {
             </section>
 
             <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.85fr)]">
-              <RecentPostsPanel initialPosts={recentPosts} />
+              <RecentPostsPanel />
 
               <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
