@@ -1,44 +1,63 @@
-import {Post, getKathmanduDate} from "@/lib/models";
-import {NextResponse} from "next/server";
-import {getCurrentUser} from "@/app/api/share/linkedin/route";
+import { publishLinkedInPost } from "@/app/api/share/linkedin/route";
+import { connectDB } from "@/lib/db";
+import { Post, getKathmanduDate } from "@/lib/models";
+import { NextResponse } from "next/server";
 
-export async function GET() {
-  const currentUser = await getCurrentUser();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-  if (!currentUser) {
-    return NextResponse.json({ error: "Login required." }, { status: 401 });
+function isAuthorizedCronRequest(request) {
+  if (!process.env.CRON_SECRET) return true;
+
+  return request.headers.get("authorization") === `Bearer ${process.env.CRON_SECRET}`;
+}
+
+export async function GET(request) {
+  if (!isAuthorizedCronRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  await connectDB();
 
   const now = getKathmanduDate();
   const posts = await Post.find({
-    user_id: currentUser._id,
     scheduled_time: { $lte: now },
-    status: "scheduled"
-  }).select("_id pr_title content scheduled_time expires_at").lean();
+    status: "scheduled",
+  })
+    .select("_id user_id pr_title content scheduled_time expires_at")
+    .lean();
 
   if (posts.length === 0) {
-    console.log("No post remaining");
-    return NextResponse.json({ message: "No posts due" });
+    return NextResponse.json({ ok: true, message: "No posts due", count: 0, published: 0, failed: 0 });
   }
 
   const results = [];
-  for (const post of posts) {
-    const response = await fetch(`${process.env.NEXTAUTH_URL}/api/share/linkedin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId: post._id.toString() }),
-    });
 
-    const data = await response.json();
-    results.push({ postId: post._id, ...data });
+  for (const post of posts) {
+    let result;
+
+    try {
+      result = await publishLinkedInPost({
+        postId: post._id.toString(),
+        userId: post.user_id.toString(),
+      });
+    } catch (error) {
+      result = {
+        ok: false,
+        statusCode: 500,
+        error: error instanceof Error ? error.message : "Unable to publish scheduled post.",
+      };
+    }
+
+    results.push({ postId: post._id.toString(), ...result });
   }
 
-  
   return NextResponse.json({
     ok: true,
     platform: "linkedin",
-    status: "published",
     count: results.length,
+    published: results.filter((result) => result.ok).length,
+    failed: results.filter((result) => !result.ok).length,
     results,
   });
 }
