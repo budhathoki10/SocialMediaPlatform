@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, Post, PostPlatform, User } from "@/lib/models";
+import { ConnectedAccount, Post, PostPlatform, User, getKathmanduDate } from "@/lib/models";
 
 export async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -100,7 +100,7 @@ console.log("content is ",content)
     throw new Error(`LinkedIn API failed: ${JSON.stringify(error)}`);
   }
 
-  const publishedAt = new Date();
+  const publishedAt = getKathmanduDate();
   await Promise.all([
     Post.updateOne({ _id: post._id, user_id: currentUser._id }, { $set: { status: "published" } }),
     PostPlatform.findOneAndUpdate(

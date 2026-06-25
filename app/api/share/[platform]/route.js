@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { Post, PostPlatform, User } from "@/lib/models";
+import { Post, PostPlatform, User, getKathmanduDate } from "@/lib/models";
 
 const supportedPlatforms = new Set(["instagram", "facebook"]);
 
@@ -48,7 +48,7 @@ export async function POST(request, context) {
   const post = await Post.findOne({ _id: postId, user_id: currentUser._id }).select("_id");
   if (!post) return NextResponse.json({ error: "Post not found." }, { status: 404 });
 
-  const publishedAt = new Date();
+  const publishedAt = getKathmanduDate();
   await Promise.all([
     Post.updateOne({ _id: post._id, user_id: currentUser._id }, { $set: { status: "published" } }),
     PostPlatform.findOneAndUpdate(

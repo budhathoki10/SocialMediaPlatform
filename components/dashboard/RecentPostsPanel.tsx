@@ -1,13 +1,16 @@
 "use client";
 
 import { CalendarDays, MessageSquare, Save, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import PostShareMenu from "./PostShareMenu";
 
 const POST_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
+const KATHMANDU_OFFSET_MS = (5 * 60 + 45) * 60 * 1000;
+const DATETIME_LOCAL_PATTERN =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/;
 
-export type DashboardPost = {
+type DashboardPost = {
   _id: string;
   content: string;
   pr_title?: string | null;
@@ -19,30 +22,52 @@ export type DashboardPost = {
   shared_platforms: string[];
 };
 
-type RecentPostsPanelProps = {
-  initialPosts: DashboardPost[];
-};
-
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
     day: "numeric",
     month: "short",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "UTC",
   }).format(new Date(value));
 }
 
-function getDatetimeLocalValue(value: string | null) {
+function parseKathmanduDatetimeLocal(value: string) {
+  const match = value.match(DATETIME_LOCAL_PATTERN);
+
+  if (!match) return null;
+
+  const [, year, month, day, hour, minute, second = "0"] = match;
+
+  return new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second),
+    ),
+  );
+}
+
+function dateToKathmanduDatetimeLocal(value: string | null) {
   if (!value) return "";
 
   const date = new Date(value);
-  const timezoneOffset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  return date.toISOString().slice(0, 16);
+}
+
+function getCurrentKathmanduDatetimeLocal() {
+  return new Date(Date.now() + KATHMANDU_OFFSET_MS).toISOString().slice(0, 16);
 }
 
 function getScheduleLimit(post: DashboardPost) {
   const expirationDate = new Date(new Date(post.created_at).getTime() + POST_RETENTION_MS);
-  return getDatetimeLocalValue(expirationDate.toISOString());
+  return dateToKathmanduDatetimeLocal(expirationDate.toISOString());
 }
 
 function getPostStatusClasses(status: DashboardPost["status"]) {
@@ -61,18 +86,46 @@ function getPostStatusLabel(status: DashboardPost["status"]) {
   return status === "published" ? "posted" : status;
 }
 
-export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps) {
-  const [posts, setPosts] = useState(initialPosts);
+export default function RecentPostsPanel() {
+  const [posts, setPosts] = useState<DashboardPost[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [editingPost, setEditingPost] = useState<DashboardPost | null>(null);
   const [content, setContent] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadLatestPosts() {
+      try {
+        const response = await fetch("/api/posts/recent", { cache: "no-store" });
+        const data = await response.json();
+
+        if (response.ok && isMounted) {
+          setPosts(data.posts);
+        }
+      } catch {
+        // Leave the most recently fetched posts visible if a refresh fails.
+      } finally {
+        if (isMounted) setIsLoadingPosts(false);
+      }
+    }
+
+    void loadLatestPosts();
+    const refreshInterval = window.setInterval(() => void loadLatestPosts(), 15_000);
+
+    return () => {
+      isMounted = false;
+      window.clearInterval(refreshInterval);
+    };
+  }, []);
+
   function openEditor(post: DashboardPost) {
     setEditingPost(post);
     setContent(post.content);
-    setScheduledTime(getDatetimeLocalValue(post.scheduled_time));
+    setScheduledTime(dateToKathmanduDatetimeLocal(post.scheduled_time));
     setSaveError(null);
   }
 
@@ -86,7 +139,10 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
   async function savePost() {
     if (!editingPost) return;
 
-    if (scheduledTime && new Date(scheduledTime).getTime() > new Date(getScheduleLimit(editingPost)).getTime()) {
+    const scheduledDate = scheduledTime ? parseKathmanduDatetimeLocal(scheduledTime) : null;
+    const scheduleLimit = parseKathmanduDatetimeLocal(getScheduleLimit(editingPost));
+
+    if (scheduledDate && scheduleLimit && scheduledDate.getTime() > scheduleLimit.getTime()) {
       setSaveError("Posts can only be scheduled within 10 days of being created.");
       return;
     }
@@ -100,7 +156,7 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content,
-          scheduled_time: scheduledTime ? new Date(scheduledTime).toISOString() : null,
+          scheduled_time: scheduledTime || null,
         }),
       });
       const data = await response.json();
@@ -129,7 +185,11 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
           <CalendarDays className="h-4 w-4 text-slate-400" />
         </div>
 
-        {posts.length === 0 ? (
+        {isLoadingPosts ? (
+          <div className="grid min-h-36 place-items-center px-5 text-center">
+            <p className="text-sm font-medium text-slate-500">Loading latest posts...</p>
+          </div>
+        ) : posts.length === 0 ? (
           <div className="grid min-h-36 place-items-center px-5 text-center">
             <div>
               <p className="text-sm font-semibold text-slate-700">No posts yet</p>
@@ -203,7 +263,7 @@ export default function RecentPostsPanel({ initialPosts }: RecentPostsPanelProps
                   type="datetime-local"
                   value={scheduledTime}
                   onChange={(event) => setScheduledTime(event.target.value)}
-                  min={getDatetimeLocalValue(new Date().toISOString())}
+                  min={getCurrentKathmanduDatetimeLocal()}
                   max={getScheduleLimit(editingPost)}
                   className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />

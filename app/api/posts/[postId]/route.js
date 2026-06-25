@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { Post, User } from "@/lib/models";
+import { Post, User, parseKathmanduDatetimeLocal } from "@/lib/models";
 import { getPostExpirationDate } from "@/lib/post-retention-config";
 
 async function getCurrentUser() {
@@ -68,9 +68,9 @@ export async function PATCH(request, context) {
   let scheduledTime = null;
 
   if (body.scheduled_time) {
-    scheduledTime = new Date(body.scheduled_time);
+    scheduledTime = parseKathmanduDatetimeLocal(body.scheduled_time);
 
-    if (Number.isNaN(scheduledTime.getTime())) {
+    if (!scheduledTime || Number.isNaN(scheduledTime.getTime())) {
       return NextResponse.json({ error: "Schedule time is invalid." }, { status: 400 });
     }
 
