@@ -23,6 +23,35 @@ const handleNextRequest = nextApp.getRequestHandler();
 const expressApp = express();
 let stopPostWorker;
 let postRetentionCleanupTimer;
+let scheduledPostCronTimer;
+let isScheduledPostCronRunning = false;
+
+async function runScheduledPostCron(baseUrl) {
+  if (isScheduledPostCronRunning) return;
+
+  isScheduledPostCronRunning = true;
+
+  try {
+    const headers = process.env.CRON_SECRET
+      ? { Authorization: `Bearer ${process.env.CRON_SECRET}` }
+      : undefined;
+    const response = await fetch(`${baseUrl}/api/cron`, { headers });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      console.error("Scheduled post cron failed:", response.status, data);
+      return;
+    }
+
+    if (data.published || data.failed) {
+      console.log("Scheduled post cron result:", data);
+    }
+  } catch (error) {
+    console.error("Unable to run scheduled post cron:", error);
+  } finally {
+    isScheduledPostCronRunning = false;
+  }
+}
 
 async function main() {
   const database = await connectDB();
@@ -73,11 +102,16 @@ async function main() {
     if (publicUrl) {
       console.log(`> Public URL: ${publicUrl}`);
     }
+
+    setTimeout(() => runScheduledPostCron(localUrl), 5000);
+    scheduledPostCronTimer = setInterval(() => runScheduledPostCron(localUrl), 60 * 1000);
+    scheduledPostCronTimer.unref?.();
   });
 }
 
 async function shutdown() {
   clearInterval(postRetentionCleanupTimer);
+  clearInterval(scheduledPostCronTimer);
   await stopPostWorker?.();
   await disconnectRedis();
   process.exit(0);

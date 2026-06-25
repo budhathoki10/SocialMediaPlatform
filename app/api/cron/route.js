@@ -1,6 +1,10 @@
 import { publishLinkedInPost } from "@/app/api/share/linkedin/route";
+import { connectDB } from "@/lib/db";
 import { Post, getKathmanduDate } from "@/lib/models";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function isAuthorizedCronRequest(request) {
   if (!process.env.CRON_SECRET) return true;
@@ -9,11 +13,11 @@ function isAuthorizedCronRequest(request) {
 }
 
 export async function GET(request) {
-
-  console.log("i am inside the cron job")
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  await connectDB();
 
   const now = getKathmanduDate();
   const posts = await Post.find({
@@ -24,16 +28,26 @@ export async function GET(request) {
     .lean();
 
   if (posts.length === 0) {
-    return NextResponse.json({ message: "No posts due" });
+    return NextResponse.json({ ok: true, message: "No posts due", count: 0, published: 0, failed: 0 });
   }
 
   const results = [];
 
   for (const post of posts) {
-    const result = await publishLinkedInPost({
-      postId: post._id.toString(),
-      userId: post.user_id.toString(),
-    });
+    let result;
+
+    try {
+      result = await publishLinkedInPost({
+        postId: post._id.toString(),
+        userId: post.user_id.toString(),
+      });
+    } catch (error) {
+      result = {
+        ok: false,
+        statusCode: 500,
+        error: error instanceof Error ? error.message : "Unable to publish scheduled post.",
+      };
+    }
 
     results.push({ postId: post._id.toString(), ...result });
   }
