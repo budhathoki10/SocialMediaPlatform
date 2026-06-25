@@ -22,6 +22,7 @@ export async function GET(request) {
   const now = getKathmanduDate();
   const posts = await Post.find({
     scheduled_time: { $lte: now },
+    
     status: "scheduled",
   })
     .select("_id user_id pr_title content scheduled_time expires_at")
