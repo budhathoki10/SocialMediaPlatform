@@ -1,5 +1,4 @@
-import {dbConnect} from "@/lib/dbConnect";
-import {Post} from "@/lib/models";
+import {Post, getKathmanduDate} from "@/lib/models";
 import {NextResponse} from "next/server";
 import {getCurrentUser} from "@/app/api/share/linkedin/route";
 
@@ -10,12 +9,12 @@ export async function GET() {
     return NextResponse.json({ error: "Login required." }, { status: 401 });
   }
 
-  const now = new Date();
+  const now = getKathmanduDate();
   const posts = await Post.find({
     user_id: currentUser._id,
-    scheduledTime: { $lte: now },
+    scheduled_time: { $lte: now },
     status: "scheduled"
-  }).select("_id pr_title content expires_at").lean();
+  }).select("_id pr_title content scheduled_time expires_at").lean();
 
   if (posts.length === 0) {
     console.log("No post remaining");

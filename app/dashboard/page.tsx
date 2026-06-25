@@ -110,6 +110,7 @@ function formatDate(value: Date | null | undefined) {
     month: "short",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: "UTC",
   }).format(new Date(value));
 }
 

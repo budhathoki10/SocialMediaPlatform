@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, User } from "@/lib/models";
+import { ConnectedAccount, User, getKathmanduDate } from "@/lib/models";
 
 function appUrl(path) {
   return `${process.env.NEXTAUTH_URL || "http://localhost:3000"}${path}`;
@@ -93,7 +93,7 @@ if (!existing) {
     access_token: tokenData.access_token,
     refresh_token: tokenData.refresh_token || null,
     platform_username: githubUser.login,
-    connected_at: new Date(),
+    connected_at: getKathmanduDate(),
     status: "active",
   });
 }

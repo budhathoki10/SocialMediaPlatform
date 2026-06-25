@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, User } from "@/lib/models";
+import { ConnectedAccount, User, getKathmanduDate } from "@/lib/models";
 
 function appUrl(path) {
   return `${process.env.NEXTAUTH_URL || "http://localhost:3000"}${path}`;
@@ -84,7 +84,7 @@ export async function GET(req) {
         refresh_token: tokenData.refresh_token || null,
         platform_user_id: linkedinUser.sub,
         platform_username: linkedinUser.name || linkedinUser.email || linkedinUser.sub,
-        connected_at: new Date(),
+        connected_at: getKathmanduDate(),
         status: "active",
       },
     },
