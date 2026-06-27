@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertTriangle, Bot, CheckCircle2, RefreshCcw } from "lucide-react";
-import { useState } from "react";
 
 type ActivityItem = {
   id: string;
@@ -24,7 +23,7 @@ const iconMap = {
 };
 
 export default function ActivityFeed({ initialItems }: { initialItems: ActivityItem[] }) {
-  const [items, setItems] = useState(initialItems);
+  const items = initialItems;
 
   return (
     <section className="min-h-[278px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -33,13 +32,6 @@ export default function ActivityFeed({ initialItems }: { initialItems: ActivityI
           <RefreshCcw className="h-4 w-4 text-[#4338ca]" />
           <h2 className="text-sm font-bold text-slate-950">Activity Feed</h2>
         </div>
-        <button
-          type="button"
-          onClick={() => setItems([])}
-          className="text-xs font-bold text-[#4338ca] transition hover:text-[#3730a3]"
-        >
-          Clear Logs
-        </button>
       </div>
 
       {items.length === 0 ? (

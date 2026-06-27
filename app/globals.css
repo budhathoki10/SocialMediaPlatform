@@ -20,7 +20,14 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 a {
@@ -667,7 +674,7 @@ a {
   background: #181827;
   color: #e0f2fe;
   padding: 22px;
-  font-family: "Geist Mono", Consolas, monospace;
+  font-family: var(--font-geist-mono), Consolas, monospace;
   font-size: 11px;
   line-height: 1.8;
   box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);

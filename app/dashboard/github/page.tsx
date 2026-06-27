@@ -162,7 +162,7 @@ export default async function GithubAutomationPage() {
                     <h2 className="truncate text-base font-bold text-slate-950">{repository.name}</h2>
                     <p className="mt-1 truncate text-xs text-slate-500">{repository.full_name}</p>
                   </div>
-                  <a
+                  <a 
                     href={repository.html_url}
                     target="_blank"
                     rel="noreferrer"

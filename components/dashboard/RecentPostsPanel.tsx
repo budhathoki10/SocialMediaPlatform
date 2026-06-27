@@ -193,9 +193,9 @@ export default function RecentPostsPanel() {
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-sm font-bold text-slate-950">Upcoming Posts</h2>
-          <button type="button" className="text-xs font-bold text-[#4338ca] transition hover:text-[#3730a3]">
+          {/* <button type="button" className="rounded-md px-2 py-1 text-xs font-bold text-[#4338ca] transition hover:bg-indigo-50 hover:text-[#3730a3]">
             View Calendar
-          </button>
+          </button> */}
         </div>
 
         {isLoadingPosts ? (
@@ -206,19 +206,19 @@ export default function RecentPostsPanel() {
           <div className="grid min-h-56 place-items-center px-5 text-center">
             <div>
               <p className="text-sm font-semibold text-slate-700">No posts yet</p>
-              <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
+              <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
             </div>
           </div>
         ) : (
           <div>
-            <div className="grid grid-cols-[minmax(0,1fr)_112px_112px_40px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500">
+            <div className="hidden grid-cols-[minmax(0,1fr)_112px_128px_40px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500 md:grid">
               <span>Post Content</span>
               <span>Platform</span>
               <span>Scheduled</span>
               <span className="sr-only">Share</span>
             </div>
             {posts.map((post) => (
-              <article key={post._id} className="grid grid-cols-[minmax(0,1fr)_112px_112px_40px] items-center gap-4 px-5 py-4 transition hover:bg-slate-50">
+              <article key={post._id} className="grid gap-3 border-b border-slate-100 px-5 py-4 transition last:border-b-0 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4">
                 <button
                   type="button"
                   onClick={() => openEditor(post)}
@@ -236,14 +236,16 @@ export default function RecentPostsPanel() {
                     </span>
                   </div>
                 </button>
-                <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-600">
-                  <span className="h-2 w-2 rounded-full bg-[#4338ca]" />
-                  {getPlatformLabel(getPrimaryPlatform(post))}
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
-                  <Clock3 className="h-3.5 w-3.5 text-slate-400" />
-                  {post.scheduled_time ? formatDate(post.scheduled_time) : "No schedule"}
-                </span>
+                <div className="flex flex-wrap items-center gap-3 md:contents">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-600">
+                    <span className="h-2 w-2 rounded-full bg-[#4338ca]" />
+                    {getPlatformLabel(getPrimaryPlatform(post))}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                    <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                    {post.scheduled_time ? formatDate(post.scheduled_time) : "No schedule"}
+                  </span>
+                </div>
                 <PostShareMenu
                   postId={post._id}
                   initialSharedPlatforms={post.shared_platforms}
@@ -256,7 +258,7 @@ export default function RecentPostsPanel() {
       </section>
 
       {editingPost && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4" role="presentation">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
           <section role="dialog" aria-modal="true" aria-labelledby="edit-post-title" className="w-full max-w-xl rounded-lg border border-slate-200 bg-white shadow-xl">
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div className="min-w-0">
