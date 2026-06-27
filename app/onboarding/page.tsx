@@ -281,6 +281,7 @@ const OnboardingContent = () => {
         github: sessionGithub || null,
         linkedin: sessionLinkedin || null,
       };
+      
       let foundDatabaseConnection = false;
 
       for (const platform of platformsToLoad) {
