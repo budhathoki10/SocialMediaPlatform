@@ -1,21 +1,30 @@
 import { publishLinkedInPost } from "@/app/api/share/linkedin/route";
 import { connectDB } from "@/lib/db";
 import { Post, getKathmanduDate } from "@/lib/models";
+import { processQueuedPostJobs } from "@/lib/working";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const maxDuration = 60;
 
 function isAuthorizedCronRequest(request) {
   if (!process.env.CRON_SECRET) return true;
 
-  return request.headers.get("authorization") === `Bearer ${process.env.CRON_SECRET}`;
+  const { searchParams } = new URL(request.url);
+
+  return (
+    request.headers.get("authorization") === `Bearer ${process.env.CRON_SECRET}` ||
+    searchParams.get("secret") === process.env.CRON_SECRET
+  );
 }
 
 export async function GET(request) {
   if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+
+  const queueResult = await processQueuedPostJobs({ maxRuntimeMs: 45_000 });
 
   await connectDB();
 
@@ -29,7 +38,14 @@ export async function GET(request) {
     .lean();
 
   if (posts.length === 0) {
-    return NextResponse.json({ ok: true, message: "No posts due", count: 0, published: 0, failed: 0 });
+    return NextResponse.json({
+      ok: true,
+      message: "No posts due",
+      queue: queueResult,
+      count: 0,
+      published: 0,
+      failed: 0,
+    });
   }
 
   const results = [];
@@ -56,6 +72,7 @@ export async function GET(request) {
   return NextResponse.json({
     ok: true,
     platform: "linkedin",
+    queue: queueResult,
     count: results.length,
     published: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
