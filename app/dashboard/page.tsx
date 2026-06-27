@@ -11,9 +11,9 @@ import {
   MessageSquare,
   Newspaper,
   Plus,
-  Search,
   Settings,
   SquareTerminal,
+  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +23,9 @@ import { redirect } from "next/navigation";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, GithubEvent, Post, User } from "@/lib/models";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import RecentPostsPanel from "@/components/dashboard/RecentPostsPanel";
+import RecentTechNewsPanel from "@/components/dashboard/RecentTechNewsPanel";
 
 // The dashboard contains live post and webhook data, so it must not reuse a
 // previously rendered page payload on refresh.
@@ -58,7 +60,7 @@ const sidebarItems = [
   { label: "Create Post", Icon: CirclePlus },
   { label: "Scheduled Posts", Icon: CalendarDays },
   { label: "Auto Reply", Icon: MessageSquare },
-  { label: "Tech News", Icon: Newspaper },
+  { label: "Tech News", Icon: Newspaper, href: "/dashboard/tech-news" },
   { label: "GitHub Automation", Icon: SquareTerminal, href: "/dashboard/github" },
   { label: "Analytics", Icon: BarChart3 },
   { label: "Settings", Icon: Settings },
@@ -102,18 +104,6 @@ function getGreeting(timezone = "Asia/Kathmandu") {
   }
 }
 
-function formatDate(value: Date | null | undefined) {
-  if (!value) return "Not scheduled";
-
-  return new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "UTC",
-  }).format(new Date(value));
-}
-
 function formatAccountUsername(account: ConnectedAccountSummary) {
   const username = account.platform_username.trim();
 
@@ -131,7 +121,7 @@ function AccountLogo({ platform }: { platform: string }) {
   if (imageSource) {
     return (
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white">
-        <Image src={imageSource} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
+        <Image src={imageSource} alt="" width={28} height={28} className="h-7 w-7 object-contain" />
       </span>
     );
   }
@@ -154,40 +144,41 @@ const UserAvatar = ({ imageSrc, name }: { imageSrc?: string | null; name?: strin
 );
 
 const Sidebar = () => (
-  <aside className="hidden min-h-screen w-[232px] shrink-0 flex-col border-r border-slate-200 bg-white px-5 py-6 lg:flex">
+  <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
     <div>
       <Image
         src="/landing/autopilot-logo.png"
         alt="AutoPilot"
         width={250}
-        height={150}
-        className="h-auto w-[142px]"
+        height={60}
+        className="h-auto w-[112px]"
         priority
       />
-      <p className="mt-1 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Automation Suite</p>
+      <p className="mt-2 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Automation Suite</p>
     </div>
 
-    <nav className="mt-9 space-y-2">
+    <nav className="mt-8 space-y-1.5">
       {sidebarItems.map(({ label, Icon, active, href }) => (
-        <a
+        <Link
           key={label}
           href={href || "#"}
-          className={`flex h-10 items-center gap-3 rounded-lg px-4 text-sm font-medium transition ${
-            active ? "bg-indigo-50 text-[#4338ca]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+          className={`flex h-10 items-center gap-3 rounded-md px-3.5 text-sm font-semibold transition ${
+            active ? "bg-[#eef2ff] text-[#4338ca]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
           }`}
         >
           <Icon className="h-4 w-4" />
           {label}
-        </a>
+        </Link>
       ))}
     </nav>
 
     <div className="mt-auto">
-      <div className="rounded-lg border border-indigo-100 bg-indigo-50 px-4 py-5">
+      <div className="rounded-lg border border-indigo-100 bg-[#f4f6ff] px-4 py-5">
         <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
         <p className="mt-2 text-[11px] leading-5 text-slate-600">Unlock advanced automation tools and analytics.</p>
-        <button className="mt-4 h-9 w-full rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]">
-          Upgrade Now
+        <button className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]">
+          <Zap className="h-4 w-4" />
+          Upgrade to Pro
         </button>
       </div>
 
@@ -206,28 +197,27 @@ const Sidebar = () => (
 );
 
 const Toolbar = ({ user }: { user: DashboardUser }) => (
-  <header className="flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 sm:px-7">
-    <label className="flex h-10 min-w-0 flex-1 max-w-[560px] items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 text-slate-400">
-      <Search className="h-4 w-4 shrink-0" />
-      <input
-        type="search"
-        placeholder="Search automation tasks..."
-        className="h-full min-w-0 w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-      />
-    </label>
+  <header className="flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 sm:px-6 lg:px-8">
+    <div className="min-w-0">
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Workspace</p>
+      <div className="mt-0.5 flex min-w-0 items-center gap-2">
+        <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+        <p className="truncate text-sm font-bold text-slate-800">AutoPilot Dashboard</p>
+      </div>
+    </div>
 
-    <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-      <button aria-label="Notifications" className="relative grid h-9 w-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-950">
+    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+      <button aria-label="Notifications" className="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950">
         <Bell className="h-5 w-5" />
         <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
       </button>
-      <button aria-label="Settings" className="hidden h-9 w-9 place-items-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
+      <button aria-label="Settings" className="hidden h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
         <Settings className="h-5 w-5" />
       </button>
       <div className="hidden h-8 w-px bg-slate-200 sm:block" />
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5">
         <div className="hidden text-right sm:block">
-          <p className="max-w-36 truncate text-sm font-bold leading-4 text-slate-700">{user.name || "User"}</p>
+          <p className="max-w-40 truncate text-sm font-bold leading-4 text-slate-700">{user.name || "User"}</p>
           <p className="mt-1 text-xs capitalize text-slate-500">{user.plan || "free"} Member</p>
         </div>
         <UserAvatar imageSrc={user.avatar_url} name={user.name} />
@@ -245,6 +235,18 @@ function EmptyPanel({ title, description }: { title: string; description: string
       </div>
     </div>
   );
+}
+
+function getRelativeTime(value: Date) {
+  const diffMs = Date.now() - new Date(value).getTime();
+  const minutes = Math.max(1, Math.round(diffMs / 60_000));
+
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  return `${Math.round(hours / 24)}d ago`;
 }
 
 export default async function DashboardPage() {
@@ -280,129 +282,134 @@ export default async function DashboardPage() {
   const activeAccounts = accounts.filter((account) => account.status === "active");
   const greeting = getGreeting(user.timezone || undefined);
   const firstName = user.name?.trim().split(" ")[0] || "there";
+  const activityFeedItems =
+    activities.length > 0
+      ? activities.slice(0, 3).map((activity, index) => ({
+          id: activity._id,
+          title: index === 0 ? "AI Agent generated a draft post" : `${activity.event_type.replaceAll("_", " ")} received`,
+          description:
+            index === 0
+              ? `New draft created from ${activity.repo_name}.`
+              : `${activity.repo_name} was processed by AutoPilot automation.`,
+          time: getRelativeTime(activity.created_at),
+          type: index === 0 ? ("ai" as const) : ("success" as const),
+        }))
+      : [
+          {
+            id: "dummy-published",
+            title: "Twitter post successfully published",
+            description: "Post ID #TW-89210 was sent to @alexchen_tech",
+            time: "2m ago",
+            type: "success" as const,
+          },
+          {
+            id: "dummy-ai",
+            title: "AI Agent generated 5 draft posts",
+            description: "New drafts are waiting in the Scheduled Posts queue.",
+            time: "45m ago",
+            type: "ai" as const,
+          },
+          {
+            id: "dummy-token",
+            title: "Instagram API Token Expiring",
+            description: "Re-authentication required for @alex_creativestudio.",
+            time: "2h ago",
+            type: "warning" as const,
+          },
+        ];
+
   return (
-    <main
-      className="min-h-screen p-1 text-slate-950"
-      style={{
-        backgroundImage: "radial-gradient(#d9dde7 1px, transparent 1px)",
-        backgroundSize: "18px 18px",
-      }}
-    >
-      <div className="flex min-h-[calc(100vh-8px)] overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
+      <div className="flex h-screen bg-[#f6f8fb]">
         <Sidebar />
 
-        <section className="flex min-w-0 flex-1 flex-col">
+        <section className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
           <Toolbar user={user} />
 
-          <div className="flex-1 px-5 py-6 sm:px-7">
+          <div className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-7 sm:px-6 lg:px-8">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">System Overview</h1>
-                <p className="mt-1 text-sm text-slate-600">Monitor your social presence and automation health.</p>
+                <p className="mt-1 text-sm text-slate-500">Monitor connected platforms, generated drafts, and publishing activity.</p>
               </div>
               <div className="flex items-center gap-3">
-                <button className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                <button className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
                   <Filter className="h-4 w-4" />
                   Filters
                 </button>
-                <button className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#4338ca] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#3730a3]">
+                <button className="inline-flex h-10 items-center gap-2 rounded-md bg-[#4338ca] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#3730a3]">
                   <Plus className="h-4 w-4" />
                   New Task
                 </button>
               </div>
             </div>
 
-            <section className="relative mt-6 overflow-hidden rounded-lg bg-[#4338ca] px-6 py-6 text-white shadow-sm sm:px-7">
-              <div className="absolute -right-7 -top-10 text-[150px] font-black leading-none text-white/10">↑</div>
-              <div className="relative max-w-2xl">
-                <p className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-indigo-100">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {activeAccounts.length > 0 ? "System status: connected" : "System status: ready"}
-                </p>
-                <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{greeting}, {firstName}.</h2>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-indigo-100">
-                  {activeAccounts.length > 0
-                    ? `You have ${activeAccounts.length} active connected ${activeAccounts.length === 1 ? "account" : "accounts"} and ${totalPostCount} ${totalPostCount === 1 ? "post" : "posts"}.`
-                    : "Connect a platform to start generating, scheduling, and tracking your social content."}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <div className="min-w-28 rounded-md bg-white/15 px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-100">Connected</p>
-                    <p className="mt-1 text-lg font-bold">{activeAccounts.length}</p>
+            <section className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center lg:p-6">
+                <div>
+                  <p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-emerald-700">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {activeAccounts.length > 0 ? "System connected" : "Ready for setup"}
+                  </p>
+                  <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">{greeting}, {firstName}.</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                    {activeAccounts.length > 0
+                      ? `You have ${activeAccounts.length} active connected ${activeAccounts.length === 1 ? "account" : "accounts"} and ${totalPostCount} published ${totalPostCount === 1 ? "post" : "posts"}.`
+                      : "Connect a platform to start generating, scheduling, and tracking your social content."}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Connected</p>
+                    <p className="mt-2 text-2xl font-black text-slate-950">{activeAccounts.length}</p>
                   </div>
-                  <div className="min-w-28 rounded-md bg-white/15 px-3 py-2">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-100">Posts</p>
-                    <p className="mt-1 text-lg font-bold">{totalPostCount}</p>
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-slate-500">Published</p>
+                    <p className="mt-2 text-2xl font-black text-slate-950">{totalPostCount}</p>
                   </div>
                 </div>
               </div>
             </section>
 
-            <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.85fr)]">
+            <div className="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
               <RecentPostsPanel />
 
-              <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <section className="min-h-[278px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold text-slate-950">Connected Accounts</h2>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{accounts.length}</span>
-                  </div>
-                    <p className="mt-0.5 text-xs text-slate-500">Platforms linked to this workspace.</p>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{activeAccounts.length}</span>
                   </div>
                   <Link href="/onboarding" aria-label="Connect a platform" className="grid h-7 w-7 place-items-center rounded-md bg-indigo-50 text-[#4338ca] hover:bg-indigo-100">
                     <Plus className="h-4 w-4" />
                   </Link>
                 </div>
 
-                {accounts.length === 0 ? (
-                  <EmptyPanel title="No accounts connected" description="Link GitHub, LinkedIn, or another platform to begin automating your presence." />
+                {activeAccounts.length === 0 ? (
+                  <EmptyPanel title="No connected accounts" description="Only active connected platforms will appear here." />
                 ) : (
                   <div className="space-y-3 p-4">
-                    {accounts.map((account) => (
-                      <div key={account._id} className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3.5 py-3 transition hover:border-indigo-200 hover:bg-indigo-50/30">
+                    {activeAccounts.map((account) => (
+                      <div key={account._id} className="flex min-w-0 items-center gap-3 rounded-md border border-slate-200 bg-slate-50/60 px-3.5 py-3 transition hover:border-indigo-200 hover:bg-white">
                         <AccountLogo platform={account.platform} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-bold text-slate-800">{platformNames[account.platform] || account.platform}</p>
                           <p className="mt-0.5 truncate text-xs text-slate-500">{formatAccountUsername(account)}</p>
                         </div>
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold uppercase ${account.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${account.status === "active" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                          {account.status}
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Live
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
               </section>
+
+              <RecentTechNewsPanel />
+
+              <ActivityFeed initialItems={activityFeedItems} />
             </div>
-
-            <section className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                <div>
-                  <h2 className="text-sm font-bold text-slate-950">Automation Activity</h2>
-                  <p className="mt-0.5 text-xs text-slate-500">Recent GitHub events used to create content.</p>
-                </div>
-                <SquareTerminal className="h-4 w-4 text-slate-400" />
-              </div>
-
-              {activities.length === 0 ? (
-                <EmptyPanel title="No automation activity" description="Merged pull requests and other configured GitHub events will appear here once they create content." />
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {activities.map((activity) => (
-                    <div key={activity._id} className="flex items-center gap-3 px-5 py-3">
-                      <span className="grid h-8 w-8 place-items-center rounded-md bg-slate-100 text-slate-600"><SquareTerminal className="h-4 w-4" /></span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-800">{activity.repo_name}</p>
-                        <p className="text-xs capitalize text-slate-500">{activity.event_type.replaceAll("_", " ")}</p>
-                      </div>
-                      <span className="text-xs text-slate-400">{formatDate(activity.created_at)}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
           </div>
         </section>
       </div>

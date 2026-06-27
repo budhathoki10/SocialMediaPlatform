@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, MessageSquare, Save, X } from "lucide-react";
+import { Clock3, MessageSquare, Save, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import PostShareMenu from "./PostShareMenu";
@@ -84,6 +84,20 @@ function getPostStatusClasses(status: DashboardPost["status"]) {
 
 function getPostStatusLabel(status: DashboardPost["status"]) {
   return status === "published" ? "posted" : status;
+}
+
+function getPrimaryPlatform(post: DashboardPost) {
+  return post.shared_platforms[0] || "linkedin";
+}
+
+function getPlatformLabel(platform: string) {
+  const labels: Record<string, string> = {
+    facebook: "Facebook",
+    instagram: "Instagram",
+    linkedin: "LinkedIn",
+  };
+
+  return labels[platform] || platform;
 }
 
 export default function RecentPostsPanel() {
@@ -178,50 +192,60 @@ export default function RecentPostsPanel() {
     <>
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-          <div>
-            <h2 className="text-sm font-bold text-slate-950">Recent Posts</h2>
-            <p className="mt-0.5 text-xs text-slate-500">Your three latest generated, draft, and scheduled posts.</p>
-          </div>
-          <CalendarDays className="h-4 w-4 text-slate-400" />
+          <h2 className="text-sm font-bold text-slate-950">Upcoming Posts</h2>
+          {/* <button type="button" className="rounded-md px-2 py-1 text-xs font-bold text-[#4338ca] transition hover:bg-indigo-50 hover:text-[#3730a3]">
+            View Calendar
+          </button> */}
         </div>
 
         {isLoadingPosts ? (
-          <div className="grid min-h-36 place-items-center px-5 text-center">
+          <div className="grid min-h-56 place-items-center px-5 text-center">
             <p className="text-sm font-medium text-slate-500">Loading latest posts...</p>
           </div>
         ) : posts.length === 0 ? (
-          <div className="grid min-h-36 place-items-center px-5 text-center">
+          <div className="grid min-h-56 place-items-center px-5 text-center">
             <div>
               <p className="text-sm font-semibold text-slate-700">No posts yet</p>
-              <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
+              <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
             </div>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div>
+            <div className="hidden grid-cols-[minmax(0,1fr)_112px_128px_40px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500 md:grid">
+              <span>Post Content</span>
+              <span>Platform</span>
+              <span>Scheduled</span>
+              <span className="sr-only">Share</span>
+            </div>
             {posts.map((post) => (
-              <article key={post._id} className="flex items-start gap-3 px-5 py-4 sm:gap-4">
+              <article key={post._id} className="grid gap-3 border-b border-slate-100 px-5 py-4 transition last:border-b-0 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4">
                 <button
                   type="button"
                   onClick={() => openEditor(post)}
-                  className="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-indigo-50 text-[#4338ca] transition hover:bg-indigo-100"
+                  className="flex min-w-0 items-start gap-3 text-left"
                   aria-label={`Edit ${post.pr_title || "post"}`}
                 >
-                  <MessageSquare className="h-4 w-4" />
-                </button>
-                <button type="button" onClick={() => openEditor(post)} className="min-w-0 flex-1 text-left">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">PR</p>
-                  <h3 className="mt-1 truncate text-sm font-bold text-slate-900">{post.pr_title || "Generated post"}</h3>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">{post.content}</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                    <span className={`rounded-full px-2 py-0.5 font-semibold capitalize ${getPostStatusClasses(post.status)}`}>{getPostStatusLabel(post.status)}</span>
-                    {post.status !== "published" && (
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {post.scheduled_time ? formatDate(post.scheduled_time) : "No schedule"}
-                      </span>
-                    )}
+                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-indigo-50 text-[#4338ca]">
+                    <MessageSquare className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-bold text-slate-900">{post.pr_title || "Generated post"}</h3>
+                    <p className="mt-1 line-clamp-1 text-xs leading-5 text-slate-500">{post.content}</p>
+                    <span className={`mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold capitalize ${getPostStatusClasses(post.status)}`}>
+                      {getPostStatusLabel(post.status)}
+                    </span>
                   </div>
                 </button>
+                <div className="flex flex-wrap items-center gap-3 md:contents">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-600">
+                    <span className="h-2 w-2 rounded-full bg-[#4338ca]" />
+                    {getPlatformLabel(getPrimaryPlatform(post))}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                    <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                    {post.scheduled_time ? formatDate(post.scheduled_time) : "No schedule"}
+                  </span>
+                </div>
                 <PostShareMenu
                   postId={post._id}
                   initialSharedPlatforms={post.shared_platforms}
@@ -234,7 +258,7 @@ export default function RecentPostsPanel() {
       </section>
 
       {editingPost && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-4" role="presentation">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
           <section role="dialog" aria-modal="true" aria-labelledby="edit-post-title" className="w-full max-w-xl rounded-lg border border-slate-200 bg-white shadow-xl">
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div className="min-w-0">

@@ -53,11 +53,11 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
 
     try {
       const response = await fetch(`/api/share/${platform}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId }),
-    });
-    const data = await response.json();
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId }),
+      });
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || `Unable to share on ${platformName}.`);
@@ -78,6 +78,7 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
         type="button"
         onClick={() => setIsOpen((open) => !open)}
         className="grid h-9 w-9 place-items-center rounded-md text-slate-400 transition hover:bg-indigo-50 hover:text-[#4338ca]"
+        aria-label="Share post"
       >
         <Share2 className="h-4 w-4" />
       </button>
@@ -110,7 +111,6 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
         </div>
       )}
 
-   
     </div>
   );
 }
