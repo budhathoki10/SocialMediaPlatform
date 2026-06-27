@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Newspaper,
   Plus,
+  RefreshCw,
   Search,
   Settings,
   SquareTerminal,
@@ -23,6 +24,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, GithubEvent, Post, User } from "@/lib/models";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import RecentPostsPanel from "@/components/dashboard/RecentPostsPanel";
 
 // The dashboard contains live post and webhook data, so it must not reuse a
@@ -102,18 +104,6 @@ function getGreeting(timezone = "Asia/Kathmandu") {
   }
 }
 
-function formatDate(value: Date | null | undefined) {
-  if (!value) return "Not scheduled";
-
-  return new Intl.DateTimeFormat("en", {
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "UTC",
-  }).format(new Date(value));
-}
-
 function formatAccountUsername(account: ConnectedAccountSummary) {
   const username = account.platform_username.trim();
 
@@ -131,7 +121,7 @@ function AccountLogo({ platform }: { platform: string }) {
   if (imageSource) {
     return (
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-slate-200 bg-white">
-        <Image src={imageSource} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
+        <Image src={imageSource} alt="" width={28} height={28} className="h-7 w-7 object-contain" />
       </span>
     );
   }
@@ -247,6 +237,31 @@ function EmptyPanel({ title, description }: { title: string; description: string
   );
 }
 
+function getRelativeTime(value: Date) {
+  const diffMs = Date.now() - new Date(value).getTime();
+  const minutes = Math.max(1, Math.round(diffMs / 60_000));
+
+  if (minutes < 60) return `${minutes}m ago`;
+
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+
+  return `${Math.round(hours / 24)}d ago`;
+}
+
+const techNews = [
+  {
+    category: "AI Hardware",
+    title: "NVIDIA unveils new Blackwell architecture for AI workloads",
+    description: "A major leap in processing power for next-gen automation and model serving.",
+  },
+  {
+    category: "Cloud Computing",
+    title: "Azure adds global edge nodes for lower latency apps",
+    description: "Developers can now deploy closer to users globally with faster response times.",
+  },
+];
+
 export default async function DashboardPage() {
   await connectDB();
   const session = await getServerSession(authOptions);
@@ -280,6 +295,42 @@ export default async function DashboardPage() {
   const activeAccounts = accounts.filter((account) => account.status === "active");
   const greeting = getGreeting(user.timezone || undefined);
   const firstName = user.name?.trim().split(" ")[0] || "there";
+  const activityFeedItems =
+    activities.length > 0
+      ? activities.slice(0, 3).map((activity, index) => ({
+          id: activity._id,
+          title: index === 0 ? "AI Agent generated a draft post" : `${activity.event_type.replaceAll("_", " ")} received`,
+          description:
+            index === 0
+              ? `New draft created from ${activity.repo_name}.`
+              : `${activity.repo_name} was processed by AutoPilot automation.`,
+          time: getRelativeTime(activity.created_at),
+          type: index === 0 ? ("ai" as const) : ("success" as const),
+        }))
+      : [
+          {
+            id: "dummy-published",
+            title: "Twitter post successfully published",
+            description: "Post ID #TW-89210 was sent to @alexchen_tech",
+            time: "2m ago",
+            type: "success" as const,
+          },
+          {
+            id: "dummy-ai",
+            title: "AI Agent generated 5 draft posts",
+            description: "New drafts are waiting in the Scheduled Posts queue.",
+            time: "45m ago",
+            type: "ai" as const,
+          },
+          {
+            id: "dummy-token",
+            title: "Instagram API Token Expiring",
+            description: "Re-authentication required for @alex_creativestudio.",
+            time: "2h ago",
+            type: "warning" as const,
+          },
+        ];
+
   return (
     <main
       className="min-h-screen p-1 text-slate-950"
@@ -338,71 +389,73 @@ export default async function DashboardPage() {
               </div>
             </section>
 
-            <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(280px,0.85fr)]">
+            <div className="mt-6 grid items-start gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
               <RecentPostsPanel />
 
-              <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <section className="min-h-[278px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <h2 className="text-sm font-bold text-slate-950">Connected Accounts</h2>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{accounts.length}</span>
-                  </div>
-                    <p className="mt-0.5 text-xs text-slate-500">Platforms linked to this workspace.</p>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">{activeAccounts.length}</span>
                   </div>
                   <Link href="/onboarding" aria-label="Connect a platform" className="grid h-7 w-7 place-items-center rounded-md bg-indigo-50 text-[#4338ca] hover:bg-indigo-100">
                     <Plus className="h-4 w-4" />
                   </Link>
                 </div>
 
-                {accounts.length === 0 ? (
-                  <EmptyPanel title="No accounts connected" description="Link GitHub, LinkedIn, or another platform to begin automating your presence." />
+                {activeAccounts.length === 0 ? (
+                  <EmptyPanel title="No connected accounts" description="Only active connected platforms will appear here." />
                 ) : (
                   <div className="space-y-3 p-4">
-                    {accounts.map((account) => (
-                      <div key={account._id} className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-white px-3.5 py-3 transition hover:border-indigo-200 hover:bg-indigo-50/30">
+                    {activeAccounts.map((account) => (
+                      <div key={account._id} className="flex min-w-0 items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/50 px-3.5 py-3 transition hover:border-indigo-200 hover:bg-indigo-50/40">
                         <AccountLogo platform={account.platform} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-bold text-slate-800">{platformNames[account.platform] || account.platform}</p>
                           <p className="mt-0.5 truncate text-xs text-slate-500">{formatAccountUsername(account)}</p>
                         </div>
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[10px] font-bold uppercase ${account.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-                          <span className={`h-1.5 w-1.5 rounded-full ${account.status === "active" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                          {account.status}
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold uppercase text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          Live
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
               </section>
-            </div>
 
-            <section className="mt-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                <div>
-                  <h2 className="text-sm font-bold text-slate-950">Automation Activity</h2>
-                  <p className="mt-0.5 text-xs text-slate-500">Recent GitHub events used to create content.</p>
+              <section className="min-h-[278px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                  <div className="flex items-center gap-2">
+                    <Newspaper className="h-4 w-4 text-[#4338ca]" />
+                    <h2 className="text-sm font-bold text-slate-950">Recent Tech News</h2>
+                  </div>
+                  <button type="button" aria-label="Refresh tech news" className="grid h-7 w-7 place-items-center rounded-md text-slate-400 transition hover:bg-slate-50 hover:text-[#4338ca]">
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
                 </div>
-                <SquareTerminal className="h-4 w-4 text-slate-400" />
-              </div>
 
-              {activities.length === 0 ? (
-                <EmptyPanel title="No automation activity" description="Merged pull requests and other configured GitHub events will appear here once they create content." />
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {activities.map((activity) => (
-                    <div key={activity._id} className="flex items-center gap-3 px-5 py-3">
-                      <span className="grid h-8 w-8 place-items-center rounded-md bg-slate-100 text-slate-600"><SquareTerminal className="h-4 w-4" /></span>
+                <div className="space-y-5 px-5 py-5">
+                  {techNews.map((news) => (
+                    <article key={news.title} className="flex gap-3">
+                      <span className="grid h-14 w-14 shrink-0 place-items-center rounded-md bg-slate-900 text-[10px] font-black text-white">
+                        AI
+                      </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-800">{activity.repo_name}</p>
-                        <p className="text-xs capitalize text-slate-500">{activity.event_type.replaceAll("_", " ")}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#4338ca]">{news.category}</p>
+                        <h3 className="mt-1 line-clamp-1 text-sm font-bold text-slate-800">{news.title}</h3>
+                        <p className="mt-0.5 line-clamp-2 text-xs leading-5 text-slate-500">{news.description}</p>
+                        <button type="button" className="mt-2 h-7 rounded-md bg-[#4338ca] px-3 text-xs font-bold text-white transition hover:bg-[#3730a3]">
+                          Post This
+                        </button>
                       </div>
-                      <span className="text-xs text-slate-400">{formatDate(activity.created_at)}</span>
-                    </div>
+                    </article>
                   ))}
                 </div>
-              )}
-            </section>
+              </section>
+
+              <ActivityFeed initialItems={activityFeedItems} />
+            </div>
           </div>
         </section>
       </div>
