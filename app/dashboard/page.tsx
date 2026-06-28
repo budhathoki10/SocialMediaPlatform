@@ -60,7 +60,7 @@ const sidebarItems = [
   { label: "Create Post", Icon: CirclePlus },
   { label: "Scheduled Posts", Icon: CalendarDays },
   { label: "Auto Reply", Icon: MessageSquare },
-  { label: "Tech News", Icon: Newspaper, href: "/dashboard/tech-news" },
+  { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news" },
   { label: "GitHub Automation", Icon: SquareTerminal, href: "/dashboard/github" },
   { label: "Analytics", Icon: BarChart3 },
   { label: "Settings", Icon: Settings },
