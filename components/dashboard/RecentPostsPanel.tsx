@@ -100,6 +100,37 @@ function getPlatformLabel(platform: string) {
   return labels[platform] || platform;
 }
 
+function UpcomingPostsSkeleton() {
+  return (
+    <div aria-label="Loading upcoming posts" aria-busy="true">
+      <div className="hidden grid-cols-[minmax(0,1fr)_112px_128px_40px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 md:grid">
+        <span className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+        <span className="h-3 w-16 animate-pulse rounded bg-slate-200" />
+        <span className="h-3 w-20 animate-pulse rounded bg-slate-200" />
+        <span className="sr-only">Share</span>
+      </div>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className="grid gap-3 border-b border-slate-100 px-5 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4"
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="mt-0.5 h-9 w-9 shrink-0 animate-pulse rounded-md bg-indigo-50" />
+            <div className="min-w-0 flex-1">
+              <div className="h-4 w-2/5 animate-pulse rounded bg-slate-200" />
+              <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-slate-100" />
+              <div className="mt-2 h-5 w-14 animate-pulse rounded-full bg-slate-100" />
+            </div>
+          </div>
+          <div className="h-3 w-20 animate-pulse rounded bg-slate-100" />
+          <div className="h-3 w-24 animate-pulse rounded bg-slate-100" />
+          <div className="h-5 w-5 animate-pulse rounded bg-slate-100" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function RecentPostsPanel() {
   const [posts, setPosts] = useState<DashboardPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
@@ -199,9 +230,7 @@ export default function RecentPostsPanel() {
         </div>
 
         {isLoadingPosts ? (
-          <div className="grid min-h-56 place-items-center px-5 text-center">
-            <p className="text-sm font-medium text-slate-500">Loading latest posts...</p>
-          </div>
+          <UpcomingPostsSkeleton />
         ) : posts.length === 0 ? (
           <div className="grid min-h-56 place-items-center px-5 text-center">
             <div>

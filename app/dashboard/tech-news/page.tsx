@@ -7,6 +7,7 @@ import {
   LogOut,
   MessageSquare,
   Newspaper,
+  Search,
   Settings,
   SquareTerminal,
   Zap,
@@ -32,43 +33,51 @@ const sidebarItems = [
 const newsItems = [
   {
     id: "llm-human-achieves",
-    source: "TechCrunch",
-    category: "AI & Robotics",
-    timeAgo: "15 minutes ago",
-    title: "New Large Language Model Achieves Human-Level Reasoning",
-    summary: "OpenAI's latest iteration showcases unprecedented reasoning capabilities in complex technical workflows.",
+    category: "Top, Technology",
+    country: "United States Of America",
+    date: "27 Jun 2026",
     image: "/landing/real.PNG",
-    status: "ready",
+    language: "English",
+    publisher: "TechCrunch",
+      Description: "Only available in professional and corporate plans",
+    time: "11:10:19 PM",
+    title: "New Large Language Model Achieves Human-Level Reasoning",
   },
   {
     id: "post-quantum-shift",
-    source: "HackerNews",
     category: "Cybersecurity",
-    timeAgo: "42 minutes ago",
-    title: "The Shift Towards Post-Quantum Cryptography: Why Infrastructure Teams Are Preparing Now",
-    summary: "Security experts urge a rapid transition to quantum-resistant algorithms as hardware advances accelerate.",
+    country: "India",
+    date: "27 Jun 2026",
     image: "/landing/hero-dashboard.png",
-    status: "warning",
+    language: "English",
+    publisher: "HackerNews",
+    Description: "Only available in professional and corporate plans",
+    time: "11:10:13 PM",
+    title: "The Shift Towards Post-Quantum Cryptography: Why Infrastructure Teams Are Preparing Now",
   },
   {
     id: "open-source-impact",
-    source: "GitHub Blog",
-    category: "Open Source",
-    timeAgo: "2 hours ago",
-    title: "Announcing the Global Impact Fund for Critical Open Source Infrastructure",
-    summary: "A new initiative aims to support maintainers behind widely used tools and core software ecosystems.",
+    category: "Business",
+    country: "United States Of America",
+    date: "27 Jun 2026",
     image: "/landing/realtimeanalytics.png",
-    status: "published",
+    language: "English",
+    publisher: "GitHub Blog",
+    Description: "Only available in professional and corporate plans",
+    time: "11:09:51 PM",
+    title: "Announcing the Global Impact Fund for Critical Open Source Infrastructure",
   },
   {
     id: "apple-m4-neural",
-    source: "The Verge",
     category: "Hardware",
-    timeAgo: "3 hours ago",
-    title: "Apple's M4 Chipset: Everything We Know About the New Neural Engine",
-    summary: "Leaks suggest a massive jump in NPU operations per second, positioning the next chipset for AI-first apps.",
+    country: "United States Of America",
+    date: "27 Jun 2026",
     image: "/landing/AICaption.png",
-    status: "ready",
+    language: "English",
+    publisher: "The Verge",
+    Description: "Only available in professional and corporate plans",
+    time: "11:09:13 PM",
+    title: "Apple's M4 Chipset: Everything We Know About the New Neural Engine",
   },
 ];
 
@@ -127,20 +136,6 @@ function Sidebar() {
   );
 }
 
-function StatusDot({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    published: "bg-blue-50 text-blue-600",
-    ready: "bg-emerald-50 text-emerald-600",
-    warning: "bg-amber-50 text-amber-600",
-  };
-
-  return (
-    <span className={`grid h-6 w-6 place-items-center rounded-full ${styles[status] || styles.ready}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
-    </span>
-  );
-}
-
 export default async function TechNewsPage() {
   const session = await getServerSession(authOptions);
 
@@ -154,11 +149,24 @@ export default async function TechNewsPage() {
         <Sidebar />
 
         <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-6xl">
+          <div className="w-full">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+              <div className="w-full">
                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-950">Tech News Feed</h1>
                 <p className="mt-1 text-sm text-slate-500">Curated technology updates ready to turn into social posts.</p>
+                <div className="mt-4 flex w-full max-w-3xl items-center gap-2">
+                  <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-slate-400 shadow-sm">
+                    <Search className="h-3.5 w-3.5 shrink-0" />
+                    <input
+                      type="search"
+                      placeholder="Search news by keyword: Technology"
+                      className="h-full min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                    />
+                  </label>
+                  <button className="h-9 rounded-lg bg-[#4338ca] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#3730a3]">
+                    Search
+                  </button>
+                </div>
                 <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-sm">
                   <span className="h-2 w-2 rounded-full bg-[#4338ca]" />
                   All News
@@ -166,41 +174,46 @@ export default async function TechNewsPage() {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-5 lg:grid-cols-2">
-              {newsItems.map((news) => (
-                <article
-                  key={news.id}
-                  className="grid min-h-[150px] cursor-pointer overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm hover:border-indigo-200 hover:shadow-md sm:grid-cols-[148px_minmax(0,1fr)]"
-                >
-                  <div className="relative h-32 overflow-hidden bg-slate-100 sm:h-full">
-                    <Image
-                      src={news.image}
-                      alt=""
-                      fill
-                      sizes="(min-width: 1024px) 148px, 100vw"
-                      className="object-cover"
-                    />
-                  </div>
-
-                  <div className="flex min-w-0 flex-col p-4">
-                    <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">
-                      {news.timeAgo} <span className="px-1.5">•</span> {news.category}
-                    </p>
-                    <h2 className="mt-2 line-clamp-2 text-[15px] font-extrabold leading-5 text-slate-950">{news.title}</h2>
-                    <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-slate-500">{news.summary}</p>
-
-                    <div className="mt-auto flex items-center justify-between pt-3">
-                      <div className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                        <StatusDot status={news.status} />
-                        {news.source}
-                      </div>
-                      <button className="h-7 rounded-md bg-[#4338ca] px-3 text-xs font-bold text-white transition hover:bg-[#3730a3]">
-                        Post This
-                      </button>
+            <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="w-full">
+                <div className="w-full">
+                  <div className="grid grid-cols-[2.3fr_0.85fr_0.95fr_0.75fr_0.9fr_0.8fr_1.2fr] items-center gap-4 bg-[#114a86] px-4 py-4 text-sm font-bold text-white">
+                    <div>News</div>
+                    <div>
+                      Date<span className="text-[10px] font-semibold">(GMT+05:45)</span>
                     </div>
+                    <div>Country</div>
+                    <div>Language</div>
+                    <div>Category</div>
+                    <div>Publisher</div>
+                    <div>Description</div>
                   </div>
-                </article>
-              ))}
+
+                  {newsItems.map((news) => (
+                    <article
+                      key={news.id}
+                      className="grid cursor-pointer grid-cols-[2.3fr_0.85fr_0.95fr_0.75fr_0.9fr_0.8fr_1.2fr] items-center gap-4 border-b border-slate-200 px-4 py-4 last:border-b-0 hover:bg-slate-50"
+                    >
+                      <div className="flex min-w-0 items-center gap-4">
+                        <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md bg-slate-100">
+                          <Image src={news.image} alt="" fill sizes="128px" className="object-cover" />
+                        </div>
+                        <h2 className="line-clamp-3 text-[13px] font-extrabold leading-5 text-slate-950">{news.title}</h2>
+                      </div>
+
+                      <div className="text-xs leading-5 text-slate-950">
+                        <p>{news.date}</p>
+                        <p>{news.time}</p>
+                      </div>
+                      <div className="text-xs leading-5 text-slate-950">{news.country}</div>
+                      <div className="text-xs text-slate-950">{news.language}</div>
+                      <div className="text-xs leading-5 text-slate-950">{news.category}</div>
+                      <div className="text-xs text-slate-950">{news.publisher}</div>
+                      <div className="text-[11px] font-semibold uppercase leading-4 text-slate-950">{news.Description}</div>
+                    </article>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
