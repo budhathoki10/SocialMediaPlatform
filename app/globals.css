@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  --font-mono: var(--font-geist-mono), Consolas, monospace;
+}
+
 :root {
   --background: #eef2ff;
   --foreground: #111827;
@@ -14,19 +19,21 @@
 
 html {
   scroll-behavior: smooth;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
 body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: inherit;
 }
 
 button,
 input,
 textarea,
-select {
+select,
+table {
   font: inherit;
 }
 
