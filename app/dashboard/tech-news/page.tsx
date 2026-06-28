@@ -160,10 +160,11 @@ export default async function TechNewsPage() {
                     <input
                       type="search"
                       placeholder="Search news by keyword: Technology"
+                  
                       className="h-full min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
                     />
                   </label>
-                  <button className="h-9 rounded-lg bg-[#4338ca] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#3730a3]">
+                  <button   className="h-9 rounded-lg bg-[#4338ca] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#3730a3]">
                     Search
                   </button>
                 </div>
