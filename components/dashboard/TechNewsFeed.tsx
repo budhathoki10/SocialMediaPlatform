@@ -1,8 +1,10 @@
 "use client";
 
-import { ExternalLink, ImageIcon, Search, X } from "lucide-react";
+import { CheckCircle2, Clock3, ExternalLink, ImageIcon, Save, Search, X } from "lucide-react";
 import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
+
+import NewsShareMenu from "./NewsShareMenu";
 
 type NewsArticle = {
   article_id?: string;
@@ -19,6 +21,14 @@ type NewsArticle = {
 };
 
 const PAGE_SIZE = 6;
+const POST_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
+const KATHMANDU_OFFSET_MS = (5 * 60 + 45) * 60 * 1000;
+
+type NewsPostStatus = {
+  post_id: string;
+  status: "draft" | "scheduled" | "published" | "failed" | "cancelled";
+  scheduled_time: string | null;
+};
 
 function formatDate(value?: string) {
   if (!value) return { date: "Unknown", time: "Unknown" };
@@ -48,12 +58,50 @@ function formatDate(value?: string) {
   };
 }
 
+function formatScheduledDate(value?: string | null) {
+  if (!value) return "Scheduled";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Scheduled";
+
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 function listValue(value?: string[]) {
   return value?.filter(Boolean).join(", ") || "Unknown";
 }
 
 function publisherName(news: NewsArticle) {
   return news.source_name || news.source_id || "Unknown";
+}
+
+function newsSourceRef(news: NewsArticle) {
+  return news.article_id || news.link || [news.source_id, news.title, news.pubDate].filter(Boolean).join("|");
+}
+
+function newsShareContent(news: NewsArticle) {
+  return [
+    news.title,
+    news.description,
+    news.link ? `Read more: ${news.link}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function getCurrentKathmanduDatetimeLocal() {
+  return new Date(Date.now() + KATHMANDU_OFFSET_MS).toISOString().slice(0, 16);
+}
+
+function getScheduleLimitDatetimeLocal() {
+  return new Date(Date.now() + KATHMANDU_OFFSET_MS + POST_RETENTION_MS).toISOString().slice(0, 16);
 }
 
 function NewsImage({ src, size = "table" }: { src?: string | null; size?: "table" | "modal" }) {
@@ -66,7 +114,16 @@ function NewsImage({ src, size = "table" }: { src?: string | null; size?: "table
     );
   }
 
-  return <Image src={src} alt="" fill sizes={size === "modal" ? "768px" : "128px"} className="object-cover" unoptimized />;
+  return (
+    <Image
+      src={src}
+      alt=""
+      fill
+      sizes={size === "modal" ? "768px" : "128px"}
+      className={size === "modal" ? "object-contain" : "object-cover"}
+      unoptimized
+    />
+  );
 }
 
 function NewsSkeleton() {
@@ -102,11 +159,33 @@ export default function TechNewsFeed() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedNews, setSelectedNews] = useState<NewsArticle | null>(null);
   const [selectedNewsImage, setSelectedNewsImage] = useState<string | null>(null);
+  const [newsStatuses, setNewsStatuses] = useState<Record<string, NewsPostStatus>>({});
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const totalPages = Math.max(1, Math.ceil(newsItems.length / PAGE_SIZE));
   const pageStart = (currentPage - 1) * PAGE_SIZE;
   const visibleNewsItems = newsItems.slice(pageStart, pageStart + PAGE_SIZE);
+
+  async function loadNewsStatuses(items: NewsArticle[]) {
+    if (items.length === 0) {
+      setNewsStatuses({});
+      return;
+    }
+
+    const statusResponse = await fetch("/api/news/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source_refs: items.map((news) => newsSourceRef(news)) }),
+    });
+
+    if (statusResponse.ok) {
+      const statusData = await statusResponse.json();
+      setNewsStatuses(statusData.statuses || {});
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -125,9 +204,15 @@ export default function TechNewsFeed() {
           throw new Error(data.error || "Unable to fetch news.");
         }
 
+        const nextNewsItems = data.results || [];
+
         if (isMounted) {
-          setNewsItems(data.results || []);
+          setNewsItems(nextNewsItems);
           setCurrentPage(1);
+        }
+
+        if (isMounted) {
+          await loadNewsStatuses(nextNewsItems);
         }
       } catch (loadError) {
         if (isMounted) {
@@ -146,11 +231,74 @@ export default function TechNewsFeed() {
     };
   }, [searchedQuery]);
 
+  useEffect(() => {
+    if (newsItems.length === 0) return;
+
+    const statusRefreshInterval = window.setInterval(() => {
+      void loadNewsStatuses(newsItems);
+    }, 15_000);
+
+    return () => window.clearInterval(statusRefreshInterval);
+  }, [newsItems]);
+
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextQuery = query.trim() || "AI Agents";
     setQuery(nextQuery);
     setSearchedQuery(nextQuery);
+  }
+
+  function openNews(news: NewsArticle, imageSource: string | null) {
+    setSelectedNews(news);
+    setSelectedNewsImage(imageSource);
+    setScheduleError(null);
+    setScheduleTime("");
+  }
+
+  async function scheduleSelectedNews() {
+    if (!selectedNews) return;
+
+    if (!scheduleTime) {
+      setScheduleError("Choose a schedule time first.");
+      return;
+    }
+
+    setIsScheduling(true);
+    setScheduleError(null);
+
+    try {
+      const sourceRef = newsSourceRef(selectedNews);
+      const response = await fetch("/api/news/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_ref: sourceRef,
+          title: selectedNews.title,
+          description: selectedNews.description,
+          link: selectedNews.link,
+          scheduled_time: scheduleTime,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to schedule news.");
+      }
+
+      setNewsStatuses((current) => ({
+        ...current,
+        [sourceRef]: {
+          post_id: data.post._id,
+          status: data.post.status,
+          scheduled_time: data.post.scheduled_time,
+        },
+      }));
+      setSelectedNews(null);
+    } catch (scheduleFailure) {
+      setScheduleError(scheduleFailure instanceof Error ? scheduleFailure.message : "Unable to schedule news.");
+    } finally {
+      setIsScheduling(false);
+    }
   }
 
   return (
@@ -211,14 +359,12 @@ export default function TechNewsFeed() {
               {visibleNewsItems.map((news, index) => {
                 const publishedAt = formatDate(news.pubDate);
                 const imageSource = news.image_url || null;
+                const savedPost = newsStatuses[newsSourceRef(news)];
 
                 return (
                   <article
                     key={news.article_id || news.link || `${news.title}-${index}`}
-                    onClick={() => {
-                      setSelectedNews(news);
-                      setSelectedNewsImage(imageSource);
-                    }}
+                    onClick={() => openNews(news, imageSource)}
                     className="grid cursor-pointer grid-cols-[2.3fr_0.85fr_0.95fr_0.75fr_0.9fr_0.8fr_1.2fr] items-center gap-4 border-b border-slate-200 px-4 py-4 transition-colors last:border-b-0 hover:bg-blue-50"
                   >
                     <div className="flex min-w-0 items-center gap-4">
@@ -238,8 +384,24 @@ export default function TechNewsFeed() {
                     <div className="text-xs capitalize text-slate-950">{news.language || "Unknown"}</div>
                     <div className="text-xs capitalize leading-5 text-slate-950">{listValue(news.category)}</div>
                     <div className="text-xs capitalize text-slate-950">{publisherName(news)}</div>
-                    <div className="line-clamp-3 text-[11px] font-semibold uppercase leading-4 text-slate-950">
-                      {news.description || "No description available."}
+                    <div className="min-w-0 space-y-3">
+                      <p className="line-clamp-3 text-[11px] font-semibold uppercase leading-4 text-slate-950">
+                        {news.description || "No description available."}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {savedPost?.status === "published" ? (
+                          <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-emerald-50 px-3 text-xs font-bold text-emerald-700">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            Posted
+                          </span>
+                        ) : savedPost?.status === "scheduled" ? (
+                          <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-blue-50 px-3 text-xs font-bold text-blue-700">
+                            <Clock3 className="h-3.5 w-3.5" />
+                            {formatScheduledDate(savedPost.scheduled_time)}
+                          </span>
+                        ) : null}
+                        <NewsShareMenu content={newsShareContent(news)} />
+                      </div>
                     </div>
                   </article>
                 );
@@ -314,17 +476,17 @@ export default function TechNewsFeed() {
               </button>
             </div>
 
-            <div className="max-h-[calc(90vh-91px)] overflow-y-auto">
-              <div className="bg-slate-50 px-6 py-5">
-                <div className="relative h-64 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
-                <NewsImage src={selectedNewsImage} size="modal" />
+            <div className="max-h-[calc(90vh-112px)] overflow-y-auto">
+              <div className="bg-slate-50 px-6 py-4">
+                <div className="relative h-48 overflow-hidden rounded-lg border border-slate-200 bg-white sm:h-56">
+                  <NewsImage src={selectedNewsImage} size="modal" />
                 </div>
               </div>
 
-              <div className="space-y-5 px-6 pb-6">
+              <div className="space-y-4 px-6 pb-6">
                 <div>
                   <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">Description</p>
-                  <p className="mt-3 text-base leading-7 text-slate-700">
+                  <p className="mt-2 text-base leading-7 text-slate-700">
                     {selectedNews.description || "No description available for this news item."}
                   </p>
                 </div>
@@ -340,6 +502,31 @@ export default function TechNewsFeed() {
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 )}
+
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Schedule this news</span>
+                    <input
+                      type="datetime-local"
+                      value={scheduleTime}
+                      onChange={(event) => setScheduleTime(event.target.value)}
+                      min={getCurrentKathmanduDatetimeLocal()}
+                      max={getScheduleLimitDatetimeLocal()}
+                      className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                    />
+                  </label>
+                  <p className="mt-1.5 text-xs text-slate-500">Scheduled news is saved in MongoDB and posted by cron.</p>
+                  {scheduleError && <p className="mt-2 text-sm font-semibold text-red-600">{scheduleError}</p>}
+                  <button
+                    type="button"
+                    onClick={() => void scheduleSelectedNews()}
+                    disabled={isScheduling}
+                    className="mt-3 inline-flex h-9 items-center gap-2 rounded-md bg-[#4338ca] px-4 text-sm font-bold text-white transition hover:bg-[#3730a3] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Save className="h-4 w-4" />
+                    {isScheduling ? "Scheduling" : "Schedule news"}
+                  </button>
+                </div>
               </div>
             </div>
           </section>

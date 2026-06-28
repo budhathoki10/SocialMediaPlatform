@@ -168,11 +168,6 @@ export default function RecentTechNewsPanel() {
                     </span>
                   </span>
                 </button>
-                <div className="px-3 pb-3 pl-[68px]">
-                  <button type="button" className="h-7 rounded-md bg-[#4338ca] px-3 text-xs font-bold text-white transition hover:bg-[#3730a3]">
-                    Post This
-                  </button>
-                </div>
               </article>
             ))}
           </div>
