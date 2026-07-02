@@ -211,7 +211,7 @@ export default async function DashboardPage() {
   const activityFeedItems =
     activities.length > 0
       ? activities.slice(0, 3).map((activity, index) => ({
-          id: activity._id,
+          id: activity._id.toString(),
           title: index === 0 ? "AI Agent generated a draft post" : `${activity.event_type.replaceAll("_", " ")} received`,
           description:
             index === 0
@@ -313,7 +313,7 @@ export default async function DashboardPage() {
                 ) : (
                   <div className="space-y-3 p-4">
                     {activeAccounts.map((account) => (
-                      <div key={account._id} className="flex min-w-0 items-center gap-3 rounded-md border border-slate-200 bg-slate-50/60 px-3.5 py-3 transition hover:border-indigo-200 hover:bg-white">
+                      <div key={account._id.toString()} className="flex min-w-0 items-center gap-3 rounded-md border border-slate-200 bg-slate-50/60 px-3.5 py-3 transition hover:border-indigo-200 hover:bg-white">
                         <AccountLogo platform={account.platform} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-bold text-slate-800">{platformNames[account.platform] || account.platform}</p>
