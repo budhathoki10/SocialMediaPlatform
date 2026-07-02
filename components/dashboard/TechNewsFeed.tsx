@@ -276,6 +276,7 @@ export default function TechNewsFeed() {
           title: selectedNews.title,
           description: selectedNews.description,
           link: selectedNews.link,
+          image_url: selectedNews.image_url,
           scheduled_time: scheduleTime,
         }),
       });
@@ -444,7 +445,7 @@ export default function TechNewsFeed() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="news-detail-title"
-            className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
+            className="max-h-[96vh] w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
               <div className="min-w-0">
@@ -476,7 +477,7 @@ export default function TechNewsFeed() {
               </button>
             </div>
 
-            <div className="max-h-[calc(90vh-112px)] overflow-y-auto">
+            <div className="max-h-[calc(96vh-112px)] overflow-y-auto">
               <div className="bg-slate-50 px-6 py-4">
                 <div className="relative h-48 overflow-hidden rounded-lg border border-slate-200 bg-white sm:h-56">
                   <NewsImage src={selectedNewsImage} size="modal" />

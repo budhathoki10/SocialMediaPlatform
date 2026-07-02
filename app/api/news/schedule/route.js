@@ -53,6 +53,7 @@ export async function POST(request) {
   const title = cleanText(body.title);
   const description = cleanText(body.description);
   const link = cleanText(body.link);
+  const imageUrl = cleanText(body.image_url);
   const scheduledTimeValue = cleanText(body.scheduled_time);
 
   if (!sourceRef) {
@@ -97,6 +98,7 @@ export async function POST(request) {
       $set: {
         pr_title: title,
         content: content || title,
+        media_url: imageUrl || null,
         source_url: link || null,
         scheduled_time: scheduledTime,
         expires_at: expiresAt,

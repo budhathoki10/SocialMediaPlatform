@@ -22,7 +22,7 @@ import TechNewsFeed from "@/components/dashboard/TechNewsFeed";
 const sidebarItems = [
   { label: "Dashboard", Icon: LayoutDashboard, href: "/dashboard" },
   { label: "Create Post", Icon: CirclePlus, href: "#" },
-  { label: "Scheduled Posts", Icon: CalendarDays, href: "#" },
+  { label: "Scheduled Posts", Icon: CalendarDays, href: "/dashboard/scheduled-posts" },
   { label: "Auto Reply", Icon: MessageSquare, href: "#" },
   { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news", active: true },
   { label: "GitHub Automation", Icon: SquareTerminal, href: "/dashboard/github" },
