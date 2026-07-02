@@ -58,7 +58,7 @@ type GithubEventSummary = {
 const sidebarItems = [
   { label: "Dashboard", Icon: LayoutDashboard, active: true, href: "/dashboard" },
   { label: "Create Post", Icon: CirclePlus },
-  { label: "Scheduled Posts", Icon: CalendarDays },
+  { label: "Scheduled Posts", Icon: CalendarDays, href: "/dashboard/scheduled-posts" },
   { label: "Auto Reply", Icon: MessageSquare },
   { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news" },
   { label: "GitHub Automation", Icon: SquareTerminal, href: "/dashboard/github" },
