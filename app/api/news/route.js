@@ -17,12 +17,12 @@ export async function GET(req) {
     sort: "relevancy",
     q: query,
   });
-
+// https://dev.to/api/articles?tag=javascript&per_page=10&top=7${params.toString()}
   const response = await fetch(`https://newsdata.io/api/1/latest?${params.toString()}`, {
     next: { revalidate: 1800 },
   });
-console.log("________________________________________")
-console.log(`https://newsdata.io/api/1/latest?${params.toString()}`)
+// console.log("________________________________________")
+// console.log(`https://newsdata.io/api/1/latest?${params.toString()}`)
   const data = await response.json();
 
   if (!response.ok) {

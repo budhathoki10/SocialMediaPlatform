@@ -333,10 +333,7 @@ export default async function DashboardPage() {
                 <p className="mt-1 text-sm text-slate-500">Monitor connected platforms, generated drafts, and publishing activity.</p>
               </div>
               <div className="flex items-center gap-3">
-                <button className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
-                  <Filter className="h-4 w-4" />
-                  Filters
-                </button>
+             
                 <button className="inline-flex h-10 items-center gap-2 rounded-md bg-[#4338ca] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#3730a3]">
                   <Plus className="h-4 w-4" />
                   New Task
