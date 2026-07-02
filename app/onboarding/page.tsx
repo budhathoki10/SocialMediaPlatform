@@ -81,7 +81,7 @@ const TwitterLogo = () => (
 
 const InstagramLogo = () => (
   <Image
-    src="/landing/instagram.png"
+    src="/landing/insta.png"
     alt=""
     width={44}
     height={44}

@@ -41,6 +41,209 @@ a {
   text-decoration: none;
 }
 
+.sidebar-nav-item {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  height: 2.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.5rem;
+  padding: 0 0.875rem;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 700;
+  width: 100%;
+  transition:
+    color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-nav-button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.sidebar-nav-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(79, 70, 229, 0.1), rgba(79, 70, 229, 0.045)),
+    #f8fafc;
+  opacity: 0;
+  transform: translate3d(-16px, 0, 0) scale(0.96);
+  transition:
+    opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-nav-item::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 9px;
+  bottom: 9px;
+  width: 2px;
+  border-radius: 999px;
+  background: #4f46e5;
+  opacity: 0;
+  transform: scaleY(0.28);
+  transition:
+    opacity 260ms ease,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-nav-icon svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  transition:
+    color 260ms ease,
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-nav-icon {
+  position: relative;
+  display: inline-grid;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+}
+
+.sidebar-nav-label {
+  min-width: 0;
+}
+
+.sidebar-nav-tooltip {
+  position: absolute;
+  left: calc(100% + 0.75rem);
+  top: 50%;
+  z-index: 20;
+  pointer-events: none;
+  width: max-content;
+  max-width: 11rem;
+  transform: translate3d(-6px, -50%, 0) scale(0.96);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.96);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  padding: 0.5rem 0.625rem;
+  white-space: nowrap;
+  transition:
+    opacity 180ms ease,
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-nav-tooltip::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: translateY(-50%);
+  border-bottom: 5px solid transparent;
+  border-right: 5px solid rgba(15, 23, 42, 0.96);
+  border-top: 5px solid transparent;
+}
+
+.sidebar-nav-icon:hover .sidebar-nav-tooltip,
+.sidebar-nav-icon:focus-within .sidebar-nav-tooltip {
+  opacity: 1;
+  transform: translate3d(0, -50%, 0) scale(1);
+}
+
+.sidebar-nav-item:hover {
+  color: #0f172a;
+  transform: translateX(2px);
+}
+
+.sidebar-nav-item:hover::before,
+.sidebar-nav-item-active::before {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.sidebar-nav-item:hover::after,
+.sidebar-nav-item-active::after {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.sidebar-nav-item:hover .sidebar-nav-icon svg,
+.sidebar-nav-item-active .sidebar-nav-icon svg {
+  color: #4f46e5;
+  transform: translateX(2px) scale(1.05);
+}
+
+.sidebar-nav-item-active {
+  color: #4338ca;
+}
+
+.sidebar-nav-item-active::before {
+  background: #eef2ff;
+}
+
+.sidebar-social-panel {
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translate3d(0, -6px, 0);
+  transition:
+    height 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 320ms ease,
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-social-panel-open {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.sidebar-social-item {
+  display: flex;
+  width: calc(100% - 1rem);
+  height: 2rem;
+  align-items: center;
+  gap: 0.625rem;
+  margin-left: 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  padding: 0 0.75rem;
+  text-align: left;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-social-item:hover {
+  background: #f8fafc;
+  color: #4338ca;
+  transform: translateX(3px);
+}
+
+.sidebar-social-item svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .hero-section {
   background: #f7f8fb;
 }

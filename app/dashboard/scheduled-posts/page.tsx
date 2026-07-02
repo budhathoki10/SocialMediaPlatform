@@ -1,23 +1,15 @@
 import {
-  BarChart3,
   Bell,
-  CalendarDays,
   CalendarRange,
   CheckCircle2,
-  CircleHelp,
-  CirclePlus,
   Clock3,
   FileText,
   Grid2X2,
-  LayoutDashboard,
   List,
-  LogOut,
   MessageSquare,
   Newspaper,
   Search,
   Settings,
-  SquareTerminal,
-  Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,6 +17,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { ScheduledPostFilters } from "@/components/dashboard/ScheduledPostFilters";
 import { connectDB } from "@/lib/db";
 import { Post, PostPlatform, User } from "@/lib/models";
@@ -57,17 +50,6 @@ type PostPlatformSummary = {
   platform: string;
   status: "pending" | "published" | "failed";
 };
-
-const sidebarItems = [
-  { label: "Dashboard", Icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Create Post", Icon: CirclePlus, href: "#" },
-  { label: "Scheduled Posts", Icon: CalendarDays, href: "/dashboard/scheduled-posts", active: true },
-  { label: "Auto Reply", Icon: MessageSquare, href: "#" },
-  { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news" },
-  { label: "GitHub Automation", Icon: SquareTerminal, href: "/dashboard/github" },
-  { label: "Analytics", Icon: BarChart3, href: "#" },
-  { label: "Settings", Icon: Settings, href: "#" },
-];
 
 const platformImages: Record<string, string> = {
   github: "/landing/githubs.png",
@@ -166,61 +148,6 @@ function StatusIcon({ status }: { status: ScheduledPost["status"] }) {
 
 function getPlatformForPost(post: ScheduledPost, platformMap: Map<string, string>) {
   return platformMap.get(post._id.toString()) || "linkedin";
-}
-
-function Sidebar() {
-  return (
-    <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
-      <div>
-        <Image
-          src="/landing/autopilot-logo.png"
-          alt="AutoPilot"
-          width={250}
-          height={60}
-          className="h-auto w-[112px]"
-          priority
-        />
-        <p className="mt-2 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Automation Suite</p>
-      </div>
-
-      <nav className="mt-8 space-y-1.5">
-        {sidebarItems.map(({ label, Icon, active, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className={`flex h-10 items-center gap-3 rounded-md px-3.5 text-sm font-semibold transition ${
-              active ? "bg-[#eef2ff] text-[#4338ca]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="mt-auto">
-        <div className="rounded-lg border border-indigo-100 bg-[#f4f6ff] px-4 py-5">
-          <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
-          <p className="mt-2 text-[11px] leading-5 text-slate-600">Unlock advanced automation tools and analytics.</p>
-          <button className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]">
-            <Zap className="h-4 w-4" />
-            Upgrade to Pro
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-2">
-          <a href="#" className="flex h-9 items-center gap-3 rounded-lg px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
-            <CircleHelp className="h-4 w-4" />
-            Help Center
-          </a>
-          <Link href="/logoutPage" className="flex h-9 items-center gap-3 rounded-lg px-4 text-sm font-medium text-red-500 hover:bg-red-50">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Link>
-        </div>
-      </div>
-    </aside>
-  );
 }
 
 function UserAvatar({ user }: { user: DashboardUser }) {
@@ -363,7 +290,7 @@ export default async function ScheduledPostsPage({
   return (
     <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
       <div className="flex h-screen">
-        <Sidebar />
+        <DashboardSidebar />
 
         <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
           <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-5">
