@@ -20,11 +20,11 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const sidebarItems = [
   { label: "Dashboard", Icon: LayoutDashboard, href: "/dashboard" },
-  { label: "Create Post", Icon: CirclePlus, href: "#" },
+  { label: "Create Post", Icon: CirclePlus, href: "/dashboard/create-post" },
   { label: "Scheduled Posts", Icon: CalendarDays, href: "/dashboard/scheduled-posts" },
   { label: "Auto Reply", Icon: MessageSquare, href: "#" },
   { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news" },
@@ -48,8 +48,18 @@ function SidebarIconTooltip({ label, children }: { children: React.ReactNode; la
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
+  const socialContentRef = useRef<HTMLDivElement>(null);
   const [socialOpen, setSocialOpen] = useState(false);
+  const [socialHeight, setSocialHeight] = useState(0);
   const socialActive = pathname.startsWith("/dashboard/socials");
+
+  function toggleSocialMenu() {
+    setSocialOpen((open) => {
+      const nextOpen = !open;
+      setSocialHeight(nextOpen ? socialContentRef.current?.scrollHeight || 0 : 0);
+      return nextOpen;
+    });
+  }
 
   return (
     <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
@@ -83,7 +93,7 @@ export default function DashboardSidebar() {
           <button
             type="button"
             aria-expanded={socialOpen}
-            onClick={() => setSocialOpen((open) => !open)}
+            onClick={toggleSocialMenu}
             className={`sidebar-nav-item sidebar-nav-button ${socialOpen || socialActive ? "sidebar-nav-item-active" : ""}`}
           >
             <SidebarIconTooltip label="Socials">
@@ -93,8 +103,8 @@ export default function DashboardSidebar() {
             <ChevronDown className={`ml-auto h-3.5 w-3.5 transition-transform duration-300 ${socialOpen ? "rotate-180" : ""}`} />
           </button>
 
-          <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`}>
-            <div className="space-y-1 py-1.5">
+          <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`} style={{ height: socialHeight }}>
+            <div ref={socialContentRef} className="space-y-1 py-1.5">
               {socialItems.map(({ label, Icon, message }) => (
                 <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
                   <span className="grid h-5 w-5 place-items-center">

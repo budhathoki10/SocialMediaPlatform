@@ -196,24 +196,17 @@ a {
 }
 
 .sidebar-social-panel {
-  display: grid;
-  grid-template-rows: 0fr;
+  height: 0;
   overflow: hidden;
   opacity: 0;
   transform: translate3d(0, -6px, 0);
   transition:
-    grid-template-rows 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 420ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 320ms ease,
     transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.sidebar-social-panel > div {
-  min-height: 0;
-  overflow: hidden;
-}
-
 .sidebar-social-panel-open {
-  grid-template-rows: 1fr;
   opacity: 1;
   transform: translate3d(0, 0, 0);
 }
