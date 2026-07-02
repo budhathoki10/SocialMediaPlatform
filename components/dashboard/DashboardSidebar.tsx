@@ -28,14 +28,13 @@ const sidebarItems = [
   { label: "Scheduled Posts", Icon: CalendarDays, href: "/dashboard/scheduled-posts" },
   { label: "Auto Reply", Icon: MessageSquare, href: "#" },
   { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news" },
-  { label: "Settings", Icon: Settings, href: "#" },
 ];
 
 const socialItems = [
-  { label: "WhatsApp", Icon: MessageCircle },
-  { label: "Facebook", Icon: Send },
-  { label: "Instagram", Icon: Camera },
-  { label: "Gmail", Icon: Mail },
+  { label: "WhatsApp", Icon: MessageCircle, message: "clicked in whatsapp" },
+  { label: "Facebook", Icon: Send, message: "clicked in facebook" },
+  { label: "Instagram", Icon: Camera, message: "clicked in instagram" },
+  { label: "Gmail", Icon: Mail, message: "clicked in gmail" },
 ];
 
 function SidebarIconTooltip({ label, children }: { children: React.ReactNode; label: string }) {
@@ -96,8 +95,8 @@ export default function DashboardSidebar() {
 
           <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`}>
             <div className="space-y-1 py-1.5">
-              {socialItems.map(({ label, Icon }) => (
-                <button key={label} type="button" className="sidebar-social-item">
+              {socialItems.map(({ label, Icon, message }) => (
+                <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
                   <span className="grid h-5 w-5 place-items-center">
                     <Icon className="h-4 w-4" />
                   </span>
@@ -107,6 +106,13 @@ export default function DashboardSidebar() {
             </div>
           </div>
         </div>
+
+        <Link href="#" className="sidebar-nav-item">
+          <SidebarIconTooltip label="Settings">
+            <Settings />
+          </SidebarIconTooltip>
+          <span className="sidebar-nav-label">Settings</span>
+        </Link>
       </nav>
 
       <div className="mt-auto">
