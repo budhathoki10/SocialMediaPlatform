@@ -10,58 +10,47 @@ import {
   Hash,
   ImagePlus,
   Link2,
-  Plus,
   Save,
   Send,
   Smile,
-  X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-const MAX_LENGTH = 280;
+const MAX_LENGTH = 3000;
+type SaveMode = "draft" | "scheduled";
 
-const platformChips = [
-  { label: "LinkedIn", tone: "bg-indigo-50 text-[#4338ca] ring-indigo-100", prefix: "in" },
-  { label: "X / Twitter", tone: "bg-slate-100 text-slate-700 ring-slate-200", prefix: "X" },
-];
+function padDatePart(value: number) {
+  return value.toString().padStart(2, "0");
+}
 
-const calendarDays = [
-  { label: "29", muted: true },
-  { label: "30", muted: true },
-  { label: "1" },
-  { label: "2" },
-  { label: "3" },
-  { label: "4" },
-  { label: "5" },
-  { label: "6" },
-  { label: "7" },
-  { label: "8" },
-  { label: "9" },
-  { label: "10" },
-  { label: "11" },
-  { label: "12" },
-  { label: "13" },
-  { label: "14" },
-  { label: "15" },
-  { label: "16" },
-  { label: "17" },
-  { label: "18" },
-  { label: "19" },
-  { label: "20" },
-  { label: "21" },
-  { label: "22" },
-  { label: "23" },
-  { label: "24", selected: true },
-  { label: "25" },
-  { label: "26" },
-  { label: "27" },
-  { label: "28" },
-  { label: "29" },
-  { label: "30" },
-  { label: "31" },
-  { label: "1", muted: true },
-  { label: "2", muted: true },
-];
+function toDateInputValue(date: Date) {
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}`;
+}
+
+function parseDateInputValue(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function getCalendarDays(visibleMonth: Date, selectedDateValue: string) {
+  const selectedDate = parseDateInputValue(selectedDateValue);
+  const monthStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+  const calendarStart = new Date(monthStart);
+  calendarStart.setDate(monthStart.getDate() - monthStart.getDay());
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(calendarStart);
+    date.setDate(calendarStart.getDate() + index);
+
+    return {
+      date,
+      value: toDateInputValue(date),
+      label: date.getDate().toString(),
+      muted: date.getMonth() !== visibleMonth.getMonth(),
+      selected: toDateInputValue(date) === toDateInputValue(selectedDate),
+    };
+  });
+}
 
 function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
   return (
@@ -82,12 +71,28 @@ function Toggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void 
   );
 }
 
-export default function CreatePostComposer() {
+export default function CreatePostComposer({ userName }: { userName?: string | null }) {
   const [content, setContent] = useState("");
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
-  const [publishDate, setPublishDate] = useState("2026-07-24");
+  const [publishDate, setPublishDate] = useState(() => toDateInputValue(new Date()));
   const [publishTime, setPublishTime] = useState("09:00");
+  const [visibleMonth, setVisibleMonth] = useState(() => parseDateInputValue(toDateInputValue(new Date())));
+  const [savingMode, setSavingMode] = useState<SaveMode | null>(null);
+  const [savedMode, setSavedMode] = useState<SaveMode | null>(null);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [saveError, setSaveError] = useState("");
   const remaining = MAX_LENGTH - content.length;
+  const hasContent = content.trim().length > 0;
+  const displayName = userName?.trim().split(" ")[0] || "there";
+  const calendarDays = useMemo(() => getCalendarDays(visibleMonth, publishDate), [publishDate, visibleMonth]);
+  const calendarMonthLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en", {
+        month: "long",
+        year: "numeric",
+      }).format(visibleMonth),
+    [visibleMonth],
+  );
   const scheduleLabel = useMemo(() => {
     if (!scheduleEnabled) return "Scheduling is off";
 
@@ -103,6 +108,50 @@ export default function CreatePostComposer() {
       minute: "2-digit",
     }).format(date)}`;
   }, [publishDate, publishTime, scheduleEnabled]);
+  const updatePublishDate = (value: string) => {
+    setPublishDate(value);
+    setVisibleMonth(parseDateInputValue(value));
+  };
+  const moveCalendarMonth = (offset: number) => {
+    setVisibleMonth((currentMonth) => new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
+  };
+  const savePost = async (mode: SaveMode) => {
+    const trimmedContent = content.trim();
+
+    setSaveMessage("");
+    setSaveError("");
+    setSavedMode(null);
+
+    if (!trimmedContent) {
+      setSaveError("Write something before saving.");
+      return;
+    }
+
+    setSavingMode(mode);
+
+    try {
+      const response = await fetch("/api/posts/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: trimmedContent,
+          scheduled_time: mode === "scheduled" ? `${publishDate}T${publishTime}:00` : null,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to save post.");
+      }
+
+      setSavedMode(mode);
+      setSaveMessage(mode === "scheduled" ? "Successfully scheduled post." : "Successfully saved draft.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Unable to save post.");
+    } finally {
+      setSavingMode(null);
+    }
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -117,27 +166,6 @@ export default function CreatePostComposer() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
         <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 py-4">
-            <span className="text-xs font-bold text-slate-500">Post to:</span>
-            {platformChips.map((platform) => (
-              <button
-                key={platform.label}
-                type="button"
-                className={`inline-flex h-8 items-center gap-2 rounded-lg px-3 text-xs font-bold ring-1 ${platform.tone}`}
-              >
-                <span className="grid h-5 w-5 place-items-center rounded-md bg-white text-[10px] font-black shadow-sm">
-                  {platform.prefix}
-                </span>
-                {platform.label}
-                <X className="h-3.5 w-3.5 opacity-60" />
-              </button>
-            ))}
-            <button
-              type="button"
-              className="inline-flex h-8 items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 text-xs font-bold text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-[#4338ca]"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add Platform
-            </button>
           </div>
 
           <div className="p-5">
@@ -146,7 +174,7 @@ export default function CreatePostComposer() {
                 value={content}
                 maxLength={MAX_LENGTH}
                 onChange={(event) => setContent(event.target.value)}
-                placeholder="What's on your mind?"
+                placeholder={`What's on your mind, ${displayName}?`}
                 className="min-h-[280px] w-full resize-none border-0 bg-transparent text-lg font-semibold leading-8 text-slate-800 outline-none placeholder:text-slate-300"
               />
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
@@ -191,7 +219,7 @@ export default function CreatePostComposer() {
                   type="date"
                   value={publishDate}
                   disabled={!scheduleEnabled}
-                  onChange={(event) => setPublishDate(event.target.value)}
+                  onChange={(event) => updatePublishDate(event.target.value)}
                   className="mt-2 h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-700 outline-none transition disabled:cursor-not-allowed disabled:bg-slate-100 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-50"
                 />
               </label>
@@ -208,43 +236,58 @@ export default function CreatePostComposer() {
             </div>
           </section>
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-950">Calendar</h2>
-              <div className="flex items-center gap-1">
-                <button type="button" className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-50 hover:text-slate-700">
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button type="button" className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-50 hover:text-slate-700">
-                  <ChevronRight className="h-4 w-4" />
-                </button>
+          {scheduleEnabled && (
+            <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-950">Calendar</h2>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">{calendarMonthLabel}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveCalendarMonth(-1)}
+                    className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                    aria-label="Previous month"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveCalendarMonth(1)}
+                    className="grid h-7 w-7 place-items-center rounded-md text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                    aria-label="Next month"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-black uppercase tracking-[0.08em] text-slate-400">
-              {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-                <span key={`${day}-${index}`}>{day}</span>
-              ))}
-            </div>
-            <div className="mt-3 grid grid-cols-7 gap-1">
-              {calendarDays.map((day, index) => (
-                <button
-                  key={`${day.label}-${index}`}
-                  type="button"
-                  disabled={!scheduleEnabled}
-                  className={`grid h-8 place-items-center rounded-lg text-xs font-bold transition disabled:cursor-not-allowed ${
-                    day.selected && scheduleEnabled
-                      ? "bg-[#4338ca] text-white shadow-md shadow-indigo-200"
-                      : day.muted
-                        ? "text-slate-300"
-                        : "text-slate-600 hover:bg-indigo-50 hover:text-[#4338ca]"
-                  }`}
-                >
-                  {day.label}
-                </button>
-              ))}
-            </div>
-          </section>
+              <div className="mt-4 grid grid-cols-7 gap-1 text-center text-[11px] font-black uppercase tracking-[0.08em] text-slate-400">
+                {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+                  <span key={`${day}-${index}`}>{day}</span>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-7 gap-1">
+                {calendarDays.map((day) => (
+                  <button
+                    key={day.value}
+                    type="button"
+                    onClick={() => updatePublishDate(day.value)}
+                    className={`grid h-8 place-items-center rounded-lg text-xs font-bold transition ${
+                      day.selected
+                        ? "bg-[#4338ca] text-white shadow-md shadow-indigo-200"
+                        : day.muted
+                          ? "text-slate-300 hover:bg-slate-50 hover:text-slate-500"
+                          : "text-slate-600 hover:bg-indigo-50 hover:text-[#4338ca]"
+                    }`}
+                  >
+                    {day.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
         </aside>
       </div>
 
@@ -252,10 +295,12 @@ export default function CreatePostComposer() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-[#4338ca]"
+            disabled={!hasContent || savingMode !== null}
+            onClick={() => savePost("draft")}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-[#4338ca] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-300"
           >
-            <Save className="h-4 w-4" />
-            Save as Draft
+            {savedMode === "draft" ? <Check className="h-4 w-4 text-emerald-500" /> : <Save className="h-4 w-4" />}
+            {savingMode === "draft" ? "Saving..." : savedMode === "draft" ? "Draft Saved" : "Save as Draft"}
           </button>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -265,14 +310,23 @@ export default function CreatePostComposer() {
             </span>
             <button
               type="button"
-              disabled={!scheduleEnabled}
+              disabled={!scheduleEnabled || !hasContent || savingMode !== null}
+              onClick={() => savePost("scheduled")}
               className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#4338ca] px-5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-[#3730a3] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
             >
-              Schedule Post
-              <Send className="h-4 w-4" />
+              {savingMode === "scheduled" ? "Scheduling..." : savedMode === "scheduled" ? "Scheduled" : "Schedule Post"}
+              {savedMode === "scheduled" ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
             </button>
           </div>
         </div>
+        {(saveMessage || saveError) && (
+          <p
+            aria-live="polite"
+            className={`mt-3 text-sm font-semibold ${saveError ? "text-red-600" : "text-emerald-600"}`}
+          >
+            {saveError || saveMessage}
+          </p>
+        )}
       </section>
     </div>
   );
