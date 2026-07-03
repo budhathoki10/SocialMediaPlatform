@@ -31,7 +31,7 @@ function Toolbar({ user }: { user?: SessionUser }) {
         <div className="hidden h-8 w-px bg-slate-200 sm:block" />
         <div className="hidden text-right sm:block">
           <p className="max-w-40 truncate text-sm font-bold leading-4 text-slate-700">{user?.name || "User"}</p>
-          <p className="mt-1 text-xs text-slate-500">Composer</p>
+          <p className="mt-1 text-xs text-slate-500">Free Member</p>
         </div>
         <Image
           src={user?.image || "/landing/testimonial-avatar.png"}

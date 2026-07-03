@@ -16,7 +16,8 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-const MAX_LENGTH = 300;
+const MAX_LENGTH = 3000;
+type SaveMode = "draft" | "scheduled";
 
 function padDatePart(value: number) {
   return value.toString().padStart(2, "0");
@@ -76,7 +77,12 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
   const [publishDate, setPublishDate] = useState(() => toDateInputValue(new Date()));
   const [publishTime, setPublishTime] = useState("09:00");
   const [visibleMonth, setVisibleMonth] = useState(() => parseDateInputValue(toDateInputValue(new Date())));
+  const [savingMode, setSavingMode] = useState<SaveMode | null>(null);
+  const [savedMode, setSavedMode] = useState<SaveMode | null>(null);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [saveError, setSaveError] = useState("");
   const remaining = MAX_LENGTH - content.length;
+  const hasContent = content.trim().length > 0;
   const displayName = userName?.trim().split(" ")[0] || "there";
   const calendarDays = useMemo(() => getCalendarDays(visibleMonth, publishDate), [publishDate, visibleMonth]);
   const calendarMonthLabel = useMemo(
@@ -108,6 +114,43 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
   };
   const moveCalendarMonth = (offset: number) => {
     setVisibleMonth((currentMonth) => new Date(currentMonth.getFullYear(), currentMonth.getMonth() + offset, 1));
+  };
+  const savePost = async (mode: SaveMode) => {
+    const trimmedContent = content.trim();
+
+    setSaveMessage("");
+    setSaveError("");
+    setSavedMode(null);
+
+    if (!trimmedContent) {
+      setSaveError("Write something before saving.");
+      return;
+    }
+
+    setSavingMode(mode);
+
+    try {
+      const response = await fetch("/api/posts/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: trimmedContent,
+          scheduled_time: mode === "scheduled" ? `${publishDate}T${publishTime}:00` : null,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to save post.");
+      }
+
+      setSavedMode(mode);
+      setSaveMessage(mode === "scheduled" ? "Successfully scheduled post." : "Successfully saved draft.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Unable to save post.");
+    } finally {
+      setSavingMode(null);
+    }
   };
 
   return (
@@ -252,10 +295,12 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-[#4338ca]"
+            disabled={!hasContent || savingMode !== null}
+            onClick={() => savePost("draft")}
+            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-[#4338ca] disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-300"
           >
-            <Save className="h-4 w-4" />
-            Save as Draft
+            {savedMode === "draft" ? <Check className="h-4 w-4 text-emerald-500" /> : <Save className="h-4 w-4" />}
+            {savingMode === "draft" ? "Saving..." : savedMode === "draft" ? "Draft Saved" : "Save as Draft"}
           </button>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -265,14 +310,23 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
             </span>
             <button
               type="button"
-              disabled={!scheduleEnabled}
+              disabled={!scheduleEnabled || !hasContent || savingMode !== null}
+              onClick={() => savePost("scheduled")}
               className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#4338ca] px-5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-[#3730a3] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
             >
-              Schedule Post
-              <Send className="h-4 w-4" />
+              {savingMode === "scheduled" ? "Scheduling..." : savedMode === "scheduled" ? "Scheduled" : "Schedule Post"}
+              {savedMode === "scheduled" ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
             </button>
           </div>
         </div>
+        {(saveMessage || saveError) && (
+          <p
+            aria-live="polite"
+            className={`mt-3 text-sm font-semibold ${saveError ? "text-red-600" : "text-emerald-600"}`}
+          >
+            {saveError || saveMessage}
+          </p>
+        )}
       </section>
     </div>
   );
