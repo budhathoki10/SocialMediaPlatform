@@ -123,7 +123,7 @@ const clickedLinkedin=()=>{
   window.location.assign("/api/auth/linkedin/connect");
 }
 const clickedInstagram=()=>{
-  alert("Instagram clicked");
+    window.location.assign("/api/auth/instagram/connect");
 }
 
 
