@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, FileText, X } from "lucide-react";
 
 type OnboardingPlatform = {
   name: string;
@@ -28,6 +28,7 @@ type PlatformConnection = {
 type ConnectedAccounts = {
   github?: PlatformConnection | null;
   linkedin?: PlatformConnection | null;
+  instagram?: PlatformConnection | null;
 };
 
 type AppSession = {
@@ -203,7 +204,31 @@ const onboardingPlatforms: OnboardingPlatform[] = [
   },
 ];
 
-const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
+const instagramPrerequisites = [
+  {
+    title: "Creator or Business account",
+    description:
+      "Instagram requires a Creator or Business account to allow third-party apps like AutoPilot to publish posts. Personal accounts are not supported by Instagram's API.",
+  },
+  {
+    title: "Linked Facebook Page",
+    description:
+      "You need a Facebook Page linked to your Instagram account. The page can be empty; it just needs to exist and be connected to Instagram.",
+  },
+  {
+    title: "Meta account setup",
+    description:
+      "Switch your Instagram account in Settings > Account type and tools, then link a Facebook Page from Instagram Settings > Linked Accounts > Facebook.",
+  },
+];
+
+const PlatformGrid = ({
+  platforms,
+  onPlatformClick,
+}: {
+  platforms: OnboardingPlatform[];
+  onPlatformClick: (name: string) => void;
+}) => {
   return (
     <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
       {platforms.map(({ name, status, Logo }) => {
@@ -213,7 +238,7 @@ const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
           <button
             key={name}
             type="button"
-            onClick={() => void handlePlatformClick(name)}
+            onClick={() => onPlatformClick(name)}
             disabled={isConnected}
             className={`flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center hover:cursor-pointer transition disabled:cursor-default ${
               isConnected
@@ -240,6 +265,111 @@ const PlatformGrid = ({ platforms }: { platforms: OnboardingPlatform[] }) => {
   );
 };
 
+const InstagramPrerequisiteDialog = ({
+  agreed,
+  onAgreeChange,
+  onClose,
+  onConnect,
+}: {
+  agreed: boolean;
+  onAgreeChange: (checked: boolean) => void;
+  onClose: () => void;
+  onConnect: () => void;
+}) => (
+  <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/10 p-4 backdrop-blur-[2px]">
+    <section className="relative flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.38)]">
+      <div className="px-7 pb-5 pt-7 text-center">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close Instagram prerequisites"
+          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-indigo-100 bg-indigo-50 text-[#4338ca] shadow-sm">
+          <FileText className="h-6 w-6" />
+        </div>
+
+        <div className="mt-5 flex items-center gap-4">
+          <span className="h-px flex-1 bg-slate-200" />
+          <p className="text-xs font-bold text-slate-800">Instagram Terms</p>
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        <p className="mx-auto mt-3 max-w-sm text-xs leading-5 text-slate-500">
+          Review these requirements before allowing AutoPilot to connect and publish with Instagram.
+        </p>
+      </div>
+
+      <div className="min-h-0 flex-1 px-7 pb-5">
+        <article className="max-h-[44vh] overflow-y-auto px-1 py-2">
+          <div className="text-center">
+            <p className="text-xs font-bold text-[#4338ca]">Required by Meta</p>
+            <h2 className="mt-2 text-base font-bold text-slate-900">
+              Instagram Publishing Prerequisites
+            </h2>
+          </div>
+
+          <div className="mt-5 space-y-5 text-xs leading-6 text-slate-600">
+            <p>
+              To connect an Instagram account to AutoPilot, the account owner must confirm that the Instagram account
+              satisfies Meta platform requirements for third-party publishing access.
+            </p>
+
+            {instagramPrerequisites.map((item, index) => (
+              <section key={item.title} className="border-t border-slate-200/80 pt-4">
+                <p className="text-xs font-semibold text-slate-400">Section {index + 1}</p>
+                <h3 className="mt-1 text-sm font-bold text-slate-950">{item.title}</h3>
+                <p className="mt-2">{item.description}</p>
+              </section>
+            ))}
+
+            <section className="border-t border-slate-200/80 pt-4">
+              <p className="text-xs font-semibold text-slate-400">Acknowledgement</p>
+              <p className="mt-2">
+                By continuing, you acknowledge that your Instagram account is eligible for Meta API access and that
+                AutoPilot can only connect accounts that meet these requirements.
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <label className="mt-4 flex cursor-pointer items-start gap-3 border-t border-slate-100 pt-4">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(event) => onAgreeChange(event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#4338ca]"
+          />
+          <span className="text-xs font-semibold leading-5 text-slate-700">
+            I have read and agree. My Instagram account is Creator or Business, and it is linked to a Facebook Page.
+          </span>
+        </label>
+      </div>
+
+      <div className="flex items-center justify-center gap-4 border-t border-slate-100 px-7 py-5">
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-10 min-w-32 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+        >
+          Decline
+        </button>
+        <button
+          type="button"
+          disabled={!agreed}
+          onClick={onConnect}
+          className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-md bg-slate-800 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+        >
+          Accept
+        </button>
+      </div>
+    </section>
+  </div>
+);
+
 const OnboardingContent = () => {
   const searchParams = useSearchParams();
   const { data: session, update } = useSession();
@@ -247,27 +377,44 @@ const OnboardingContent = () => {
   const sessionConnections = appSession?.connected_accounts;
   const sessionGithub = sessionConnections?.github;
   const sessionLinkedin = sessionConnections?.linkedin;
+  const sessionInstagram = sessionConnections?.instagram;
   const sessionGithubConnected = Boolean(sessionGithub?.connected);
   const sessionLinkedinConnected = Boolean(sessionLinkedin?.connected);
+  const sessionInstagramConnected = Boolean(sessionInstagram?.connected);
   const [savedConnections, setSavedConnections] = useState<ConnectedAccounts>({});
+  const [showInstagramPrerequisites, setShowInstagramPrerequisites] = useState(false);
+  const [instagramPrerequisitesAgreed, setInstagramPrerequisitesAgreed] = useState(false);
   const isGithubConnected =
     searchParams.get("github") === "connected" || sessionGithubConnected || Boolean(savedConnections.github?.connected);
   const isLinkedinConnected =
     searchParams.get("linkedin") === "connected" || sessionLinkedinConnected || Boolean(savedConnections.linkedin?.connected);
+  const isInstagramConnected =
+    searchParams.get("instagram") === "connected" || sessionInstagramConnected || Boolean(savedConnections.instagram?.connected);
   const currentStep = onboardingSteps[currentStepIndex];
   const platforms = onboardingPlatforms.map((platform) => ({
     ...platform,
     status:
       (platform.name === "GitHub" && isGithubConnected) ||
-      (platform.name === "LinkedIn" && isLinkedinConnected)
+      (platform.name === "LinkedIn" && isLinkedinConnected) ||
+      (platform.name === "Instagram" && isInstagramConnected)
         ? "connected"
         : platform.status,
   }));
+  const handleOnboardingPlatformClick = (platformName: string) => {
+    if (platformName === "Instagram") {
+      setInstagramPrerequisitesAgreed(false);
+      setShowInstagramPrerequisites(true);
+      return;
+    }
+
+    void handlePlatformClick(platformName);
+  };
 
   useEffect(() => {
     const platformsToLoad = [
       { key: "github", endpoint: "/api/auth/github/status", connected: sessionGithubConnected },
       { key: "linkedin", endpoint: "/api/auth/linkedin/status", connected: sessionLinkedinConnected },
+      { key: "instagram", endpoint: "/api/auth/instagram/status", connected: sessionInstagramConnected },
     ].filter((platform) => !platform.connected);
 
     if (platformsToLoad.length === 0) {
@@ -280,6 +427,7 @@ const OnboardingContent = () => {
       const nextConnections: ConnectedAccounts = {
         github: sessionGithub || null,
         linkedin: sessionLinkedin || null,
+        instagram: sessionInstagram || null,
       };
       
       let foundDatabaseConnection = false;
@@ -320,11 +468,23 @@ const OnboardingContent = () => {
     return () => {
       isMounted = false;
     };
-  }, [sessionGithub, sessionGithubConnected, sessionLinkedin, sessionLinkedinConnected, update]);
+  }, [
+    sessionGithub,
+    sessionGithubConnected,
+    sessionInstagram,
+    sessionInstagramConnected,
+    sessionLinkedin,
+    sessionLinkedinConnected,
+    update,
+  ]);
 
   return (
     <main className="min-h-screen bg-[#f8fafc] px-6 py-8 text-slate-950">
-      <div className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl rounded-xl border border-slate-200 bg-white/80 shadow-sm">
+      <div
+        className={`mx-auto min-h-[calc(100vh-4rem)] max-w-7xl rounded-xl border border-slate-200 bg-white/80 shadow-sm transition duration-300 ${
+          showInstagramPrerequisites ? "pointer-events-none select-none" : ""
+        }`}
+      >
         <div className="mx-auto flex w-full max-w-[680px] flex-col items-center px-6 py-6 sm:py-8">
           <h1 className="text-xl font-bold tracking-tight">AutoPilot Onboarding</h1>
           <section className="mt-6 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -334,7 +494,7 @@ const OnboardingContent = () => {
                 <p className="mt-2 text-sm text-slate-500">{currentStep.description}</p>
               </div>
 
-              <PlatformGrid platforms={platforms} />
+              <PlatformGrid platforms={platforms} onPlatformClick={handleOnboardingPlatformClick} />
             </div>
 
             <div className="flex items-center justify-between border-t border-slate-100 px-6 py-5">
@@ -368,6 +528,14 @@ const OnboardingContent = () => {
           </p>
         </div>
       </div>
+      {showInstagramPrerequisites && (
+        <InstagramPrerequisiteDialog
+          agreed={instagramPrerequisitesAgreed}
+          onAgreeChange={setInstagramPrerequisitesAgreed}
+          onClose={() => setShowInstagramPrerequisites(false)}
+          onConnect={clickedInstagram}
+        />
+      )}
     </main>
   );
 };
