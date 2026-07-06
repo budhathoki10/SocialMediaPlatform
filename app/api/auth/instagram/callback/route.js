@@ -11,32 +11,19 @@ function appUrl(path) {
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id && !session?.user?.email) {
-    return null;
-  }
+  if (!session?.user?.id && !session?.user?.email) return null;
 
   await connectDB();
 
   if (session.user.id) {
     const user = await User.findById(session.user.id);
-
-    if (user) {
-      return user;
-    }
+    if (user) return user;
   }
 
-  if (session.user.email) {
-    return User.findOne({ email: session.user.email });
-  }
-
-  return null;
+  return User.findOne({ email: session.user.email });
 }
 
 export async function GET(req) {
-  // console.log("_______________________________________________________________________________________________________________--")
-  // console.log("inside call back")
-  // console.log("_______________________________________________________________________________________________________________--")
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
 
@@ -45,44 +32,72 @@ export async function GET(req) {
   }
 
   const currentUser = await getCurrentUser();
-
   if (!currentUser) {
     return NextResponse.redirect(appUrl("/login?callbackUrl=/onboarding"));
   }
 
-const tokenRes = await fetch(
-  `https://graph.facebook.com/v18.0/oauth/access_token?` +
-  new URLSearchParams({
-    client_id: process.env.INSTAGRAM_CLIENT_ID,     // 2521181031665804
-    client_secret: process.env.INSTAGRAM_CLIENT_SECRET, // from App Settings → Basic
-    redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/instagram/callback`,
-    code: code,
-  })
-);
+  // Step 1 — Exchange code for token
+  const tokenRes = await fetch(
+    `https://graph.facebook.com/v18.0/oauth/access_token?` +
+    new URLSearchParams({
+      client_id: process.env.INSTAGRAM_CLIENT_ID,
+      client_secret: process.env.INSTAGRAM_CLIENT_SECRET,
+      redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/instagram/callback`,
+      code,
+    })
+  );
+  const tokenData = await tokenRes.json();
+  console.log("token data", tokenData);
 
-const tokenData = await tokenRes.json();
-console.log("token data", tokenData);
+  if (!tokenData.access_token) {
+    return NextResponse.redirect(appUrl("/onboarding?error=instagram_token_failed"));
+  }
 
-    if (!tokenData.access_token) {
-      return NextResponse.redirect(appUrl("/onboarding?error=instagram_denied"));
-    }
-    console.log(tokenData)
-//  now we have the access token, we can use it to get the user's Instagram account info
-const accountRes = await fetch(
-  `https://graph.facebook.com/v18.0/me/accounts?access_token=${tokenData.access_token}`
-)
-const userData = await accountRes.json();
-console.log("pages data", userData);
+  // Step 2 — Get Facebook Pages
+  const accountRes = await fetch(
+    `https://graph.facebook.com/v18.0/me/accounts?access_token=${tokenData.access_token}`
+  );
+  const userData = await accountRes.json();
+  console.log("pages data", userData);
 
-const pageId = userData.data[0].id;
-const igRes = await fetch(
-  `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name}&access_token=${tokenData.access_token}`
-);
-// console.log("____________________________________________________________________________________________________")
-const igData = await igRes.json();
-console.log("instagram account", igData);
-const igAccount = igData.instagram_business_account;
-console.log("igaccount",igAccount)
+  // ✅ Guard — no pages found
+  if (!userData.data || userData.data.length === 0) {
+    return NextResponse.redirect(appUrl("/onboarding?error=no_facebook_page"));
+  }
+
+  const pageId = userData.data[0].id;
+  const pageAccessToken = userData.data[0].access_token;
+
+  // Step 3 — Get Instagram account
+  const igRes = await fetch(
+    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name}&access_token=${pageAccessToken}`
+  );
+  const igData = await igRes.json();
+  console.log("instagram account", igData);
+
+  const igAccount = igData.instagram_business_account;
+  console.log("igaccount", igAccount);
+
+  // ✅ Guard — no Instagram linked
+  if (!igAccount) {
+    return NextResponse.redirect(appUrl("/onboarding?error=no_instagram_linked"));
+  }
+
+  // Step 4 — Save to DB
+  await ConnectedAccount.findOneAndUpdate(
+    { user_id: currentUser._id, platform: "instagram" },
+    {
+      $set: {
+        access_token: tokenData.access_token,
+        platform_user_id: igAccount.id,
+        platform_username: igAccount.username || igAccount.name,
+        expires_at: new Date(Date.now() + tokenData.expires_in * 1000),
+        connected_at: getKathmanduDate(),
+        status: "active",
+      },
+    },
+    { new: true, upsert: true, runValidators: true }
+  );
 
   return NextResponse.redirect(appUrl("/onboarding?instagram=connected"));
 }

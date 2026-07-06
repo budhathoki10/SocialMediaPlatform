@@ -18,6 +18,11 @@ function getAllowedDevOrigins() {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: getAllowedDevOrigins(),
+  env: {
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || process.env.LOCAL_APP_URL || "http://localhost:3000",
+    NEXTAUTH_URL_INTERNAL:
+      process.env.NEXTAUTH_URL_INTERNAL || process.env.NEXTAUTH_URL || process.env.LOCAL_APP_URL || "http://localhost:3000",
+  },
   images: {
     remotePatterns: [
       {

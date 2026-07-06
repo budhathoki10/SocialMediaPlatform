@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, Bot, CheckCircle2, RefreshCcw } from "lucide-react";
+import { Activity, AlertTriangle, Bot, CheckCircle2, RefreshCcw } from "lucide-react";
+import { useState } from "react";
 
 type ActivityItem = {
   id: string;
@@ -22,19 +23,76 @@ const iconMap = {
   warning: AlertTriangle,
 };
 
+function ActivityFeedSkeleton() {
+  return (
+    <div className="space-y-5 px-5 py-5">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex gap-3">
+          <span className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-slate-100 ring-4 ring-slate-50" />
+          <span className="min-w-0 flex-1 space-y-2">
+            <span className="block h-4 w-3/5 animate-pulse rounded bg-slate-100" />
+            <span className="block h-3 w-full animate-pulse rounded bg-slate-100" />
+            <span className="block h-3 w-4/5 animate-pulse rounded bg-slate-100" />
+          </span>
+          <span className="h-3 w-10 shrink-0 animate-pulse rounded bg-slate-100" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ActivityFeed({ initialItems }: { initialItems: ActivityItem[] }) {
-  const items = initialItems;
+  const [items, setItems] = useState<ActivityItem[]>(initialItems);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function refreshActivity() {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/activity/recent", { cache: "no-store" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to refresh activity.");
+      }
+
+      setItems(data.items || []);
+    } catch (refreshError) {
+      setError(refreshError instanceof Error ? refreshError.message : "Unable to refresh activity.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <section className="min-h-[278px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div className="flex items-center gap-2">
-          <RefreshCcw className="h-4 w-4 text-[#4338ca]" />
+          <Activity className="h-4 w-4 text-[#4338ca]" />
           <h2 className="text-sm font-bold text-slate-950">Activity Feed</h2>
         </div>
+        <button
+          type="button"
+          onClick={() => void refreshActivity()}
+          disabled={isLoading}
+          aria-label="Refresh activity"
+          className="grid h-7 w-7 place-items-center rounded-md text-slate-400 transition hover:bg-slate-50 hover:text-[#4338ca] disabled:cursor-not-allowed"
+        >
+          <RefreshCcw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        </button>
       </div>
 
-      {items.length === 0 ? (
+      {isLoading ? (
+        <ActivityFeedSkeleton />
+      ) : error ? (
+        <div className="px-4 py-4">
+          <div className="rounded-md border border-red-100 bg-red-50 px-3 py-3 text-xs font-semibold text-red-700">
+            {error}
+          </div>
+        </div>
+      ) : items.length === 0 ? (
         <div className="grid min-h-48 place-items-center px-5 text-center">
           <div>
             <p className="text-sm font-semibold text-slate-700">No logs</p>

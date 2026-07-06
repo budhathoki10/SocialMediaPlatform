@@ -6,7 +6,7 @@ import { ConnectedAccount, User } from "../../../../lib/models";
 
 const onboardingPath = "/onboarding";
 const sessionMaxAge = 60 * 60 * 24 * 90;
-const supportedPlatforms = ["github", "linkedin"];
+const supportedPlatforms = ["github", "linkedin", "instagram"];
 
 function normalizeAuthUser(profile) {
   if (!profile?.email) {
@@ -40,6 +40,7 @@ function formatConnectedAccounts(accounts) {
   return {
     github: formatConnection(accountsByPlatform.get("github")),
     linkedin: formatConnection(accountsByPlatform.get("linkedin")),
+    instagram: formatConnection(accountsByPlatform.get("instagram")),
   };
 }
 
@@ -71,7 +72,7 @@ async function findOrCreateUser(profile) {
 
 async function loadConnectedAccounts(userId) {
   if (!userId) {
-    return { github: null, linkedin: null };
+    return { github: null, linkedin: null, instagram: null };
   }
 
   await connectDB();
@@ -165,7 +166,7 @@ export const authOptions = {
         session.user.image = token.picture;
       }
 
-      session.connected_accounts = token.connected_accounts || { github: null, linkedin: null };
+      session.connected_accounts = token.connected_accounts || { github: null, linkedin: null, instagram: null };
 
       return session;
     },
