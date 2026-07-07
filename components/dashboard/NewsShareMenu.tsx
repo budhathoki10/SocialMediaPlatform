@@ -6,7 +6,7 @@ import { MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "reac
 
 const sharePlatforms = [
   { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin", enabled: true },
-  { name: "Instagram", image: "/landing/instagram.png", action: "instagram", enabled: false },
+  { name: "Instagram", image: "/landing/insta.png", action: "instagram", enabled: false },
   { name: "Facebook", image: "/landing/facebook.png", action: "facebook", enabled: false },
 ] as const;
 

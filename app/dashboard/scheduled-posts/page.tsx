@@ -54,7 +54,7 @@ type PostPlatformSummary = {
 const platformImages: Record<string, string> = {
   github: "/landing/githubs.png",
   linkedin: "/landing/linkedin.png",
-  instagram: "/landing/instagram.png",
+  instagram: "/landing/insta.png",
   facebook: "/landing/facebook.png",
   gmail: "/landing/gmail.png",
 };
