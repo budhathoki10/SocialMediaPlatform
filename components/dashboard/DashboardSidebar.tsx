@@ -62,6 +62,7 @@ export default function DashboardSidebar() {
   }
 
   return (
+    
     <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
       <div>
         <Link href="/dashboard" className="inline-flex items-center gap-2">
