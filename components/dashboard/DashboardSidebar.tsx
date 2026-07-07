@@ -71,6 +71,9 @@ export default function DashboardSidebar() {
               src="/landing/final-center-logo.png"
               alt=""
               width={1024}
+
+
+              
               height={1024}
               className="absolute left-1/2 top-1/2 h-16 w-16 max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
               priority
