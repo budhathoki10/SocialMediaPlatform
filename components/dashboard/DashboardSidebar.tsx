@@ -33,7 +33,7 @@ const sidebarItems = [
 const socialItems = [
   { label: "WhatsApp", Icon: MessageCircle, message: "clicked in whatsapp" },
   { label: "Facebook", Icon: Send, message: "clicked in facebook" },
-  { label: "Instagram", Icon: Camera, message: "clicked in instagram" },
+  { label: "Instagram", Icon: Camera, href: "/dashboard/socials/instagram" },
   { label: "Gmail", Icon: Mail, message: "clicked in gmail" },
 ];
 
@@ -110,14 +110,23 @@ export default function DashboardSidebar() {
 
           <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`} style={{ height: socialHeight }}>
             <div ref={socialContentRef} className="space-y-1 py-1.5">
-              {socialItems.map(({ label, Icon, message }) => (
-                <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
-                  <span className="grid h-5 w-5 place-items-center">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span>{label}</span>
-                </button>
-              ))}
+              {socialItems.map(({ label, Icon, message, href }) =>
+                href ? (
+                  <Link key={label} href={href} className={`sidebar-social-item ${pathname === href ? "text-[#4338ca]" : ""}`}>
+                    <span className="grid h-5 w-5 place-items-center">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span>{label}</span>
+                  </Link>
+                ) : (
+                  <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
+                    <span className="grid h-5 w-5 place-items-center">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span>{label}</span>
+                  </button>
+                ),
+              )}
             </div>
           </div>
         </div>
