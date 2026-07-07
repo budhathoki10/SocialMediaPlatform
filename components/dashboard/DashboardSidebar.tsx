@@ -64,18 +64,23 @@ export default function DashboardSidebar() {
   return (
     <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
       <div>
-        <Image
-          src="/landing/autopilot-logo.png"
-          alt="AutoPilot"
-          width={250}
-          height={60}
-          className="h-auto w-[112px]"
-          priority
-        />
-        <p className="mt-2 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Automation Suite</p>
+        <Link href="/dashboard" className="inline-flex items-center gap-2">
+          <span className="relative h-8 w-8 overflow-hidden rounded-lg">
+            <Image
+              src="/landing/final-center-logo.png"
+              alt=""
+              width={1024}
+              height={1024}
+              className="absolute left-1/2 top-1/2 h-16 w-16 max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
+              priority
+            />
+          </span>
+          <span className="text-sm font-extrabold text-[#4f46e5]">AutoPilot</span>
+        </Link>
+        <p className="mt-3 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Automation Suite</p>
       </div>
 
-      <nav className="mt-8 space-y-1.5">
+      <nav className="mt-6 space-y-1.5">
         {sidebarItems.map(({ label, Icon, href }) => {
           const active = href !== "#" && pathname === href;
 

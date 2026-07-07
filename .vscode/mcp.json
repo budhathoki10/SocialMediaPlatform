@@ -1,0 +1,32 @@
+{
+  "servers": {
+    "stitch": {
+      "type": "http",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "${input:stitch_api_key}"
+      }
+    },
+    "github-social-media-platform": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${input:github_social_media_platform_token}"
+      }
+    }
+  },
+  "inputs": [
+    {
+      "id": "stitch_api_key",
+      "type": "promptString",
+      "description": "Google Stitch MCP API key",
+      "password": true
+    },
+    {
+      "id": "github_social_media_platform_token",
+      "type": "promptString",
+      "description": "GitHub PAT with access to budhathoki10/SocialMediaPlatform",
+      "password": true
+    }
+  ]
+}

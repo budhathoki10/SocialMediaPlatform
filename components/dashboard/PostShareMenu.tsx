@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 const sharePlatforms = [
   { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin" },
-  { name: "Instagram", image: "/landing/instagram.png", action: "instagram" },
+  { name: "Instagram", image: "/landing/insta.png", action: "instagram" },
   { name: "Facebook", image: "/landing/facebook.png", action: "facebook" },
 ] as const;
 

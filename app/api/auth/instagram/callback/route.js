@@ -36,7 +36,7 @@ export async function GET(req) {
     return NextResponse.redirect(appUrl("/login?callbackUrl=/onboarding"));
   }
 
-  // Step 1 — Exchange code for token
+  //  Exchange code for token
   const tokenRes = await fetch(
     `https://graph.facebook.com/v18.0/oauth/access_token?` +
     new URLSearchParams({
@@ -53,14 +53,14 @@ export async function GET(req) {
     return NextResponse.redirect(appUrl("/onboarding?error=instagram_token_failed"));
   }
 
-  // Step 2 — Get Facebook Pages
+  // Get Facebook Pages
   const accountRes = await fetch(
     `https://graph.facebook.com/v18.0/me/accounts?access_token=${tokenData.access_token}`
   );
   const userData = await accountRes.json();
   console.log("pages data", userData);
 
-  // ✅ Guard — no pages found
+  //  no pages found
   if (!userData.data || userData.data.length === 0) {
     return NextResponse.redirect(appUrl("/onboarding?error=no_facebook_page"));
   }
@@ -68,9 +68,9 @@ export async function GET(req) {
   const pageId = userData.data[0].id;
   const pageAccessToken = userData.data[0].access_token;
 
-  // Step 3 — Get Instagram account
+// Get Instagram account
   const igRes = await fetch(
-    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name}&access_token=${pageAccessToken}`
+    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url}&access_token=${pageAccessToken}`
   );
   const igData = await igRes.json();
   console.log("instagram account", igData);
@@ -78,12 +78,12 @@ export async function GET(req) {
   const igAccount = igData.instagram_business_account;
   console.log("igaccount", igAccount);
 
-  // ✅ Guard — no Instagram linked
+
   if (!igAccount) {
     return NextResponse.redirect(appUrl("/onboarding?error=no_instagram_linked"));
   }
 
-  // Step 4 — Save to DB
+
   await ConnectedAccount.findOneAndUpdate(
     { user_id: currentUser._id, platform: "instagram" },
     {
@@ -91,6 +91,7 @@ export async function GET(req) {
         access_token: tokenData.access_token,
         platform_user_id: igAccount.id,
         platform_username: igAccount.username || igAccount.name,
+        profilePictureUrl: igAccount.profile_picture_url,
         expires_at: new Date(Date.now() + tokenData.expires_in * 1000),
         connected_at: getKathmanduDate(),
         status: "active",
