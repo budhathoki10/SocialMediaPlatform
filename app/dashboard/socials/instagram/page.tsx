@@ -176,7 +176,12 @@ export default async function InstagramSocialPage() {
                         <td className="px-3 py-3">
                           <span className={`block h-2 w-2 rounded-full ${statusStyles[row.status]}`} />
                         </td>
-                        <td className="whitespace-nowrap px-3 py-3 text-xs font-semibold text-slate-600">{row.user}</td>
+                        <td className="whitespace-nowrap px-3 py-3">
+                          <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
+                            <span className="h-6 w-6 rounded-full border border-white bg-gradient-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
+                            {row.user}
+                          </span>
+                        </td>
                         <td className="px-3 py-3">
                           <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{row.source}</span>
                         </td>
