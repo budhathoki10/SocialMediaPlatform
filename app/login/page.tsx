@@ -36,7 +36,14 @@ function getCallbackUrl() {
   }
 
   const normalizeCallbackPath = (url: string) => {
-    if (url === "/login" || url.startsWith("/login?")) {
+    if (
+      url === "/login" ||
+      url.startsWith("/login?") ||
+      url === "/error" ||
+      url.startsWith("/error?") ||
+      url === "/api/auth/error" ||
+      url.startsWith("/api/auth/error?")
+    ) {
       return fallback;
     }
 
