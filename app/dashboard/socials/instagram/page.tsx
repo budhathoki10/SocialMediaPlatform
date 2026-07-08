@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronLeft, ChevronRight, Eye, MessageSquare, MoreVertical, Pencil, Play, Trash2 } from "lucide-react";
+import { CheckCircle2, MessageSquare, Pencil, Play, XCircle } from "lucide-react";
 import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -41,12 +41,33 @@ const draftRows = [
     confidence: "12%",
     tone: "bad",
   },
-];
-
-const activityRows = [
-  { time: "10:42 AM", source: "DM", action: "Draft approved & sent", user: "@creative_mind", status: "sent" },
-  { time: "10:39 AM", source: "Comment", action: "Spam filter triggered", user: "@bot_9182", status: "blocked" },
-  { time: "10:35 AM", source: "DM", action: "AI draft generated", user: "@alex_fitness", status: "draft" },
+  {
+    status: "live",
+    user: "@nina_growth",
+    source: "Comment",
+    message: "Can I get the link to your pricing?",
+    draft: "Absolutely Nina! Here is the pricing page...",
+    confidence: "96%",
+    tone: "good",
+  },
+  {
+    status: "pending",
+    user: "@creative_mind",
+    source: "DM",
+    message: "Do you work with small creator brands?",
+    draft: "Yes, we help creator brands build a stronger...",
+    confidence: "89%",
+    tone: "good",
+  },
+  {
+    status: "blocked",
+    user: "@spam_promo",
+    source: "Comment",
+    message: "Buy followers today, instant delivery!!!",
+    draft: "Draft suppressed - suspicious promotion detected.",
+    confidence: "18%",
+    tone: "bad",
+  },
 ];
 
 const statusStyles: Record<string, string> = {
@@ -65,7 +86,7 @@ export default async function InstagramSocialPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect("/login?callbackUrl=/dashboard/socials/instagram");
+    redirect("/login?callbackUrl=/login");
   }
 
   return (
@@ -193,12 +214,31 @@ export default async function InstagramSocialPage() {
                           {row.confidence}
                         </td>
                         <td className="px-5 py-3">
-                          <div className="flex items-center justify-end gap-2 text-slate-400">
-                            <Eye className="h-4 w-4" />
-                            <Pencil className="h-4 w-4" />
-                            <CheckCircle2 className="h-4 w-4" />
-                            <Trash2 className="h-4 w-4" />
-                            <MoreVertical className="h-4 w-4" />
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              aria-label={`Approve draft from ${row.user}`}
+                              title="Approve"
+                              className="grid h-8 w-8 place-items-center rounded-md bg-emerald-50 text-emerald-700 transition hover:bg-emerald-100"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Reject draft from ${row.user}`}
+                              title="Reject"
+                              className="grid h-8 w-8 place-items-center rounded-md bg-red-50 text-red-600 transition hover:bg-red-100"
+                            >
+                              <XCircle className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Edit draft from ${row.user}`}
+                              title="Edit"
+                              className="grid h-8 w-8 place-items-center rounded-md bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -207,80 +247,27 @@ export default async function InstagramSocialPage() {
                 </table>
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-                <p>
-                  Showing <span className="font-semibold text-slate-700">1-25</span> of <span className="font-semibold text-slate-700">200</span> items
-                </p>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+                <p>Showing 1-6 of 10</p>
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
                     disabled
-                    className="inline-flex h-9 items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-3 font-semibold text-slate-300"
+                    className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 font-semibold text-slate-300"
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                    Prev
+                    Previous
                   </button>
-                  <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
-                    {["1", "2", "3", "...", "8"].map((page) => (
-                      <button
-                        key={page}
-                        type="button"
-                        className={`grid h-8 min-w-8 place-items-center rounded-md px-2 font-semibold ${
-                          page === "1" ? "bg-[#4338ca] text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="inline-flex h-10 items-center rounded-lg bg-slate-50 px-4 text-sm font-bold text-slate-700">Page 1 of 2</span>
                   <button
                     type="button"
-                    className="inline-flex h-9 items-center gap-1 rounded-md border border-slate-200 bg-white px-3 font-semibold text-slate-600 shadow-sm hover:border-[#4338ca] hover:text-[#4338ca]"
+                    className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 font-semibold text-slate-700 shadow-sm transition hover:border-[#4338ca] hover:text-[#4338ca]"
                   >
                     Next
-                    <ChevronRight className="h-4 w-4" />
                   </button>
                 </div>
               </div>
             </section>
 
-            <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-5 py-4">
-                <h2 className="text-base font-bold text-slate-950">Recent Activity Log</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="bg-white text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                    <tr>
-                      <th className="px-5 py-3">Status</th>
-                      <th className="px-3 py-3">Source</th>
-                      <th className="px-3 py-3">Action</th>
-                      <th className="px-3 py-3">User Entity</th>
-                      <th className="px-5 py-3">Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {activityRows.map((row) => (
-                      <tr key={`${row.time}-${row.action}`}>
-                        <td className="px-5 py-3">
-                          <span
-                            className={`block h-2.5 w-2.5 rounded-full ${
-                              row.status === "sent" ? "bg-emerald-500" : row.status === "blocked" ? "bg-red-500" : "bg-amber-500"
-                            }`}
-                          />
-                        </td>
-                        <td className="px-3 py-3">
-                          <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{row.source}</span>
-                        </td>
-                        <td className="px-3 py-3 text-xs font-semibold text-slate-600">{row.action}</td>
-                        <td className="px-3 py-3 text-xs font-semibold text-slate-500">{row.user}</td>
-                        <td className="px-5 py-3 text-xs text-slate-500">{row.time}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
           </div>
         </section>
       </div>
