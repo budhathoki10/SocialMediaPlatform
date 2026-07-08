@@ -33,7 +33,7 @@ type DashboardUser = {
 type ConnectedAccountSummary = {
   _id: string;
   platform: string;
-  platform_username: string;
+  platform_username?: string | null;
   status: "active" | "expired" | "revoked" | "error";
   connected_at: Date;
 };
@@ -84,7 +84,7 @@ function getGreeting(timezone = "Asia/Kathmandu") {
 }
 
 function formatAccountUsername(account: ConnectedAccountSummary) {
-  const username = account.platform_username.trim();
+  const username = account.platform_username?.trim() || platformNames[account.platform] || account.platform;
 
   if (account.platform === "linkedin") {
     const storedIdentifier = username.match(/^[A-Za-z0-9_-]{8,}\s+(.+)$/);

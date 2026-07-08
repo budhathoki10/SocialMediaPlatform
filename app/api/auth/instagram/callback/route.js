@@ -9,6 +9,16 @@ function appUrl(path) {
   return `${process.env.NEXTAUTH_URL || "http://localhost:3000"}${path}`;
 }
 
+function getTokenExpirationDate(expiresIn) {
+  const seconds = Number(expiresIn);
+
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return null;
+  }
+
+  return new Date(Date.now() + seconds * 1000);
+}
+
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id && !session?.user?.email) return null;
@@ -70,7 +80,7 @@ export async function GET(req) {
 
 // Get Instagram account
   const igRes = await fetch(
-    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url}&access_token=${pageAccessToken}`
+    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name,biography,profile_picture_url,media_count,followers_count,follows_count}&access_token=${pageAccessToken}`
   );
   const igData = await igRes.json();
   console.log("instagram account", igData);
@@ -83,6 +93,7 @@ export async function GET(req) {
     return NextResponse.redirect(appUrl("/onboarding?error=no_instagram_linked"));
   }
 
+  const expiresAt = getTokenExpirationDate(tokenData.expires_in);
 
   await ConnectedAccount.findOneAndUpdate(
     { user_id: currentUser._id, platform: "instagram" },
@@ -90,14 +101,19 @@ export async function GET(req) {
       $set: {
         access_token: tokenData.access_token,
         platform_user_id: igAccount.id,
-        platform_username: igAccount.username || igAccount.name,
+        platform_username: igAccount.username || igAccount.name || igAccount.id,
+        name: igAccount.name || igAccount.username || "",
+        biography: igAccount.biography || "",
+        totalpost: igAccount.media_count || 0,
+        followers: igAccount.followers_count || 0,
+        following: igAccount.follows_count || 0,
         profilePictureUrl: igAccount.profile_picture_url,
-        expires_at: new Date(Date.now() + tokenData.expires_in * 1000),
+        expires_at: expiresAt,
         connected_at: getKathmanduDate(),
         status: "active",
       },
     },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: "after", upsert: true, runValidators: true }
   );
 
   return NextResponse.redirect(appUrl("/onboarding?instagram=connected"));
