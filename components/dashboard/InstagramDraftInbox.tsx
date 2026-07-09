@@ -1,15 +1,19 @@
 "use client";
 
 import { CheckCircle2, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type DraftRow = {
+  id: string;
+  externalId: string;
   user: string;
   source: string;
   message: string;
   draft: string;
   confidence: string;
   tone: string;
+  status: string;
+  createdAt: string | null;
 };
 
 type InstagramDraftInboxProps = {
@@ -17,16 +21,38 @@ type InstagramDraftInboxProps = {
 };
 
 export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) {
+  const [draftRows, setDraftRows] = useState<DraftRow[]>(rows);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
-  const allSelected = rows.length > 0 && selectedRows.length === rows.length;
+  const allSelected = draftRows.length > 0 && selectedRows.length === draftRows.length;
+
+  useEffect(() => {
+    setDraftRows(rows);
+  }, [rows]);
+
+  useEffect(() => {
+    const events = new EventSource("/api/socials/instagram/events");
+
+    events.addEventListener("instagram-draft", (event) => {
+      const draft = JSON.parse(event.data) as DraftRow;
+
+      setDraftRows((currentRows) => {
+        const nextRows = currentRows.filter((row) => row.id !== draft.id && row.externalId !== draft.externalId);
+        return [draft, ...nextRows].slice(0, 6);
+      });
+    });
+
+    return () => {
+      events.close();
+    };
+  }, []);
 
   function handleSelectAll() {
-    setSelectedRows(allSelected ? [] : rows.map((row) => row.user));
+    setSelectedRows(allSelected ? [] : draftRows.map((row) => row.id));
   }
 
-  function handleSelectRow(user: string) {
+  function handleSelectRow(id: string) {
     setSelectedRows((currentRows) =>
-      currentRows.includes(user) ? currentRows.filter((currentUser) => currentUser !== user) : [...currentRows, user],
+      currentRows.includes(id) ? currentRows.filter((currentId) => currentId !== id) : [...currentRows, id],
     );
   }
 
@@ -71,13 +97,21 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((row) => (
-              <tr key={row.user} className="hover:bg-slate-50/70">
+            {draftRows.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-5 py-12 text-center">
+                  <p className="text-sm font-bold text-slate-700">No unreplied drafts yet</p>
+                  <p className="mt-1 text-xs text-slate-500">New Instagram DM and comment drafts will appear here.</p>
+                </td>
+              </tr>
+            ) : (
+              draftRows.map((row) => (
+              <tr key={row.id} className="hover:bg-slate-50/70">
                 <td className="px-5 py-3">
                   <input
                     type="checkbox"
-                    checked={selectedRows.includes(row.user)}
-                    onChange={() => handleSelectRow(row.user)}
+                    checked={selectedRows.includes(row.id)}
+                    onChange={() => handleSelectRow(row.id)}
                     className="cursor-pointer rounded border-slate-300"
                     aria-label={`Select ${row.user}`}
                   />
@@ -127,13 +161,14 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                   </div>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-        <p>Showing 1-6 of 10</p>
+        <p>Showing {draftRows.length === 0 ? "0-0" : `1-${draftRows.length}`} of {draftRows.length}</p>
         <div className="flex items-center gap-3">
           <button
             type="button"

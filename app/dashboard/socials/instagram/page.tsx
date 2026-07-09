@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { GET as getInstagramDraftsRoute } from "@/app/api/socials/instagram/drafts/route";
 import { GET as getInstagramRoute } from "@/app/api/socials/instagram/route";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import InstagramDraftInbox from "@/components/dashboard/InstagramDraftInbox";
@@ -26,62 +27,31 @@ type InstagramSession = {
   };
 } | null;
 
-const stats = [
-  { label: "Total Drafts", value: "42", Icon: MessageSquare },
-  { label: "Total DM Drafts", value: "28", Icon: MessageSquare },
-  { label: "Total Comment Drafts", value: "14", Icon: MessageSquare },
-  { label: "Sent Today", value: "156", Icon: Play, highlight: true },
-];
+type InstagramDraftRow = {
+  id: string;
+  externalId: string;
+  user: string;
+  source: string;
+  message: string;
+  draft: string;
+  confidence: string;
+  tone: string;
+  status: string;
+  createdAt: string | null;
+};
 
-const draftRows = [
-  {
-    user: "@alex_fitness",
-    source: "DM",
-    message: "How do I join the next challenge?",
-    draft: "Hello Alex! We would love to help you join...",
-    confidence: "94%",
-    tone: "good",
-  },
-  {
-    user: "@marta_designs",
-    source: "Comment",
-    message: "Love the new collection!",
-    draft: "Thank you Marta! We spent weeks refining...",
-    confidence: "98%",
-    tone: "good",
-  },
-  {
-    user: "@bot_zone_99",
-    source: "DM",
-    message: "FREE CRYPTO GIVEAWAY!!!",
-    draft: "Draft suppressed - marketing spam detected.",
-    confidence: "12%",
-    tone: "bad",
-  },
-  {
-    user: "@nina_growth",
-    source: "Comment",
-    message: "Can I get the link to your pricing?",
-    draft: "Absolutely Nina! Here is the pricing page...",
-    confidence: "96%",
-    tone: "good",
-  },
-  {
-    user: "@creative_mind",
-    source: "DM",
-    message: "Do you work with small creator brands?",
-    draft: "Yes, we help creator brands build a stronger...",
-    confidence: "89%",
-    tone: "good",
-  },
-  {
-    user: "@spam_promo",
-    source: "Comment",
-    message: "Buy followers today, instant delivery!!!",
-    draft: "Draft suppressed - suspicious promotion detected.",
-    confidence: "18%",
-    tone: "bad",
-  },
+type InstagramDraftStats = {
+  totalDrafts: number;
+  totalDmDrafts: number;
+  totalCommentDrafts: number;
+  sentToday: number;
+};
+
+const statCards = [
+  { label: "Total Drafts", key: "totalDrafts", Icon: MessageSquare },
+  { label: "Total DM Drafts", key: "totalDmDrafts", Icon: MessageSquare },
+  { label: "Total Comment Drafts", key: "totalCommentDrafts", Icon: MessageSquare },
+  { label: "Sent Today", key: "sentToday", Icon: Play, highlight: true },
 ];
 
 function formatCount(value?: number | null) {
@@ -109,6 +79,34 @@ async function getInstagramProfileFromRoute() {
   return data.profile || null;
 }
 
+async function getInstagramDraftsFromRoute() {
+  const response = await getInstagramDraftsRoute();
+
+  if (!response.ok) {
+    return {
+      drafts: [],
+      stats: {
+        totalDrafts: 0,
+        totalDmDrafts: 0,
+        totalCommentDrafts: 0,
+        sentToday: 0,
+      },
+    };
+  }
+
+  const data = (await response.json()) as { drafts?: InstagramDraftRow[]; stats?: InstagramDraftStats };
+
+  return {
+    drafts: data.drafts || [],
+    stats: data.stats || {
+      totalDrafts: 0,
+      totalDmDrafts: 0,
+      totalCommentDrafts: 0,
+      sentToday: 0,
+    },
+  };
+}
+
 export default async function InstagramSocialPage() {
   const session = (await getServerSession(authOptions)) as InstagramSession;
 
@@ -117,6 +115,8 @@ export default async function InstagramSocialPage() {
   }
 
   const instagramProfile = await getInstagramProfileFromRoute();
+  const draftData = await getInstagramDraftsFromRoute();
+  const draftRows = draftData.drafts;
   const instagramUsername = instagramProfile?.username || null;
   const instagramDisplayName = instagramProfile?.name || instagramUsername || "Instagram account";
   const instagramBio = instagramProfile?.biography || "Connect Instagram to sync profile details.";
@@ -184,13 +184,15 @@ export default async function InstagramSocialPage() {
             </section>
 
             <section className="mt-5 grid gap-4 md:grid-cols-4">
-              {stats.map(({ label, value, Icon, highlight }) => (
+              {statCards.map(({ label, key, Icon, highlight }) => (
                 <div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">
                   <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                     <Icon className="h-4 w-4" />
                     {label}
                   </div>
-                  <p className={`mt-3 text-2xl font-bold ${highlight ? "text-[#4338ca]" : "text-slate-950"}`}>{value}</p>
+                  <p className={`mt-3 text-2xl font-bold ${highlight ? "text-[#4338ca]" : "text-slate-950"}`}>
+                    {formatCount(draftData.stats[key as keyof InstagramDraftStats])}
+                  </p>
                 </div>
               ))}
             </section>
