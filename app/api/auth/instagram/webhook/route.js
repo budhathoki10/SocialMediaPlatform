@@ -1,6 +1,5 @@
 import { connectDB } from "@/lib/db";
 import { upsertInstagramDraft } from "@/lib/instagram-drafts";
-import { emitInstagramDraft } from "@/lib/instagram-live-events";
 import { ConnectedAccount } from "@/lib/models";
 
 export const dynamic = "force-dynamic";
@@ -153,7 +152,7 @@ export async function POST(req) {
         continue;
       }
 
-      const draft = await upsertInstagramDraft({
+      await upsertInstagramDraft({
         userId: account.user_id,
         connectedAccountId: account._id,
         platformUserId: account.platform_user_id,
@@ -163,8 +162,6 @@ export async function POST(req) {
         senderUsername: webhookEvent.senderUsername,
         message: webhookEvent.message,
       });
-
-      emitInstagramDraft(account.user_id, draft);
     }
 
     return new Response("EVENT_RECEIVED", {
