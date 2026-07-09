@@ -30,23 +30,39 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   }, [rows]);
 
   useEffect(() => {
-    const events = new EventSource("/api/socials/instagram/events");
+    let isMounted = true;
 
-    events.addEventListener("instagram-draft", (event) => {
-      const draft = JSON.parse(event.data) as DraftRow;
+    async function refreshDrafts() {
+      try {
+        const response = await fetch("/api/socials/instagram/drafts", {
+          cache: "no-store",
+        });
 
-      setDraftRows((currentRows) => {
-        const nextRows = currentRows.filter((row) => row.id !== draft.id && row.externalId !== draft.externalId);
-        return [draft, ...nextRows].slice(0, 6);
-      });
-    });
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as { drafts?: DraftRow[] };
+
+        if (isMounted) {
+          setDraftRows(data.drafts || []);
+        }
+      } catch (error) {
+        console.error("Unable to refresh Instagram drafts:", error);
+      }
+    }
+
+    const refreshInterval = window.setInterval(() => void refreshDrafts(), 30_000);
 
     return () => {
-      events.close();
+      isMounted = false;
+      window.clearInterval(refreshInterval);
     };
+
   }, []);
 
   function handleSelectAll() {
+    
     setSelectedRows(allSelected ? [] : draftRows.map((row) => row.id));
   }
 
