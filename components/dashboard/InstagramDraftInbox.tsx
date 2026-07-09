@@ -58,10 +58,11 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
       isMounted = false;
       window.clearInterval(refreshInterval);
     };
-    
+
   }, []);
 
   function handleSelectAll() {
+    
     setSelectedRows(allSelected ? [] : draftRows.map((row) => row.id));
   }
 
