@@ -40,12 +40,6 @@ async function getCurrentUser(session) {
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const sessionInstagram = session?.connected_accounts?.instagram;
-
-  if (sessionInstagram?.connected) {
-    return connectedResponse("session", sessionInstagram);
-  }
-
   const currentUser = await getCurrentUser(session);
 
   if (!currentUser) {

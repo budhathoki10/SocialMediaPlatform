@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ArrowLeft, ArrowRight, CheckCircle2, FileText, X } from "lucide-react";
 
@@ -371,25 +370,16 @@ const InstagramPrerequisiteDialog = ({
 );
 
 const OnboardingContent = () => {
-  const searchParams = useSearchParams();
   const { data: session, update } = useSession();
   const appSession = session as AppSession | null;
   const sessionConnections = appSession?.connected_accounts;
-  const sessionGithub = sessionConnections?.github;
-  const sessionLinkedin = sessionConnections?.linkedin;
-  const sessionInstagram = sessionConnections?.instagram;
-  const sessionGithubConnected = Boolean(sessionGithub?.connected);
-  const sessionLinkedinConnected = Boolean(sessionLinkedin?.connected);
-  const sessionInstagramConnected = Boolean(sessionInstagram?.connected);
-  const [savedConnections, setSavedConnections] = useState<ConnectedAccounts>({});
+  const [savedConnections, setSavedConnections] = useState<ConnectedAccounts | null>(null);
   const [showInstagramPrerequisites, setShowInstagramPrerequisites] = useState(false);
   const [instagramPrerequisitesAgreed, setInstagramPrerequisitesAgreed] = useState(false);
-  const isGithubConnected =
-    searchParams.get("github") === "connected" || sessionGithubConnected || Boolean(savedConnections.github?.connected);
-  const isLinkedinConnected =
-    searchParams.get("linkedin") === "connected" || sessionLinkedinConnected || Boolean(savedConnections.linkedin?.connected);
-  const isInstagramConnected =
-    searchParams.get("instagram") === "connected" || sessionInstagramConnected || Boolean(savedConnections.instagram?.connected);
+  const currentConnections = savedConnections || sessionConnections || {};
+  const isGithubConnected = Boolean(currentConnections.github?.connected);
+  const isLinkedinConnected = Boolean(currentConnections.linkedin?.connected);
+  const isInstagramConnected = Boolean(currentConnections.instagram?.connected);
   const currentStep = onboardingSteps[currentStepIndex];
   const platforms = onboardingPlatforms.map((platform) => ({
     ...platform,
@@ -412,25 +402,19 @@ const OnboardingContent = () => {
 
   useEffect(() => {
     const platformsToLoad = [
-      { key: "github", endpoint: "/api/auth/github/status", connected: sessionGithubConnected },
-      { key: "linkedin", endpoint: "/api/auth/linkedin/status", connected: sessionLinkedinConnected },
-      { key: "instagram", endpoint: "/api/auth/instagram/status", connected: sessionInstagramConnected },
-    ].filter((platform) => !platform.connected);
-
-    if (platformsToLoad.length === 0) {
-      return;
-    }
+      { key: "github", endpoint: "/api/auth/github/status" },
+      { key: "linkedin", endpoint: "/api/auth/linkedin/status" },
+      { key: "instagram", endpoint: "/api/auth/instagram/status" },
+    ];
 
     let isMounted = true;
 
     async function loadConnectionStatuses() {
       const nextConnections: ConnectedAccounts = {
-        github: sessionGithub || null,
-        linkedin: sessionLinkedin || null,
-        instagram: sessionInstagram || null,
+        github: null,
+        linkedin: null,
+        instagram: null,
       };
-      
-      let foundDatabaseConnection = false;
 
       for (const platform of platformsToLoad) {
         try {
@@ -448,14 +432,13 @@ const OnboardingContent = () => {
               username: data.username || null,
               connected_at: data.connected_at || null,
             };
-            foundDatabaseConnection = true;
           }
         } catch (error) {
           console.error(`Unable to load ${platform.key} connection status:`, error);
         }
       }
 
-      if (!isMounted || !foundDatabaseConnection) {
+      if (!isMounted) {
         return;
       }
 
@@ -469,12 +452,6 @@ const OnboardingContent = () => {
       isMounted = false;
     };
   }, [
-    sessionGithub,
-    sessionGithubConnected,
-    sessionInstagram,
-    sessionInstagramConnected,
-    sessionLinkedin,
-    sessionLinkedinConnected,
     update,
   ]);
 

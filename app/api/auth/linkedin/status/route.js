@@ -40,12 +40,6 @@ async function getCurrentUser(session) {
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const sessionLinkedin = session?.connected_accounts?.linkedin;
-
-  if (sessionLinkedin?.connected) {
-    return connectedResponse("session", sessionLinkedin);
-  }
-
   const currentUser = await getCurrentUser(session);
 
   if (!currentUser) {

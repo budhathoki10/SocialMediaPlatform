@@ -40,12 +40,6 @@ async function getCurrentUser(session) {
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const sessionGithub = session?.connected_accounts?.github;
-
-  if (sessionGithub?.connected) {
-    return connectedResponse("session", sessionGithub);
-  }
-
   const currentUser = await getCurrentUser(session);
 
   if (!currentUser) {
