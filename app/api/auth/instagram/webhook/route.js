@@ -92,12 +92,49 @@ async function findInstagramAccount(platformCandidates) {
     query.platform_user_id = { $in: platformCandidates };
   }
 
-  const matchedAccount = await ConnectedAccount.findOne(query).select("_id user_id platform_user_id").lean();
+  const matchedAccount = await ConnectedAccount.findOne(query)
+    .select("_id user_id platform_user_id +access_token")
+    .lean();
 
   if (matchedAccount) {
     return matchedAccount;
   }
 
+  return null;
+}
+
+async function getInstagramSenderProfile(senderId, accessTokens) {
+  const tokens = [...new Set(accessTokens.filter(Boolean))];
+
+  if (!senderId || tokens.length === 0) {
+    return null;
+  }
+
+  for (const accessToken of tokens) {
+    try {
+      const profileUrl = new URL(`https://graph.instagram.com/v25.0/${senderId}`);
+      profileUrl.searchParams.set("fields", "name,username,profile_pic");
+      profileUrl.searchParams.set("access_token", accessToken);
+
+      const response = await fetch(profileUrl, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      });
+
+      const profile = await response.json();
+
+      if (response.ok) {
+        return {
+          username: profile?.username || profile?.name || null,
+          profilePictureUrl: profile?.profile_pic || null,
+        };
+      }
+    } catch {
+      // Try the next configured token without failing the webhook.
+    }
+  }
+
+  console.warn("Unable to load Instagram sender profile.", { senderId });
   return null;
 }
 
@@ -133,7 +170,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     const body = await req.json();
-
+ console.log("Mesiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
     console.log("Instagram webhook event received:");
     console.log(JSON.stringify(body, null, 2));
 
@@ -152,6 +189,11 @@ export async function POST(req) {
         continue;
       }
 
+      const senderProfile = await getInstagramSenderProfile(
+        webhookEvent.senderId,
+        [account.access_token, process.env.INSTAGRAM_REPLIED_ACCESSTOKEN],
+      );
+
       await upsertInstagramDraft({
         userId: account.user_id,
         connectedAccountId: account._id,
@@ -159,7 +201,8 @@ export async function POST(req) {
         externalId: webhookEvent.externalId,
         source: webhookEvent.source,
         senderId: webhookEvent.senderId,
-        senderUsername: webhookEvent.senderUsername,
+        senderUsername: senderProfile?.username || webhookEvent.senderUsername,
+        senderProfilePictureUrl: senderProfile?.profilePictureUrl || null,
         message: webhookEvent.message,
       });
     }

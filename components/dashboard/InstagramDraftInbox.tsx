@@ -7,6 +7,7 @@ type DraftRow = {
   id: string;
   externalId: string;
   user: string;
+  profilePictureUrl?: string | null;
   source: string;
   message: string;
   draft: string;
@@ -24,10 +25,6 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   const [draftRows, setDraftRows] = useState<DraftRow[]>(rows);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const allSelected = draftRows.length > 0 && selectedRows.length === draftRows.length;
-
-  useEffect(() => {
-    setDraftRows(rows);
-  }, [rows]);
 
   useEffect(() => {
     let isMounted = true;
@@ -71,7 +68,8 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
       currentRows.includes(id) ? currentRows.filter((currentId) => currentId !== id) : [...currentRows, id],
     );
   }
-
+  console.log("________________________________________________-------")
+console.log("draft rows is", draftRows);
   return (
     <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
@@ -134,7 +132,17 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                 </td>
                 <td className="whitespace-nowrap px-3 py-3">
                   <span className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600">
-                    <span className="h-6 w-6 rounded-full border border-white bg-gradient-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
+                    {row.profilePictureUrl ? (
+                      // Instagram profile URLs are short-lived and use dynamic CDN hostnames.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={row.profilePictureUrl}
+                        alt=""
+                        className="h-6 w-6 rounded-full border border-white object-cover shadow-sm ring-1 ring-slate-200"
+                      />
+                    ) : (
+                      <span className="h-6 w-6 rounded-full border border-white bg-gradient-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
+                    )}
                     {row.user}
                   </span>
                 </td>
