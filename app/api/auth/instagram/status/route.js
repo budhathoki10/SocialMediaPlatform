@@ -1,3 +1,5 @@
+
+// this file checks if the user account is connected to Instagram and returns the connection status along with the username and connected_at timestamp if connected.
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 

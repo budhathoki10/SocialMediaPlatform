@@ -30,7 +30,9 @@ type InstagramSession = {
 type InstagramDraftRow = {
   id: string;
   externalId: string;
-  user: string;
+  name: string;
+  username: string;
+  profilePictureUrl?: string | null;
   source: string;
   message: string;
   draft: string;

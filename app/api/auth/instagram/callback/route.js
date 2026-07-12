@@ -1,3 +1,6 @@
+// in this file it recieves the code from instagram and exchanges it for an access token, fetches Instagram account info, then saves the connected account in MongoDB.
+
+
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -95,6 +98,7 @@ export async function GET(req) {
 
   const expiresAt = getTokenExpirationDate(tokenData.expires_in);
 
+  // save the instagram details in the connected accounts collection
   await ConnectedAccount.findOneAndUpdate(
     { user_id: currentUser._id, platform: "instagram" },
     {
