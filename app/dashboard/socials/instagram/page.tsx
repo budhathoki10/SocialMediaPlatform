@@ -40,6 +40,7 @@ type InstagramDraftRow = {
   tone: string;
   status: string;
   createdAt: string | null;
+  sentAt: string | null;
 };
 
 type InstagramDraftStats = {

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle2, LoaderCircle, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type DraftRow = {
@@ -16,6 +16,7 @@ type DraftRow = {
   tone: string;
   status: string;
   createdAt: string | null;
+  sentAt: string | null;
 };
 
 type InstagramDraftInboxProps = {
@@ -23,7 +24,7 @@ type InstagramDraftInboxProps = {
 };
 
 const PAGE_SIZE = 6;
-const draftTabs = ["All", "Comments", "DMs"] as const;
+const draftTabs = ["All", "Comments", "DMs", "Replied"] as const;
 type DraftTab = (typeof draftTabs)[number];
 
 export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) {
@@ -31,12 +32,19 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<DraftTab>("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const isRepliedTab = activeTab === "Replied";
   const filteredRows = draftRows.filter((row) => {
-    if (activeTab === "All") {
-      return true;
+    if (isRepliedTab) {
+      return row.status === "sent";
     }
 
-    return row.source === (activeTab === "Comments" ? "Comment" : "DM");
+    if (activeTab === "All") {
+      return row.status === "pending";
+    }
+
+    return row.status === "pending" && row.source === (activeTab === "Comments" ? "Comment" : "DM");
   });
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -104,12 +112,63 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     setSelectedRows([]);
   }
 
-  console.log("________________________________________________-------")
-console.log("draft rows is", draftRows);
+  async function handleApprove(draftId: string) {
+    if (processingId) {
+      return;
+    }
+
+    setProcessingId(draftId);
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`/api/socials/instagram/approve/${draftId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "approve" }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        message?: string;
+        draft?: { id: string; status: string; sentAt: string | null };
+      };
+
+      if (!response.ok) {
+        setFeedback({ type: "error", message: data.error || "Unable to send the Instagram reply." });
+        return;
+      }
+
+      setDraftRows((currentRows) =>
+        currentRows.map((row) =>
+          row.id === draftId
+            ? { ...row, status: data.draft?.status || "sent", sentAt: data.draft?.sentAt || new Date().toISOString() }
+            : row,
+        ),
+      );
+      setSelectedRows((currentRows) => currentRows.filter((id) => id !== draftId));
+      setFeedback({ type: "success", message: data.message || "Instagram reply sent successfully." });
+    } catch (error) {
+      console.error("Unable to approve Instagram draft:", error);
+      setFeedback({ type: "error", message: "Unable to connect to the server." });
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+
+
+  
+
   return (
     <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-        <h2 className="text-base font-bold text-slate-950">Draft Inbox</h2>
+        <div>
+          <h2 className="text-base font-bold text-slate-950">Draft Inbox</h2>
+          {feedback ? (
+            <p className={`mt-1 text-xs font-medium ${feedback.type === "success" ? "text-emerald-600" : "text-red-600"}`}>
+              {feedback.message}
+            </p>
+          ) : null}
+        </div>
         <div className="flex flex-wrap items-center justify-end gap-4">
           <div className="flex rounded-md bg-slate-50 p-1 text-xs font-semibold text-slate-500">
             {draftTabs.map((tab) => (
@@ -117,7 +176,7 @@ console.log("draft rows is", draftRows);
                 key={tab}
                 type="button"
                 onClick={() => handleTabChange(tab)}
-                className={`rounded px-3 py-1.5 transition ${
+                className={`rounded px-3 py-1.5  cursor-pointer transition ${
                   activeTab === tab ? "bg-white text-[#4338ca] shadow-sm" : "hover:text-slate-900"
                 }`}
               >
@@ -132,43 +191,53 @@ console.log("draft rows is", draftRows);
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
             <tr>
-              <th className="w-10 px-5 py-3">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={handleSelectAll}
-                  className="cursor-pointer rounded border-slate-300"
-                  aria-label="Select all drafts"
-                />
-              </th>
+              {!isRepliedTab ? (
+                <th className="w-10 px-5 py-3">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={handleSelectAll}
+                    className="cursor-pointer rounded border-slate-300"
+                    aria-label="Select all drafts"
+                  />
+                </th>
+              ) : null}
               <th className="px-3 py-3">User</th>
               <th className="px-3 py-3">Source</th>
               <th className="px-3 py-3">Message Preview</th>
-              <th className="px-3 py-3">AI Draft Preview</th>
-              <th className="px-3 py-3">Confidence</th>
-              <th className="px-5 py-3 text-right">Actions</th>
+              <th className="px-3 py-3">{isRepliedTab ? "Replied" : "AI Draft Preview"}</th>
+              {!isRepliedTab ? <th className="px-3 py-3">Confidence</th> : null}
+              {!isRepliedTab ? <th className="px-5 py-3 text-right">Actions</th> : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-12 text-center">
-                  <p className="text-sm font-bold text-slate-700">No unreplied drafts yet</p>
-                  <p className="mt-1 text-xs text-slate-500">New Instagram DM and comment drafts will appear here.</p>
+                <td colSpan={isRepliedTab ? 4 : 7} className="px-5 py-12 text-center">
+                  <p className="text-sm font-bold text-slate-700">
+                    {isRepliedTab ? "No replies sent in the last 24 hours" : "No unreplied drafts yet"}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {isRepliedTab
+                      ? "Recently approved Instagram replies will appear here."
+                      : "New Instagram DM and comment drafts will appear here."}
+                  </p>
                 </td>
               </tr>
             ) : (
               pageRows.map((row) => (
                 <tr key={row.id} className="hover:bg-slate-50/70">
-                  <td className="px-5 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedRows.includes(row.id)}
-                      onChange={() => handleSelectRow(row.id)}
-                      className="cursor-pointer rounded border-slate-300"
-                      aria-label={`Select ${row.username}`}
-                    />
-                  </td>
+                  {!isRepliedTab ? (
+                    <td className="px-5 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.includes(row.id)}
+                        onChange={() => handleSelectRow(row.id)}
+                        className="cursor-pointer rounded border-slate-300"
+                        aria-label={`Select ${row.username}`}
+                      />
+                    </td>
+                  ) : null}
                   <td className="whitespace-nowrap px-3 py-3">
                     <div className="flex items-center gap-2">
                       {row.profilePictureUrl ? (
@@ -192,21 +261,30 @@ console.log("draft rows is", draftRows);
                     <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{row.source}</span>
                   </td>
                   <td className="max-w-44 truncate px-3 py-3 text-xs text-slate-500">&quot;{row.message}&quot;</td>
-                  <td className={`max-w-52 truncate px-3 py-3 text-xs ${row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
+                  <td className={`max-w-52 truncate px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
                     &quot;{row.draft}&quot;
                   </td>
-                  <td className={`px-3 py-3 text-xs font-bold ${row.tone === "bad" ? "text-red-500" : "text-emerald-500"}`}>
-                    {row.confidence}
-                  </td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-2">
+                  {!isRepliedTab ? (
+                    <td className={`px-3 py-3 text-xs font-bold ${row.tone === "bad" ? "text-red-500" : "text-emerald-500"}`}>
+                      {row.confidence}
+                    </td>
+                  ) : null}
+                  {!isRepliedTab ? (
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end gap-2">
                       <button
                         type="button"
+                        onClick={() => handleApprove(row.id)}
+                        disabled={processingId !== null}
                         aria-label={`Approve draft from ${row.username}`}
-                        title="Approve"
-                        className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                        title="Approve and send"
+                        className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        {processingId === row.id ? (
+                          <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        )}
                       </button>
                       <button
                         type="button"
@@ -224,8 +302,9 @@ console.log("draft rows is", draftRows);
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
-                    </div>
-                  </td>
+                      </div>
+                    </td>
+                  ) : null}
                 </tr>
               ))
             )}

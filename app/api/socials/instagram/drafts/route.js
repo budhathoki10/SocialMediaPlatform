@@ -34,11 +34,15 @@ export async function GET() {
     return NextResponse.json({ drafts: [] }, { status: 401 });
   }
 
+  const repliedSince = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const drafts = await InstagramDraft.find({
     user_id: currentUser._id,
-    status: "pending",
+    $or: [
+      { status: "pending" },
+      { status: "sent", sent_at: { $gte: repliedSince } },
+    ],
   })
-    .sort({ created_at: -1 })
+    .sort({ updated_at: -1 })
     .lean();
 
   const [totalDrafts, totalDmDrafts, totalCommentDrafts, sentToday] = await Promise.all([
@@ -48,7 +52,7 @@ export async function GET() {
     InstagramDraft.countDocuments({
       user_id: currentUser._id,
       status: "sent",
-      created_at: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      sent_at: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
     }),
   ]);
 
