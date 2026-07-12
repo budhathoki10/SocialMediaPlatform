@@ -419,7 +419,7 @@ export default function TechNewsFeed() {
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 disabled={currentPage === 1}
-                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50  cursor-pointer"
+                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
               </button>
@@ -430,7 +430,7 @@ export default function TechNewsFeed() {
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                 disabled={currentPage === totalPages}
-                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
               </button>

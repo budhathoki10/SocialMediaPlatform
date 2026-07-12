@@ -1,3 +1,4 @@
+// this is the webhook where instagram sends the events when a user sends a message or comments on a post. This webhook will receive the events and create a draft in the database for the user to reply to.
 import { connectDB } from "@/lib/db";
 import { upsertInstagramDraft } from "@/lib/instagram-drafts";
 import { ConnectedAccount } from "@/lib/models";
@@ -16,6 +17,7 @@ function createExternalId(prefix, ...parts) {
   return [prefix, ...parts.filter(Boolean)].join(":");
 }
 
+// it extracts the dm and comments event from the Instagram webhook body and returns an array of events with the following structure:
 function extractDraftEvents(body) {
   const events = [];
 
@@ -103,6 +105,7 @@ async function findInstagramAccount(platformCandidates) {
   return null;
 }
 
+// fetch the user name, photo and other details of the sender from the Instagram Graph API using the senderId and the access token of the connected account. If the senderId is not provided or the access token is not valid, return null.
 async function getInstagramSenderProfile(senderId, accessTokens) {
   const tokens = [...new Set(accessTokens.filter(Boolean))];
 
@@ -125,6 +128,7 @@ async function getInstagramSenderProfile(senderId, accessTokens) {
 
       if (response.ok) {
         return {
+          name: profile?.name || profile?.username || null,
           username: profile?.username || profile?.name || null,
           profilePictureUrl: profile?.profile_pic || null,
         };
@@ -201,6 +205,7 @@ export async function POST(req) {
         externalId: webhookEvent.externalId,
         source: webhookEvent.source,
         senderId: webhookEvent.senderId,
+        senderName: senderProfile?.name || null,
         senderUsername: senderProfile?.username || webhookEvent.senderUsername,
         senderProfilePictureUrl: senderProfile?.profilePictureUrl || null,
         message: webhookEvent.message,

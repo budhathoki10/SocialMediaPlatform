@@ -39,7 +39,6 @@ export async function GET() {
     status: "pending",
   })
     .sort({ created_at: -1 })
-    .limit(6)
     .lean();
 
   const [totalDrafts, totalDmDrafts, totalCommentDrafts, sentToday] = await Promise.all([
