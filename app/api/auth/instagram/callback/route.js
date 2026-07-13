@@ -60,7 +60,6 @@ export async function GET(req) {
     })
   );
   const tokenData = await tokenRes.json();
-  console.log("token data", tokenData);
 
   if (!tokenData.access_token) {
     return NextResponse.redirect(appUrl("/onboarding?error=instagram_token_failed"));
@@ -71,7 +70,6 @@ export async function GET(req) {
     `https://graph.facebook.com/v18.0/me/accounts?access_token=${tokenData.access_token}`
   );
   const userData = await accountRes.json();
-  console.log("pages data", userData);
 
   //  no pages found
   if (!userData.data || userData.data.length === 0) {
@@ -81,15 +79,17 @@ export async function GET(req) {
   const pageId = userData.data[0].id;
   const pageAccessToken = userData.data[0].access_token;
 
+  if (!pageAccessToken) {
+    return NextResponse.redirect(appUrl("/onboarding?error=instagram_page_token_failed"));
+  }
+
 // Get Instagram account
   const igRes = await fetch(
     `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name,biography,profile_picture_url,media_count,followers_count,follows_count}&access_token=${pageAccessToken}`
   );
   const igData = await igRes.json();
-  console.log("instagram account", igData);
 
   const igAccount = igData.instagram_business_account;
-  console.log("igaccount", igAccount);
 
 
   if (!igAccount) {
@@ -103,8 +103,9 @@ export async function GET(req) {
     { user_id: currentUser._id, platform: "instagram" },
     {
       $set: {
-        access_token: tokenData.access_token,
+        access_token: pageAccessToken,
         platform_user_id: igAccount.id,
+        page_id: pageId,
         platform_username: igAccount.username || igAccount.name || igAccount.id,
         name: igAccount.name || igAccount.username || "",
         biography: igAccount.biography || "",

@@ -26,6 +26,13 @@ function extractDraftEvents(body) {
 
     for (const messageEvent of entry?.messaging || []) {
       const message = messageEvent?.message;
+
+      // Meta echoes messages sent by the connected Instagram account. They are
+      // already recorded as sent after approval and must not become new drafts.
+      if (message?.is_echo) {
+        continue;
+      }
+
       const text = message?.text || message?.quick_reply?.payload || "";
 
       if (!text) {
