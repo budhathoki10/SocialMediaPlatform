@@ -1,116 +1,73 @@
+import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import InstagramDraft from "@/models/InstagramDraft";
-import { getCurrentUser } from "@/lib/getCurrentUser";
 
-export const dynamic = "force-dynamic";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { connectDB } from "@/lib/db";
+import { InstagramDraft, User } from "@/lib/models";
 
-export async function POST(request, { params }) {
+async function getCurrentUser(session) {
+  if (!session?.user?.id && !session?.user?.email) {
+    return null;
+  }
+
+  await connectDB();
+
+  if (session.user.id) {
+    const user = await User.findById(session.user.id).select("_id");
+
+    if (user) {
+      return user;
+    }
+  }
+
+  return User.findOne({ email: session.user.email }).select("_id");
+}
+
+export async function PATCH(request, { params }) {
   try {
-    await connectDB();
-
-    const currentUser = await getCurrentUser();
+    const session = await getServerSession(authOptions);
+    const currentUser = await getCurrentUser(session);
 
     if (!currentUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Login required." }, { status: 401 });
     }
 
     const { draftId } = await params;
 
-    if (!draftId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Draft ID is required",
-        },
-        { status: 400 }
-      );
+    if (!mongoose.Types.ObjectId.isValid(draftId)) {
+      return NextResponse.json({ error: "Invalid draft ID." }, { status: 400 });
     }
 
-    // Find draft
+    const body = await request.json();
+
+    if (body.action !== "reject") {
+      return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
+    }
+
     const draft = await InstagramDraft.findOne({
       _id: draftId,
       user_id: currentUser._id,
+      status: "pending",
     });
 
     if (!draft) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Draft not found",
-        },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Pending draft not found." }, { status: 404 });
     }
 
-    // Prevent rejecting twice
-    if (draft.status !== "pending") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Draft is already ${draft.status}`,
-        },
-        { status: 409 }
-      );
-    }
+    draft.status = "rejected";
+    draft.updated_at = new Date();
+    await draft.save();
 
-    // Update draft
-    const updatedDraft = await InstagramDraft.findOneAndUpdate(
-      {
-        _id: draftId,
-        user_id: currentUser._id,
-        status: "pending",
+    return NextResponse.json({
+      message: "Instagram draft rejected successfully.",
+      draft: {
+        id: draft._id.toString(),
+        status: draft.status,
       },
-      {
-        $set: {
-          status: "dismissed",
-          rejected_at: new Date(),
-          rejected_by: currentUser._id,
-        },
-      },
-      {
-        returnDocument: "after",
-        runValidators: true,
-      }
-    );
-
-    if (!updatedDraft) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unable to reject draft",
-        },
-        { status: 409 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Draft rejected successfully",
-        draft: {
-          id: updatedDraft._id,
-          status: updatedDraft.status,
-          rejectedAt: updatedDraft.rejected_at,
-        },
-      },
-      { status: 200 }
-    );
+    });
   } catch (error) {
-    console.error("Reject draft error:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to reject draft",
-      },
-      { status: 500 }
-    );
+    console.error("Error occurred while rejecting Instagram draft:", error);
+    return NextResponse.json({ error: "An error occurred while rejecting the Instagram draft." }, { status: 500 });
   }
 }

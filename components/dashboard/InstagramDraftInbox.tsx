@@ -33,11 +33,12 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   const [activeTab, setActiveTab] = useState<DraftTab>("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState<"approve" | "reject" | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const isRepliedTab = activeTab === "Replied";
   const filteredRows = draftRows.filter((row) => {
     if (isRepliedTab) {
-      return row.status === "sent";
+      return row.status === "sent" || row.status === "approved";
     }
 
     if (activeTab === "All") {
@@ -113,11 +114,12 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   }
 
   async function handleApprove(draftId: string) {
-    if (processingId) {
+    if (processingId === draftId) {
       return;
     }
 
     setProcessingId(draftId);
+    setProcessingAction("approve");
     setFeedback(null);
 
     try {
@@ -151,12 +153,49 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
       setFeedback({ type: "error", message: "Unable to connect to the server." });
     } finally {
       setProcessingId(null);
+      setProcessingAction(null);
     }
   }
 
+  async function handleReject(draftId: string) {
+    if (processingId === draftId) {
+      return;
+    }
 
+    setProcessingId(draftId);
+    setProcessingAction("reject");
+    setFeedback(null);
 
-  
+    try {
+      const response = await fetch(`/api/socials/instagram/reject/${draftId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject" }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        message?: string;
+      };
+
+      if (!response.ok) {
+        setFeedback({ type: "error", message: data.error || "Unable to reject the Instagram draft." });
+        return;
+      }
+
+      // Remove the draft instantly from the UI
+      setDraftRows((currentRows) =>
+        currentRows.filter((row) => row.id !== draftId),
+      );
+      setSelectedRows((currentRows) => currentRows.filter((id) => id !== draftId));
+      setFeedback({ type: "success", message: data.message || "Instagram draft rejected successfully." });
+    } catch (error) {
+      console.error("Unable to reject Instagram draft:", error);
+      setFeedback({ type: "error", message: "Unable to connect to the server." });
+    } finally {
+      setProcessingId(null);
+      setProcessingAction(null);
+    }
+  }
 
   return (
     <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -272,36 +311,42 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                   {!isRepliedTab ? (
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleApprove(row.id)}
-                        disabled={processingId !== null}
-                        aria-label={`Approve draft from ${row.username}`}
-                        title="Approve and send"
-                        className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
-                      >
-                        {processingId === row.id ? (
-                          <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Delete draft from ${row.username}`}
-                        title="Delete"
-                        className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Edit draft from ${row.username}`}
-                        title="Edit"
-                        className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApprove(row.id)}
+                          disabled={processingId !== null}
+                          aria-label={`Approve draft from ${row.username}`}
+                          title="Approve"
+                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+                        >
+                          {processingId === row.id && processingAction === "approve" ? (
+                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReject(row.id)}
+                          disabled={processingId !== null}
+                          aria-label={`Reject draft from ${row.username}`}
+                          title="Reject"
+                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+                        >
+                          {processingId === row.id && processingAction === "reject" ? (
+                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Edit draft from ${row.username}`}
+                          title="Edit"
+                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </td>
                   ) : null}
