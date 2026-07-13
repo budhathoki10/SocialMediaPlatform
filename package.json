@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "node app.js",
     "lint": "eslint",
-    "git:feature": "node scripts/git-feature-workflow.js"
+    "git:feature": "node scripts/git-feature-workflow.js",
+    "test": "node --test"
   },
   "dependencies": {
     "bullmq": "^5.79.0",

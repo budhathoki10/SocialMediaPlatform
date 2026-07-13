@@ -124,6 +124,6 @@ export async function PATCH(request, { params }) {
     });
   } catch (error) {
     console.error("Error occurred while sending Instagram reply:", error);
-    return NextResponse.json({ error: "An error occurred while sending the Instagram reply." }, { status: 500 });
+    return NextResponse.json({ error: "Cannot send Instagram reply.Please try again later." }, { status: 500 });
   }
 }
