@@ -33,7 +33,10 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   const [activeTab, setActiveTab] = useState<DraftTab>("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [processingAction, setProcessingAction] = useState<"approve" | "reject" | null>(null);
+  const [processingAction, setProcessingAction] = useState<"approve" | "reject" | "edit" | null>(null);
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
+  const [draftEditValue, setDraftEditValue] = useState("");
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const isRepliedTab = activeTab === "Replied";
   const filteredRows = draftRows.filter((row) => {
@@ -111,6 +114,67 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     setActiveTab(tab);
     setCurrentPage(1);
     setSelectedRows([]);
+  }
+
+  function handleStartEdit(row: DraftRow) {
+    setEditingDraftId(row.id);
+    setDraftEditValue(row.draft);
+    setFeedback(null);
+  }
+
+  function handleCancelEdit() {
+    setEditingDraftId(null);
+    setDraftEditValue("");
+  }
+
+  async function handleEditSave(draftId: string) {
+    if (processingId === draftId) {
+      return;
+    }
+
+    const trimmedDraft = draftEditValue.trim();
+
+    if (!trimmedDraft) {
+      setFeedback({ type: "error", message: "Draft reply cannot be empty." });
+      return;
+    }
+
+    setProcessingId(draftId);
+    setProcessingAction("edit");
+    setSavingEditId(draftId);
+    setFeedback(null);
+
+    try {
+      const response = await fetch(`/api/socials/instagram/edit/${draftId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draft: trimmedDraft }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        message?: string;
+        draft?: { id: string; draft: string };
+      };
+
+      if (!response.ok) {
+        setFeedback({ type: "error", message: data.error || "Unable to update the Instagram draft." });
+        return;
+      }
+
+      setDraftRows((currentRows) =>
+        currentRows.map((row) => (row.id === draftId ? { ...row, draft: data.draft?.draft || trimmedDraft } : row)),
+      );
+      setEditingDraftId(null);
+      setDraftEditValue("");
+      setFeedback({ type: "success", message: data.message || "Instagram draft updated successfully." });
+    } catch (error) {
+      console.error("Unable to update Instagram draft:", error);
+      setFeedback({ type: "error", message: "Unable to connect to the server." });
+    } finally {
+      setProcessingId(null);
+      setProcessingAction(null);
+      setSavingEditId(null);
+    }
   }
 
   async function handleApprove(draftId: string) {
@@ -288,7 +352,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                           className="h-12 w-12 rounded-full border border-white object-cover shadow-sm ring-1 ring-slate-200"
                         />
                       ) : (
-                        <span className="h-15 w-15 rounded-full border border-white bg-gradient-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
+                        <span className="h-15 w-15 rounded-full border border-white bg-linear-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
                       )}
                       <span className="min-w-0">
                         <span className="block truncate text-xs font-semibold text-slate-700">{row.name}</span>
@@ -300,8 +364,44 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                     <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{row.source}</span>
                   </td>
                   <td className="max-w-44 truncate px-3 py-3 text-xs text-slate-500">&quot;{row.message}&quot;</td>
-                  <td className={`max-w-52 truncate px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
-                    &quot;{row.draft}&quot;
+                  <td className={`max-w-52 px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
+                    {editingDraftId === row.id ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={draftEditValue}
+                          onChange={(event) => setDraftEditValue(event.target.value)}
+                          rows={3}
+                          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleEditSave(row.id)}
+                            disabled={processingId !== null}
+                            className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50"
+                          >
+                            {savingEditId === row.id ? "Saving..." : "Save"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            disabled={processingId !== null}
+                            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(row)}
+                        className="w-full cursor-text text-left"
+                      >
+                        <span className="block truncate">&quot;{row.draft}&quot;</span>
+                        <span className="mt-1 block text-[11px] text-slate-400">Click to edit</span>
+                      </button>
+                    )}
                   </td>
                   {!isRepliedTab ? (
                     <td className={`px-3 py-3 text-xs font-bold ${row.tone === "bad" ? "text-red-500" : "text-emerald-500"}`}>
@@ -341,11 +441,17 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                         </button>
                         <button
                           type="button"
+                          onClick={() => handleStartEdit(row)}
+                          disabled={processingId !== null}
                           aria-label={`Edit draft from ${row.username}`}
                           title="Edit"
-                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          {processingId === row.id && processingAction === "edit" ? (
+                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Pencil className="h-3.5 w-3.5" />
+                          )}
                         </button>
                       </div>
                     </td>
