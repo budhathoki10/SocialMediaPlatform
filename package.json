@@ -7,7 +7,8 @@
     "dev": "nodemon app.js",
     "build": "next build",
     "start": "node app.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "git:feature": "node scripts/git-feature-workflow.js"
   },
   "dependencies": {
     "bullmq": "^5.79.0",
