@@ -114,6 +114,8 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     setActiveTab(tab);
     setCurrentPage(1);
     setSelectedRows([]);
+    setEditingDraftId(null);
+    setDraftEditValue("");
   }
 
   function handleStartEdit(row: DraftRow) {
@@ -206,11 +208,13 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
       setDraftRows((currentRows) =>
         currentRows.map((row) =>
           row.id === draftId
-            ? { ...row, status: data.draft?.status || "sent", sentAt: data.draft?.sentAt || new Date().toISOString() }
+            ? { ...row, status: "sent", sentAt: data.draft?.sentAt || new Date().toISOString() }
             : row,
         ),
       );
       setSelectedRows((currentRows) => currentRows.filter((id) => id !== draftId));
+      setEditingDraftId(null);
+      setDraftEditValue("");
       setFeedback({ type: "success", message: data.message || "Instagram reply sent successfully." });
     } catch (error) {
       console.error("Unable to approve Instagram draft:", error);
@@ -365,7 +369,9 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                   </td>
                   <td className="max-w-44 truncate px-3 py-3 text-xs text-slate-500">&quot;{row.message}&quot;</td>
                   <td className={`max-w-52 px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
-                    {editingDraftId === row.id ? (
+                    {isRepliedTab ? (
+                      <span className="block truncate">&quot;{row.draft}&quot;</span>
+                    ) : editingDraftId === row.id ? (
                       <div className="space-y-2">
                         <textarea
                           value={draftEditValue}

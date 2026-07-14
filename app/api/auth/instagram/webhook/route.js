@@ -1,6 +1,6 @@
 // this is the webhook where instagram sends the events when a user sends a message or comments on a post. This webhook will receive the events and create a draft in the database for the user to reply to.
 import { connectDB } from "@/lib/db";
-import { upsertInstagramDraft } from "@/lib/instagram-drafts";
+import { markInstagramReplySent, upsertInstagramDraft } from "@/lib/instagram-drafts";
 import { ConnectedAccount } from "@/lib/models";
 
 export const dynamic = "force-dynamic";
@@ -70,10 +70,14 @@ function extractDraftEvents(body) {
       }
 
       const isComment = change?.field?.includes("comment") || value?.comment_id || value?.from;
+      const platformCommentId = isComment ? value?.id || value?.comment_id || null : null;
+      const parentCommentId = isComment ? value?.parent_id || value?.parent_comment_id || null : null;
 
       events.push({
         platformCandidates: [...platformCandidates],
         source: isComment ? "comment" : "dm",
+        platformCommentId,
+        parentCommentId,
         externalId: createExternalId(
           isComment ? "instagram-comment" : "instagram-event",
           value?.id || value?.comment_id,
@@ -200,6 +204,20 @@ export async function POST(req) {
         continue;
       }
 
+      const isOutgoingCommentReply =
+        webhookEvent.source === "comment" &&
+        webhookEvent.senderId &&
+        String(webhookEvent.senderId) === String(account.platform_user_id);
+
+      if (isOutgoingCommentReply) {
+        await markInstagramReplySent({
+          userId: account.user_id,
+          platformReplyId: webhookEvent.platformCommentId,
+          parentCommentId: webhookEvent.parentCommentId,
+        });
+        continue;
+      }
+
       const senderProfile = await getInstagramSenderProfile(
         webhookEvent.senderId,
         [account.access_token, process.env.INSTAGRAM_REPLIED_ACCESSTOKEN],
@@ -211,6 +229,7 @@ export async function POST(req) {
         platformUserId: account.platform_user_id,
         externalId: webhookEvent.externalId,
         source: webhookEvent.source,
+        platformCommentId: webhookEvent.platformCommentId,
         senderId: webhookEvent.senderId,
         senderName: senderProfile?.name || null,
         senderUsername: senderProfile?.username || webhookEvent.senderUsername,
