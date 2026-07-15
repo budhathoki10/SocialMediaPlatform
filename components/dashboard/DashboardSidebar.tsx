@@ -33,6 +33,12 @@ const socialItems = [
   { label: "Gmail", image: "/landing/gmail.png", message: "clicked in gmail" },
 ];
 
+const comingSoonPill = (
+  <span className="ml-auto rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-600">
+    Soon
+  </span>
+);
+
 function SidebarIconTooltip({ label, children }: { children: React.ReactNode; label: string }) {
   return (
     <span className="sidebar-nav-icon">
@@ -90,6 +96,7 @@ export default function DashboardSidebar() {
                 <Icon />
               </SidebarIconTooltip>
               <span className="sidebar-nav-label">{label}</span>
+              {label === "Auto Reply" && comingSoonPill}
             </Link>
           );
         })}
@@ -122,6 +129,7 @@ export default function DashboardSidebar() {
                   <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
                     <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
+                    {comingSoonPill}
                   </button>
                 );
               })}
@@ -139,9 +147,16 @@ export default function DashboardSidebar() {
 
       <div className="mt-auto">
         <div className="rounded-lg border border-indigo-100 bg-[#f4f6ff] px-4 py-5">
-          <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
+            {comingSoonPill}
+          </div>
           <p className="mt-2 text-[11px] leading-5 text-slate-600">Unlock advanced automation tools and analytics.</p>
-          <button className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]">
+          <button
+            type="button"
+            onClick={() => alert("Billing is coming soon — we're still building this.")}
+            className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]"
+          >
             <Zap className="h-4 w-4" />
             Upgrade to Pro
           </button>

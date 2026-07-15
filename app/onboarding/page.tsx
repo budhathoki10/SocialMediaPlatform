@@ -232,30 +232,38 @@ const PlatformGrid = ({
     <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
       {platforms.map(({ name, status, Logo }) => {
         const isConnected = status === "connected";
+        const isComingSoon = name === "Twitter" || name === "Facebook" || name === "Gmail";
 
         return (
           <button
             key={name}
             type="button"
-            onClick={() => onPlatformClick(name)}
-            disabled={isConnected}
-            className={`flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center hover:cursor-pointer transition disabled:cursor-default ${
+            onClick={() => !isComingSoon && onPlatformClick(name)}
+            disabled={isConnected || isComingSoon}
+            className={`relative flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center transition disabled:cursor-default ${
               isConnected
                 ? "border-slate-200 bg-slate-50 opacity-60 shadow-sm"
-                : "border-slate-200 bg-white hover:border-indigo-600 hover:bg-indigo-50/20"
+                : isComingSoon
+                  ? "border-slate-200 bg-slate-50 opacity-70"
+                  : "border-slate-200 bg-white hover:cursor-pointer hover:border-indigo-600 hover:bg-indigo-50/20"
             }`}
           >
+            {isComingSoon && (
+              <span className="absolute right-2 top-2 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-600">
+                Soon
+              </span>
+            )}
             <span className="grid h-12 w-12 place-items-center">
               <Logo />
             </span>
             <span className="mt-4 text-sm font-semibold text-slate-950">{name}</span>
             <span
               className={`mt-2 inline-flex items-center gap-1 text-xs font-bold ${
-                isConnected ? "text-emerald-600" : "text-[#4338ca]"
+                isConnected ? "text-emerald-600" : isComingSoon ? "text-slate-400" : "text-[#4338ca]"
               }`}
             >
               {isConnected && <CheckCircle2 className="h-3.5 w-3.5" />}
-              {isConnected ? "Connected" : "Connect"}
+              {isConnected ? "Connected" : isComingSoon ? "Coming Soon" : "Connect"}
             </span>
           </button>
         );
