@@ -5,17 +5,12 @@ import {
   ChevronDown,
   CircleHelp,
   CirclePlus,
-  Camera,
   LayoutDashboard,
   LogOut,
-  Mail,
-  MessageCircle,
   MessageSquare,
   Newspaper,
-  Send,
   Settings,
   Share2,
-  
   Zap,
 } from "lucide-react";
 import Image from "next/image";
@@ -32,10 +27,10 @@ const sidebarItems = [
 ];
 
 const socialItems = [
-  { label: "WhatsApp", Icon: MessageCircle, message: "clicked in whatsapp" },
-  { label: "Facebook", Icon: Send, message: "clicked in facebook" },
-  { label: "Instagram", Icon: Camera, href: "/dashboard/socials/instagram" },
-  { label: "Gmail", Icon: Mail, message: "clicked in gmail" },
+  { label: "WhatsApp", image: "/landing/whatsapp.png", message: "clicked in whatsapp" },
+  { label: "Facebook", image: "/landing/facebook.png", message: "clicked in facebook" },
+  { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
+  { label: "Gmail", image: "/landing/gmail.png", message: "clicked in gmail" },
 ];
 
 function SidebarIconTooltip({ label, children }: { children: React.ReactNode; label: string }) {
@@ -115,23 +110,21 @@ export default function DashboardSidebar() {
 
           <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`} style={{ height: socialHeight }}>
             <div ref={socialContentRef} className="space-y-1 py-1.5">
-              {socialItems.map(({ label, Icon, message, href }) =>
-                href ? (
+              {socialItems.map(({ label, image, message, href }) => {
+                const iconEl = <Image src={image} alt="" width={20} height={20} className="h-4 w-4 rounded-sm object-contain" />;
+
+                return href ? (
                   <Link key={label} href={href} className={`sidebar-social-item ${pathname === href ? "text-[#4338ca]" : ""}`}>
-                    <span className="grid h-5 w-5 place-items-center">
-                      <Icon className="h-4 w-4" />
-                    </span>
+                    <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
                   </Link>
                 ) : (
                   <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
-                    <span className="grid h-5 w-5 place-items-center">
-                      <Icon className="h-4 w-4" />
-                    </span>
+                    <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
                   </button>
-                ),
-              )}
+                );
+              })}
             </div>
           </div>
         </div>

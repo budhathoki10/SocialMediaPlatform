@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, InstagramDraft, User } from "@/lib/models";
+import { approveInstagramDraft } from "@/lib/instagram-drafts";
+import { User } from "@/lib/models";
 
 async function getCurrentUser(session) {
   if (!session?.user?.id && !session?.user?.email) {
@@ -45,99 +46,15 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
     }
 
-    const draft = await InstagramDraft.findOne({
-      _id: draftId,
-      user_id: currentUser._id,
-      status: "pending",
-    });
+    const result = await approveInstagramDraft({ userId: currentUser._id, draftId });
 
-    if (!draft) {
-      return NextResponse.json({ error: "Pending draft not found." }, { status: 404 });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
-
-    if (!draft.draft_reply?.trim()) {
-      return NextResponse.json({ error: "Draft reply is empty." }, { status: 400 });
-    }
-
-    const account = await ConnectedAccount.findOne({
-      user_id: currentUser._id,
-      platform: "instagram",
-      status: "active",
-    }).select("+access_token page_id");
-
-    if (!account?.access_token) {
-      return NextResponse.json({ error: "Connected Instagram account not found." }, { status: 404 });
-    }
-
-    const isCommentReply = draft.source === "comment";
-
-    if (!isCommentReply && !draft.sender_id) {
-      return NextResponse.json({ error: "Instagram recipient ID is missing." }, { status: 400 });
-    }
-
-    if (!isCommentReply && !account.page_id) {
-      return NextResponse.json(
-        { error: "Connected Facebook Page ID is missing. Reconnect Instagram and try again." },
-        { status: 400 },
-      );
-    }
-
-    const replyText = draft.draft_reply.trim();
-    const savedCommentId = draft.platform_comment_id || draft.external_id?.split(":")[1] || null;
-
-    if (isCommentReply && !savedCommentId) {
-      return NextResponse.json({ error: "Instagram comment ID is missing." }, { status: 400 });
-    }
-
-    const instagramResponse = await fetch(
-      isCommentReply
-        ? `https://graph.facebook.com/v25.0/${savedCommentId}/replies`
-        : `https://graph.facebook.com/v25.0/${account.page_id}/messages`,
-      isCommentReply
-        ? {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams({ message: replyText, access_token: account.access_token }),
-          }
-        : {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${account.access_token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              recipient: { id: draft.sender_id },
-              message: { text: replyText },
-            }),
-          },
-    );
-
-    const instagramResult = await instagramResponse.json().catch(() => ({}));
-
-    if (!instagramResponse.ok) {
-      console.error("Instagram reply failed:", instagramResult);
-
-      return NextResponse.json(
-        { error: instagramResult?.error?.message || "Instagram rejected the reply." },
-        { status: instagramResponse.status },
-      );
-    }
-
-    draft.status = "sent";
-    draft.connected_account_id = account._id;
-    draft.sent_at = new Date();
-    draft.platform_message_id = instagramResult.id || instagramResult.message_id || null;
-    draft.updated_at = new Date();
-    await draft.save();
 
     return NextResponse.json({
       message: "Instagram reply sent successfully.",
-      draft: {
-        id: draft._id.toString(),
-        status: draft.status,
-        platformMessageId: draft.platform_message_id,
-        sentAt: draft.sent_at,
-      },
+      draft: result.draft,
     });
   } catch (error) {
     console.error("Error occurred while sending Instagram reply:", error);

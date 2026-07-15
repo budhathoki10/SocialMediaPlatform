@@ -29,11 +29,13 @@ type DraftTab = (typeof draftTabs)[number];
 
 export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) {
   const [draftRows, setDraftRows] = useState<DraftRow[]>(rows);
+  // this state is used to track which rows are selected for bulk actions. It stores the IDs of the selected drafts.
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<DraftTab>("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState<"approve" | "reject" | "edit" | null>(null);
+  const [bulkAction, setBulkAction] = useState<"approve" | "reject" | null>(null);
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null);
   const [draftEditValue, setDraftEditValue] = useState("");
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
@@ -265,6 +267,106 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     }
   }
 
+  async function handleAcceptAll() {
+    if (bulkAction || selectedRows.length === 0) {
+      return;
+    }
+
+    const draftIds = [...selectedRows];
+    setBulkAction("approve");
+    setFeedback(null);
+
+    try {
+      const response = await fetch("/api/socials/instagram/approve-bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftIds }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        message?: string;
+        succeeded?: { id: string; sentAt: string | null }[];
+        failed?: { id: string; error: string }[];
+      };
+
+      if (!response.ok) {
+        setFeedback({ type: "error", message: data.error || "Unable to send the Instagram replies." });
+        return;
+      }
+
+      const succeeded = data.succeeded || [];
+      const sentAtById = new Map(succeeded.map((item) => [item.id, item.sentAt]));
+      const succeededIds = new Set(sentAtById.keys());
+
+      setDraftRows((currentRows) =>
+        currentRows.map((row) =>
+          succeededIds.has(row.id)
+            ? { ...row, status: "sent", sentAt: sentAtById.get(row.id) || new Date().toISOString() }
+            : row,
+        ),
+      );
+      // Failed drafts stay selected so the user can see and retry them.
+      setSelectedRows((currentRows) => currentRows.filter((id) => !succeededIds.has(id)));
+
+      const failedCount = data.failed?.length || 0;
+      setFeedback({
+        type: failedCount > 0 ? "error" : "success",
+        message: data.message || `${succeeded.length} of ${draftIds.length} Instagram replies sent.`,
+      });
+    } catch (error) {
+      console.error("Unable to bulk approve Instagram drafts:", error);
+      setFeedback({ type: "error", message: "Unable to connect to the server." });
+    } finally {
+      setBulkAction(null);
+    }
+  }
+
+  async function handleRejectAll() {
+    if (bulkAction || selectedRows.length === 0) {
+      return;
+    }
+
+    const draftIds = [...selectedRows];
+    setBulkAction("reject");
+    setFeedback(null);
+
+    try {
+      const response = await fetch("/api/socials/instagram/reject-bulk", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ draftIds }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        message?: string;
+        succeeded?: { id: string }[];
+        failed?: { id: string; error: string }[];
+      };
+
+      if (!response.ok) {
+        setFeedback({ type: "error", message: data.error || "Unable to reject the Instagram drafts." });
+        return;
+      }
+
+      const succeededIds = new Set((data.succeeded || []).map((item) => item.id));
+
+      setDraftRows((currentRows) => currentRows.filter((row) => !succeededIds.has(row.id)));
+      // Failed drafts stay selected so the user can see and retry them.
+      setSelectedRows((currentRows) => currentRows.filter((id) => !succeededIds.has(id)));
+
+      const failedCount = data.failed?.length || 0;
+      setFeedback({
+        type: failedCount > 0 ? "error" : "success",
+        message: data.message || `${succeededIds.size} of ${draftIds.length} Instagram drafts rejected.`,
+      });
+    } catch (error) {
+      console.error("Unable to bulk reject Instagram drafts:", error);
+      setFeedback({ type: "error", message: "Unable to connect to the server." });
+    } finally {
+      setBulkAction(null);
+    }
+  }
+
   return (
     <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
@@ -293,6 +395,56 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
           </div>
         </div>
       </div>
+
+      {!isRepliedTab && allSelected ? (
+        <div className="mx-5 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#4338ca] text-xs font-bold text-white">
+              {selectedRows.length}
+            </span>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold text-slate-800">
+                {selectedRows.length} draft{selectedRows.length === 1 ? "" : "s"} selected
+              </p>
+              <button
+                type="button"
+                onClick={() => setSelectedRows([])}
+                className="cursor-pointer text-[11px] font-medium text-slate-400 transition hover:text-slate-600 hover:underline"
+              >
+                Clear selection
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void handleAcceptAll()}
+              disabled={bulkAction !== null || processingId !== null}
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+            >
+              {bulkAction === "approve" ? (
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-3.5 w-3.5" />
+              )}
+              {bulkAction === "approve" ? "Sending..." : "Accept All"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleRejectAll()}
+              disabled={bulkAction !== null || processingId !== null}
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-red-500 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-red-600 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+            >
+              {bulkAction === "reject" ? (
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5" />
+              )}
+              {bulkAction === "reject" ? "Rejecting..." : "Reject All"}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
@@ -383,7 +535,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                           <button
                             type="button"
                             onClick={() => void handleEditSave(row.id)}
-                            disabled={processingId !== null}
+                            disabled={processingId !== null || bulkAction !== null}
                             className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50"
                           >
                             {savingEditId === row.id ? "Saving..." : "Save"}
@@ -391,7 +543,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                           <button
                             type="button"
                             onClick={handleCancelEdit}
-                            disabled={processingId !== null}
+                            disabled={processingId !== null || bulkAction !== null}
                             className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
                           >
                             Cancel
@@ -420,7 +572,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                         <button
                           type="button"
                           onClick={() => handleApprove(row.id)}
-                          disabled={processingId !== null}
+                          disabled={processingId !== null || bulkAction !== null}
                           aria-label={`Approve draft from ${row.username}`}
                           title="Approve"
                           className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
@@ -434,7 +586,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                         <button
                           type="button"
                           onClick={() => handleReject(row.id)}
-                          disabled={processingId !== null}
+                          disabled={processingId !== null || bulkAction !== null}
                           aria-label={`Reject draft from ${row.username}`}
                           title="Reject"
                           className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
@@ -448,7 +600,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                         <button
                           type="button"
                           onClick={() => handleStartEdit(row)}
-                          disabled={processingId !== null}
+                          disabled={processingId !== null || bulkAction !== null}
                           aria-label={`Edit draft from ${row.username}`}
                           title="Edit"
                           className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
