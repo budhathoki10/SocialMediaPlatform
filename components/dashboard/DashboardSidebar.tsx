@@ -5,17 +5,12 @@ import {
   ChevronDown,
   CircleHelp,
   CirclePlus,
-  Camera,
   LayoutDashboard,
   LogOut,
-  Mail,
-  MessageCircle,
   MessageSquare,
   Newspaper,
-  Send,
   Settings,
   Share2,
-  
   Zap,
 } from "lucide-react";
 import Image from "next/image";
@@ -32,11 +27,17 @@ const sidebarItems = [
 ];
 
 const socialItems = [
-  { label: "WhatsApp", Icon: MessageCircle, message: "clicked in whatsapp" },
-  { label: "Facebook", Icon: Send, message: "clicked in facebook" },
-  { label: "Instagram", Icon: Camera, href: "/dashboard/socials/instagram" },
-  { label: "Gmail", Icon: Mail, message: "clicked in gmail" },
+  { label: "WhatsApp", image: "/landing/whatsapp.png", message: "clicked in whatsapp" },
+  { label: "Facebook", image: "/landing/facebook.png", message: "clicked in facebook" },
+  { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
+  { label: "Gmail", image: "/landing/gmail.png", message: "clicked in gmail" },
 ];
+
+const comingSoonPill = (
+  <span className="ml-auto rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-600">
+    Soon
+  </span>
+);
 
 function SidebarIconTooltip({ label, children }: { children: React.ReactNode; label: string }) {
   return (
@@ -95,6 +96,7 @@ export default function DashboardSidebar() {
                 <Icon />
               </SidebarIconTooltip>
               <span className="sidebar-nav-label">{label}</span>
+              {label === "Auto Reply" && comingSoonPill}
             </Link>
           );
         })}
@@ -115,23 +117,22 @@ export default function DashboardSidebar() {
 
           <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`} style={{ height: socialHeight }}>
             <div ref={socialContentRef} className="space-y-1 py-1.5">
-              {socialItems.map(({ label, Icon, message, href }) =>
-                href ? (
+              {socialItems.map(({ label, image, message, href }) => {
+                const iconEl = <Image src={image} alt="" width={20} height={20} className="h-4 w-4 rounded-sm object-contain" />;
+
+                return href ? (
                   <Link key={label} href={href} className={`sidebar-social-item ${pathname === href ? "text-[#4338ca]" : ""}`}>
-                    <span className="grid h-5 w-5 place-items-center">
-                      <Icon className="h-4 w-4" />
-                    </span>
+                    <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
                   </Link>
                 ) : (
                   <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
-                    <span className="grid h-5 w-5 place-items-center">
-                      <Icon className="h-4 w-4" />
-                    </span>
+                    <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
+                    {comingSoonPill}
                   </button>
-                ),
-              )}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -146,9 +147,16 @@ export default function DashboardSidebar() {
 
       <div className="mt-auto">
         <div className="rounded-lg border border-indigo-100 bg-[#f4f6ff] px-4 py-5">
-          <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
+            {comingSoonPill}
+          </div>
           <p className="mt-2 text-[11px] leading-5 text-slate-600">Unlock advanced automation tools and analytics.</p>
-          <button className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]">
+          <button
+            type="button"
+            onClick={() => alert("Billing is coming soon — we're still building this.")}
+            className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]"
+          >
             <Zap className="h-4 w-4" />
             Upgrade to Pro
           </button>

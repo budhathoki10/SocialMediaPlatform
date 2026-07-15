@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { InstagramDraft, User } from "@/lib/models";
+import { rejectInstagramDraft } from "@/lib/instagram-drafts";
+import { User } from "@/lib/models";
 
 async function getCurrentUser(session) {
   if (!session?.user?.id && !session?.user?.email) {
@@ -45,26 +46,15 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
     }
 
-    const draft = await InstagramDraft.findOne({
-      _id: draftId,
-      user_id: currentUser._id,
-      status: "pending",
-    });
+    const result = await rejectInstagramDraft({ userId: currentUser._id, draftId });
 
-    if (!draft) {
-      return NextResponse.json({ error: "Pending draft not found." }, { status: 404 });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
-
-    draft.status = "rejected";
-    draft.updated_at = new Date();
-    await draft.save();
 
     return NextResponse.json({
       message: "Instagram draft rejected successfully.",
-      draft: {
-        id: draft._id.toString(),
-        status: draft.status,
-      },
+      draft: result.draft,
     });
   } catch (error) {
     console.error("Error occurred while rejecting Instagram draft:", error);
