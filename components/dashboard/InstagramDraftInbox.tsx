@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckCircle2, LoaderCircle, Pencil, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { CheckCircle2, ChevronDown, LoaderCircle, Pencil, Trash2 } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
 
 type DraftRow = {
   id: string;
@@ -12,11 +12,19 @@ type DraftRow = {
   source: string;
   message: string;
   draft: string;
-  confidence: string;
   tone: string;
   status: string;
   createdAt: string | null;
   sentAt: string | null;
+};
+
+type MessageGroup = {
+  key: string;
+  name: string;
+  username: string;
+  profilePictureUrl?: string | null;
+  source: string;
+  messages: DraftRow[];
 };
 
 type InstagramDraftInboxProps = {
@@ -26,6 +34,42 @@ type InstagramDraftInboxProps = {
 const PAGE_SIZE = 6;
 const draftTabs = ["All", "Comments", "DMs", "Replied"] as const;
 type DraftTab = (typeof draftTabs)[number];
+
+// Same sender + same source (DM or Comment) collapse into one conversation row.
+// A sender who has messaged in both a DM and a comment gets two separate rows.
+function groupRowsByConversation(rows: DraftRow[]): MessageGroup[] {
+  const groups = new Map<string, MessageGroup>();
+
+  for (const row of rows) {
+    const key = `${row.username}__${row.source}`;
+    const existingGroup = groups.get(key);
+
+    if (existingGroup) {
+      existingGroup.messages.push(row);
+
+      if (row.profilePictureUrl) {
+        existingGroup.profilePictureUrl = row.profilePictureUrl;
+      }
+
+      if (row.name) {
+        existingGroup.name = row.name;
+      }
+
+      continue;
+    }
+
+    groups.set(key, {
+      key,
+      name: row.name,
+      username: row.username,
+      profilePictureUrl: row.profilePictureUrl,
+      source: row.source,
+      messages: [row],
+    });
+  }
+
+  return [...groups.values()];
+}
 
 export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) {
   const [draftRows, setDraftRows] = useState<DraftRow[]>(rows);
@@ -40,6 +84,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   const [draftEditValue, setDraftEditValue] = useState("");
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const isRepliedTab = activeTab === "Replied";
   const filteredRows = draftRows.filter((row) => {
     if (isRepliedTab) {
@@ -52,14 +97,16 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
 
     return row.status === "pending" && row.source === (activeTab === "Comments" ? "Comment" : "DM");
   });
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+  const filteredGroups = groupRowsByConversation(filteredRows);
+  const totalPages = Math.max(1, Math.ceil(filteredGroups.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const pageStartIndex = (safeCurrentPage - 1) * PAGE_SIZE;
-  const pageRows = filteredRows.slice(pageStartIndex, pageStartIndex + PAGE_SIZE);
-  const selectedPageRows = pageRows.filter((row) => selectedRows.includes(row.id));
-  const allSelected = pageRows.length > 0 && selectedPageRows.length === pageRows.length;
-  const showingStart = filteredRows.length === 0 ? 0 : pageStartIndex + 1;
-  const showingEnd = Math.min(pageStartIndex + pageRows.length, filteredRows.length);
+  const pageGroups = filteredGroups.slice(pageStartIndex, pageStartIndex + PAGE_SIZE);
+  const pageMessageIds = pageGroups.flatMap((group) => group.messages.map((message) => message.id));
+  const selectedPageIds = pageMessageIds.filter((id) => selectedRows.includes(id));
+  const allSelected = pageMessageIds.length > 0 && selectedPageIds.length === pageMessageIds.length;
+  const showingStart = filteredGroups.length === 0 ? 0 : pageStartIndex + 1;
+  const showingEnd = Math.min(pageStartIndex + pageGroups.length, filteredGroups.length);
 
   useEffect(() => {
     let isMounted = true;
@@ -95,14 +142,12 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   }, []);
 
   function handleSelectAll() {
-    const pageIds = pageRows.map((row) => row.id);
-
     setSelectedRows((currentRows) => {
       if (allSelected) {
-        return currentRows.filter((id) => !pageIds.includes(id));
+        return currentRows.filter((id) => !pageMessageIds.includes(id));
       }
 
-      return [...new Set([...currentRows, ...pageIds])];
+      return [...new Set([...currentRows, ...pageMessageIds])];
     });
   }
 
@@ -112,12 +157,44 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     );
   }
 
+  function isGroupSelected(group: MessageGroup) {
+    return group.messages.every((message) => selectedRows.includes(message.id));
+  }
+
+  function handleSelectGroup(group: MessageGroup) {
+    const messageIds = group.messages.map((message) => message.id);
+    const groupFullySelected = messageIds.every((id) => selectedRows.includes(id));
+
+    setSelectedRows((currentRows) => {
+      if (groupFullySelected) {
+        return currentRows.filter((id) => !messageIds.includes(id));
+      }
+
+      return [...new Set([...currentRows, ...messageIds])];
+    });
+  }
+
+  function toggleGroupExpanded(key: string) {
+    setExpandedGroups((currentKeys) => {
+      const nextKeys = new Set(currentKeys);
+
+      if (nextKeys.has(key)) {
+        nextKeys.delete(key);
+      } else {
+        nextKeys.add(key);
+      }
+
+      return nextKeys;
+    });
+  }
+
   function handleTabChange(tab: DraftTab) {
     setActiveTab(tab);
     setCurrentPage(1);
     setSelectedRows([]);
     setEditingDraftId(null);
     setDraftEditValue("");
+    setExpandedGroups(new Set());
   }
 
   function handleStartEdit(row: DraftRow) {
@@ -367,6 +444,130 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     }
   }
 
+  function renderDraftCell(row: DraftRow) {
+    return (
+      <td className={`max-w-52 px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
+        {isRepliedTab ? (
+          <span className="block truncate">&quot;{row.draft}&quot;</span>
+        ) : editingDraftId === row.id ? (
+          <div className="space-y-2">
+            <textarea
+              value={draftEditValue}
+              onChange={(event) => setDraftEditValue(event.target.value)}
+              rows={3}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => void handleEditSave(row.id)}
+                disabled={processingId !== null || bulkAction !== null}
+                className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50"
+              >
+                {savingEditId === row.id ? "Saving..." : "Save"}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                disabled={processingId !== null || bulkAction !== null}
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => handleStartEdit(row)}
+            className="w-full cursor-text text-left"
+          >
+            <span className="block truncate">&quot;{row.draft}&quot;</span>
+            <span className="mt-1 block text-[11px] text-slate-400">Click to edit</span>
+          </button>
+        )}
+      </td>
+    );
+  }
+
+  function renderActionsCell(row: DraftRow) {
+    return (
+      <td className="px-5 py-3">
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => handleApprove(row.id)}
+            disabled={processingId !== null || bulkAction !== null}
+            aria-label={`Approve draft from ${row.username}`}
+            title="Approve"
+            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+          >
+            {processingId === row.id && processingAction === "approve" ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleReject(row.id)}
+            disabled={processingId !== null || bulkAction !== null}
+            aria-label={`Reject draft from ${row.username}`}
+            title="Reject"
+            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+          >
+            {processingId === row.id && processingAction === "reject" ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleStartEdit(row)}
+            disabled={processingId !== null || bulkAction !== null}
+            aria-label={`Edit draft from ${row.username}`}
+            title="Edit"
+            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+          >
+            {processingId === row.id && processingAction === "edit" ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Pencil className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
+      </td>
+    );
+  }
+
+  function renderMessageSubRow(row: DraftRow, index: number) {
+    return (
+      <tr key={row.id} className="bg-slate-50/60 hover:bg-slate-50">
+        {!isRepliedTab ? (
+          <td className="px-5 py-2.5">
+            <input
+              type="checkbox"
+              checked={selectedRows.includes(row.id)}
+              onChange={() => handleSelectRow(row.id)}
+              className="cursor-pointer rounded border-slate-300"
+              aria-label={`Select message ${index + 1} from ${row.username}`}
+            />
+          </td>
+        ) : null}
+        <td className="whitespace-nowrap px-3 py-2.5 pl-9 text-[11px] font-semibold text-slate-400">
+          Message {index + 1}
+        </td>
+        <td className="px-3 py-2.5" />
+        <td className="min-w-[22rem] whitespace-pre-wrap break-words px-3 py-2.5 align-top text-xs text-slate-500">
+          &quot;{row.message}&quot;
+        </td>
+        {renderDraftCell(row)}
+        {!isRepliedTab ? renderActionsCell(row) : null}
+      </tr>
+    );
+  }
+
   return (
     <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
@@ -465,14 +666,13 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
               <th className="px-3 py-3">Source</th>
               <th className="px-3 py-3">Message Preview</th>
               <th className="px-3 py-3">{isRepliedTab ? "Replied" : "AI Draft Preview"}</th>
-              {!isRepliedTab ? <th className="px-3 py-3">Confidence</th> : null}
               {!isRepliedTab ? <th className="px-5 py-3 text-right">Actions</th> : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredRows.length === 0 ? (
+            {filteredGroups.length === 0 ? (
               <tr>
-                <td colSpan={isRepliedTab ? 4 : 7} className="px-5 py-12 text-center">
+                <td colSpan={isRepliedTab ? 4 : 6} className="px-5 py-12 text-center">
                   <p className="text-sm font-bold text-slate-700">
                     {isRepliedTab ? "No replies sent in the last 24 hours" : "No unreplied drafts yet"}
                   </p>
@@ -484,145 +684,118 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                 </td>
               </tr>
             ) : (
-              pageRows.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/70">
-                  {!isRepliedTab ? (
-                    <td className="px-5 py-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedRows.includes(row.id)}
-                        onChange={() => handleSelectRow(row.id)}
-                        className="cursor-pointer rounded border-slate-300"
-                        aria-label={`Select ${row.username}`}
-                      />
-                    </td>
-                  ) : null}
-                  <td className="whitespace-nowrap px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      {row.profilePictureUrl ? (
-                        // Instagram profile URLs are short-lived and use dynamic CDN hostnames.
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={row.profilePictureUrl}
-                          alt=""
-                          className="h-12 w-12 rounded-full border border-white object-cover shadow-sm ring-1 ring-slate-200"
-                        />
-                      ) : (
-                        <span className="h-15 w-15 rounded-full border border-white bg-linear-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
-                      )}
-                      <span className="min-w-0">
-                        <span className="block truncate text-xs font-semibold text-slate-700">{row.name}</span>
-                        <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">{row.username}</span>
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3">
-                    <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{row.source}</span>
-                  </td>
-                  <td className="max-w-44 truncate px-3 py-3 text-xs text-slate-500">&quot;{row.message}&quot;</td>
-                  <td className={`max-w-52 px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
-                    {isRepliedTab ? (
-                      <span className="block truncate">&quot;{row.draft}&quot;</span>
-                    ) : editingDraftId === row.id ? (
-                      <div className="space-y-2">
-                        <textarea
-                          value={draftEditValue}
-                          onChange={(event) => setDraftEditValue(event.target.value)}
-                          rows={3}
-                          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-                        />
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => void handleEditSave(row.id)}
-                            disabled={processingId !== null || bulkAction !== null}
-                            className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50"
-                          >
-                            {savingEditId === row.id ? "Saving..." : "Save"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleCancelEdit}
-                            disabled={processingId !== null || bulkAction !== null}
-                            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
-                          >
-                            Cancel
-                          </button>
+              pageGroups.map((group) => {
+                const hasMultipleMessages = group.messages.length > 1;
+                const isExpanded = expandedGroups.has(group.key);
+                const primaryRow = group.messages[0];
+
+                return (
+                  <Fragment key={group.key}>
+                    <tr className="hover:bg-slate-50/70">
+                      {!isRepliedTab ? (
+                        <td className="px-5 py-3">
+                          <input
+                            type="checkbox"
+                            checked={isGroupSelected(group)}
+                            onChange={() => handleSelectGroup(group)}
+                            className="cursor-pointer rounded border-slate-300"
+                            aria-label={`Select all messages from ${group.username}`}
+                          />
+                        </td>
+                      ) : null}
+                      <td className="whitespace-nowrap px-3 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="relative inline-flex shrink-0">
+                            {group.profilePictureUrl ? (
+                              // Instagram profile URLs are short-lived and use dynamic CDN hostnames.
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={group.profilePictureUrl}
+                                alt=""
+                                className="h-12 w-12 rounded-full border border-white object-cover shadow-sm ring-1 ring-slate-200"
+                              />
+                            ) : (
+                              <span className="h-15 w-15 rounded-full border border-white bg-linear-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
+                            )}
+                            {hasMultipleMessages ? (
+                              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-[#4338ca] text-[10px] font-bold text-white ring-2 ring-white">
+                                {group.messages.length}
+                              </span>
+                            ) : null}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-semibold text-slate-700">{group.name}</span>
+                            <span className="mt-0.5 block truncate text-[11px] font-medium text-slate-400">{group.username}</span>
+                          </span>
                         </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleStartEdit(row)}
-                        className="w-full cursor-text text-left"
-                      >
-                        <span className="block truncate">&quot;{row.draft}&quot;</span>
-                        <span className="mt-1 block text-[11px] text-slate-400">Click to edit</span>
-                      </button>
-                    )}
-                  </td>
-                  {!isRepliedTab ? (
-                    <td className={`px-3 py-3 text-xs font-bold ${row.tone === "bad" ? "text-red-500" : "text-emerald-500"}`}>
-                      {row.confidence}
-                    </td>
-                  ) : null}
-                  {!isRepliedTab ? (
-                    <td className="px-5 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleApprove(row.id)}
-                          disabled={processingId !== null || bulkAction !== null}
-                          aria-label={`Approve draft from ${row.username}`}
-                          title="Approve"
-                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
-                        >
-                          {processingId === row.id && processingAction === "approve" ? (
-                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleReject(row.id)}
-                          disabled={processingId !== null || bulkAction !== null}
-                          aria-label={`Reject draft from ${row.username}`}
-                          title="Reject"
-                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
-                        >
-                          {processingId === row.id && processingAction === "reject" ? (
-                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleStartEdit(row)}
-                          disabled={processingId !== null || bulkAction !== null}
-                          aria-label={`Edit draft from ${row.username}`}
-                          title="Edit"
-                          className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
-                        >
-                          {processingId === row.id && processingAction === "edit" ? (
-                            <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Pencil className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  ) : null}
-                </tr>
-              ))
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{group.source}</span>
+                      </td>
+                      <td className="min-w-[22rem] whitespace-pre-wrap break-words px-3 py-3 align-top text-xs text-slate-500">
+                        &quot;{primaryRow.message}&quot;
+                        {hasMultipleMessages ? (
+                          <span className="ml-1 text-[10px] font-semibold text-slate-400">
+                            +{group.messages.length - 1} more
+                          </span>
+                        ) : null}
+                      </td>
+                      {hasMultipleMessages ? (
+                        <td className="max-w-52 px-3 py-3 text-xs text-slate-500">
+                          <button
+                            type="button"
+                            onClick={() => toggleGroupExpanded(group.key)}
+                            className="flex w-full cursor-pointer items-center justify-between gap-2 text-left"
+                          >
+                            <span>
+                              <span className="block truncate font-semibold text-slate-600">
+                                {group.messages.length} message{group.messages.length === 1 ? "" : "s"} to review
+                              </span>
+                              <span className="mt-1 block text-[11px] text-slate-400">
+                                {isExpanded ? "Click to collapse" : "Click to expand"}
+                              </span>
+                            </span>
+                            <ChevronDown
+                              className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            />
+                          </button>
+                        </td>
+                      ) : (
+                        renderDraftCell(primaryRow)
+                      )}
+                      {!isRepliedTab ? (
+                        hasMultipleMessages ? (
+                          <td className="px-5 py-3">
+                            <div className="flex items-center justify-end">
+                              <button
+                                type="button"
+                                onClick={() => toggleGroupExpanded(group.key)}
+                                aria-label={isExpanded ? "Collapse messages" : "Expand messages"}
+                                title={isExpanded ? "Collapse" : "Expand"}
+                                className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                              >
+                                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                              </button>
+                            </div>
+                          </td>
+                        ) : (
+                          renderActionsCell(primaryRow)
+                        )
+                      ) : null}
+                    </tr>
+                    {hasMultipleMessages && isExpanded
+                      ? group.messages.map((message, index) => renderMessageSubRow(message, index))
+                      : null}
+                  </Fragment>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-        <p>Showing {showingStart}-{showingEnd} of {filteredRows.length}</p>
+        <p>Showing {showingStart}-{showingEnd} of {filteredGroups.length}</p>
         <div className="flex items-center gap-3">
           <button
             type="button"
