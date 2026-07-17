@@ -12,6 +12,7 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "bullmq": "^5.79.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
