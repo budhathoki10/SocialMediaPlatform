@@ -7,6 +7,7 @@ import {
   CirclePlus,
   LayoutDashboard,
   LogOut,
+  MessageCircle,
   MessageSquare,
   Newspaper,
   Settings,
@@ -136,6 +137,16 @@ export default function DashboardSidebar() {
             </div>
           </div>
         </div>
+
+        <Link
+          href="/dashboard/feedback"
+          className={`sidebar-nav-item ${pathname === "/dashboard/feedback" ? "sidebar-nav-item-active" : ""}`}
+        >
+          <SidebarIconTooltip label="Feedback">
+            <MessageCircle />
+          </SidebarIconTooltip>
+          <span className="sidebar-nav-label">Feedback</span>
+        </Link>
 
         <Link href="#" className="sidebar-nav-item">
           <SidebarIconTooltip label="Settings">
