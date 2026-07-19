@@ -208,41 +208,16 @@ export default async function DashboardPage() {
   const activeAccounts = accounts.filter((account) => account.status === "active");
   const greeting = getGreeting(user.timezone || undefined);
   const firstName = user.name?.trim().split(" ")[0] || "there";
-  const activityFeedItems =
-    activities.length > 0
-      ? activities.slice(0, 3).map((activity, index) => ({
-          id: activity._id.toString(),
-          title: index === 0 ? "AI Agent generated a draft post" : `${activity.event_type.replaceAll("_", " ")} received`,
-          description:
-            index === 0
-              ? `New draft created from ${activity.repo_name}.`
-              : `${activity.repo_name} was processed by AutoPilot automation.`,
-          time: getRelativeTime(activity.created_at),
-          type: index === 0 ? ("ai" as const) : ("success" as const),
-        }))
-      : [
-          {
-            id: "dummy-published",
-            title: "Twitter post successfully published",
-            description: "Post ID #TW-89210 was sent to @alexchen_tech",
-            time: "2m ago",
-            type: "success" as const,
-          },
-          {
-            id: "dummy-ai",
-            title: "AI Agent generated 5 draft posts",
-            description: "New drafts are waiting in the Scheduled Posts queue.",
-            time: "45m ago",
-            type: "ai" as const,
-          },
-          {
-            id: "dummy-token",
-            title: "Instagram API Token Expiring",
-            description: "Re-authentication required for @alex_creativestudio.",
-            time: "2h ago",
-            type: "warning" as const,
-          },
-        ];
+  const activityFeedItems = activities.slice(0, 3).map((activity, index) => ({
+    id: activity._id.toString(),
+    title: index === 0 ? "AI Agent generated a draft post" : `${activity.event_type.replaceAll("_", " ")} received`,
+    description:
+      index === 0
+        ? `New draft created from ${activity.repo_name}.`
+        : `${activity.repo_name} was processed by AutoPilot automation.`,
+    time: getRelativeTime(activity.created_at),
+    type: index === 0 ? ("ai" as const) : ("success" as const),
+  }));
 
   return (
     <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
@@ -295,7 +270,7 @@ export default async function DashboardPage() {
             </section>
 
             <div className="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-              <RecentPostsPanel />
+              <RecentPostsPanel hasConnectedAccounts={activeAccounts.length > 0} />
 
               <section className="min-h-[278px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">

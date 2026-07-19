@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock3, MessageSquare, Save, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import PostShareMenu from "./PostShareMenu";
@@ -131,7 +132,7 @@ function UpcomingPostsSkeleton() {
   );
 }
 
-export default function RecentPostsPanel() {
+export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnectedAccounts: boolean }) {
   const [posts, setPosts] = useState<DashboardPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [editingPost, setEditingPost] = useState<DashboardPost | null>(null);
@@ -235,7 +236,19 @@ export default function RecentPostsPanel() {
           <div className="grid min-h-56 place-items-center px-5 text-center">
             <div>
               <p className="text-sm font-semibold text-slate-700">No posts yet</p>
-              <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
+              {hasConnectedAccounts ? (
+                <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
+              ) : (
+                <>
+                  <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Connect a social media account to start generating and scheduling posts.</p>
+                  <Link
+                    href="/onboarding"
+                    className="mt-3 inline-flex h-9 items-center rounded-md bg-[#4338ca] px-4 text-xs font-bold text-white transition hover:bg-[#3730a3]"
+                  >
+                    Connect a platform
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         ) : (
