@@ -16,8 +16,12 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
+
+import PressableButton from "@/components/motion/PressableButton";
+import { SPRING } from "@/lib/motion/tokens";
 
 const sidebarItems = [
   { label: "Dashboard", Icon: LayoutDashboard, href: "/dashboard" },
@@ -51,25 +55,15 @@ function SidebarIconTooltip({ label, children }: { children: React.ReactNode; la
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const socialContentRef = useRef<HTMLDivElement>(null);
   const [socialOpen, setSocialOpen] = useState(false);
-  const [socialHeight, setSocialHeight] = useState(0);
   const socialActive = pathname.startsWith("/dashboard/socials");
-
-  function toggleSocialMenu() {
-    setSocialOpen((open) => {
-      const nextOpen = !open;
-      setSocialHeight(nextOpen ? socialContentRef.current?.scrollHeight || 0 : 0);
-      return nextOpen;
-    });
-  }
 
   return (
     
     <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
       <div>
         <Link href="/dashboard" className="inline-flex items-center gap-2">
-          <span className="relative h-8 w-8 overflow-hidden rounded-lg">
+          <span className="relative h-8 w-8 overflow-hidden rounded-control">
             <Image
               src="/landing/final-center-logo.png"
               alt=""
@@ -82,7 +76,7 @@ export default function DashboardSidebar() {
               priority
             />
           </span>
-          <span className="text-sm font-extrabold text-[#4f46e5]">AutoPilot</span>
+          <span className="text-sm font-extrabold text-primary">AutoPilot</span>
         </Link>
         <p className="mt-3 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Automation Suite</p>
       </div>
@@ -106,7 +100,7 @@ export default function DashboardSidebar() {
           <button
             type="button"
             aria-expanded={socialOpen}
-            onClick={toggleSocialMenu}
+            onClick={() => setSocialOpen((open) => !open)}
             className={`sidebar-nav-item sidebar-nav-button ${socialOpen || socialActive ? "sidebar-nav-item-active" : ""}`}
           >
             <SidebarIconTooltip label="Socials">
@@ -116,13 +110,22 @@ export default function DashboardSidebar() {
             <ChevronDown className={`ml-auto h-3.5 w-3.5 transition-transform duration-300 ${socialOpen ? "rotate-180" : ""}`} />
           </button>
 
-          <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`} style={{ height: socialHeight }}>
-            <div ref={socialContentRef} className="space-y-1 py-1.5">
+          {/* Motion measures "auto" itself (no scrollHeight ref/state
+              juggling needed) — it animates to the real content height and
+              settles back to auto once open, so late-loading content still
+              fits. */}
+          <motion.div
+            initial={false}
+            animate={{ height: socialOpen ? "auto" : 0 }}
+            transition={SPRING.panel}
+            className="overflow-hidden"
+          >
+            <div className="space-y-1 py-1.5">
               {socialItems.map(({ label, image, message, href }) => {
                 const iconEl = <Image src={image} alt="" width={20} height={20} className="h-4 w-4 rounded-sm object-contain" />;
 
                 return href ? (
-                  <Link key={label} href={href} className={`sidebar-social-item ${pathname === href ? "text-[#4338ca]" : ""}`}>
+                  <Link key={label} href={href} className={`sidebar-social-item ${pathname === href ? "text-primary" : ""}`}>
                     <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
                   </Link>
@@ -135,7 +138,7 @@ export default function DashboardSidebar() {
                 );
               })}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         <Link
@@ -153,32 +156,33 @@ export default function DashboardSidebar() {
             <Settings />
           </SidebarIconTooltip>
           <span className="sidebar-nav-label">Settings</span>
+          {comingSoonPill}
         </Link>
       </nav>
 
       <div className="mt-auto">
-        <div className="rounded-lg border border-indigo-100 bg-[#f4f6ff] px-4 py-5">
+        <div className="rounded-card border border-primary/20 bg-primary-tint px-4 py-5">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
+            <p className="text-sm font-bold text-primary">Upgrade to Pro</p>
             {comingSoonPill}
           </div>
           <p className="mt-2 text-[11px] leading-5 text-slate-600">Unlock advanced automation tools and analytics.</p>
-          <button
+          <PressableButton
             type="button"
             onClick={() => alert("Billing is coming soon — we're still building this.")}
-            className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]"
+            className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-control bg-primary text-sm font-bold text-white transition hover:bg-primary-hover"
           >
             <Zap className="h-4 w-4" />
             Upgrade to Pro
-          </button>
+          </PressableButton>
         </div>
 
         <div className="mt-5 space-y-2">
-          <a href="#" className="flex h-9 items-center gap-3 rounded-lg px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
+          <a href="#" className="flex h-9 items-center gap-3 rounded-control px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
             <CircleHelp className="h-4 w-4" />
             Help Center
           </a>
-          <Link href="/logoutPage" className="flex h-9 items-center gap-3 rounded-lg px-4 text-sm font-medium text-red-500 hover:bg-red-50">
+          <Link href="/logoutPage" className="flex h-9 items-center gap-3 rounded-control px-4 text-sm font-medium text-red-500 hover:bg-red-50">
             <LogOut className="h-4 w-4" />
             Logout
           </Link>

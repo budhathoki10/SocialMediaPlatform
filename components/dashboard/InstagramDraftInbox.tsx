@@ -1,7 +1,11 @@
 "use client";
 
-import { CheckCircle2, ChevronDown, LoaderCircle, Pencil, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, LoaderCircle, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { Fragment, useEffect, useState } from "react";
+
+import PressableButton from "@/components/motion/PressableButton";
+import { DURATION, SPRING } from "@/lib/motion/tokens";
 
 type DraftRow = {
   id: string;
@@ -455,36 +459,36 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
               value={draftEditValue}
               onChange={(event) => setDraftEditValue(event.target.value)}
               rows={3}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              className="w-full rounded-control border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
             />
             <div className="flex flex-wrap gap-2">
-              <button
+              <PressableButton
                 type="button"
                 onClick={() => void handleEditSave(row.id)}
                 disabled={processingId !== null || bulkAction !== null}
-                className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-50"
+                className="rounded-control bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-hover disabled:cursor-wait disabled:opacity-50"
               >
                 {savingEditId === row.id ? "Saving..." : "Save"}
-              </button>
-              <button
+              </PressableButton>
+              <PressableButton
                 type="button"
                 onClick={handleCancelEdit}
                 disabled={processingId !== null || bulkAction !== null}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
+                className="rounded-control border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:cursor-wait disabled:opacity-50"
               >
                 Cancel
-              </button>
+              </PressableButton>
             </div>
           </div>
         ) : (
-          <button
+          <PressableButton
             type="button"
             onClick={() => handleStartEdit(row)}
             className="w-full cursor-text text-left"
           >
             <span className="block truncate">&quot;{row.draft}&quot;</span>
             <span className="mt-1 block text-[11px] text-slate-400">Click to edit</span>
-          </button>
+          </PressableButton>
         )}
       </td>
     );
@@ -494,48 +498,48 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     return (
       <td className="px-5 py-3">
         <div className="flex items-center justify-end gap-2">
-          <button
+          <PressableButton
             type="button"
             onClick={() => handleApprove(row.id)}
             disabled={processingId !== null || bulkAction !== null}
             aria-label={`Approve draft from ${row.username}`}
             title="Approve"
-            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-emerald-600 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-wait disabled:opacity-50"
           >
             {processingId === row.id && processingAction === "approve" ? (
               <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <CheckCircle2 className="h-3.5 w-3.5" />
             )}
-          </button>
-          <button
+          </PressableButton>
+          <PressableButton
             type="button"
             onClick={() => handleReject(row.id)}
             disabled={processingId !== null || bulkAction !== null}
             aria-label={`Reject draft from ${row.username}`}
             title="Reject"
-            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-red-500 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-wait disabled:opacity-50"
           >
             {processingId === row.id && processingAction === "reject" ? (
               <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <Trash2 className="h-3.5 w-3.5" />
             )}
-          </button>
-          <button
+          </PressableButton>
+          <PressableButton
             type="button"
             onClick={() => handleStartEdit(row)}
             disabled={processingId !== null || bulkAction !== null}
             aria-label={`Edit draft from ${row.username}`}
             title="Edit"
-            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200 disabled:cursor-wait disabled:opacity-50"
+            className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-wait disabled:opacity-50"
           >
             {processingId === row.id && processingAction === "edit" ? (
               <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <Pencil className="h-3.5 w-3.5" />
             )}
-          </button>
+          </PressableButton>
         </div>
       </td>
     );
@@ -543,7 +547,15 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
 
   function renderMessageSubRow(row: DraftRow, index: number) {
     return (
-      <tr key={row.id} className="bg-slate-50/60 hover:bg-slate-50">
+      <motion.tr
+        key={row.id}
+        layout
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6, transition: { duration: DURATION.fast } }}
+        transition={SPRING.gentle}
+        className="bg-slate-50/60 hover:bg-slate-50"
+      >
         {!isRepliedTab ? (
           <td className="px-5 py-2.5">
             <input
@@ -564,12 +576,12 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
         </td>
         {renderDraftCell(row)}
         {!isRepliedTab ? renderActionsCell(row) : null}
-      </tr>
+      </motion.tr>
     );
   }
 
   return (
-    <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section className="mt-5 overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
         <div>
           <h2 className="text-base font-bold text-slate-950">Draft Inbox</h2>
@@ -580,48 +592,55 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
           ) : null}
         </div>
         <div className="flex flex-wrap items-center justify-end gap-4">
-          <div className="flex rounded-md bg-slate-50 p-1 text-xs font-semibold text-slate-500">
+          <div className="flex rounded-control bg-slate-50 p-1 text-xs font-semibold text-slate-500">
             {draftTabs.map((tab) => (
-              <button
+              <PressableButton
                 key={tab}
                 type="button"
                 onClick={() => handleTabChange(tab)}
-                className={`rounded px-3 py-1.5  cursor-pointer transition ${
-                  activeTab === tab ? "bg-white text-[#4338ca] shadow-sm" : "hover:text-slate-900"
+                className={`rounded-control px-3 py-1.5  cursor-pointer transition ${
+                  activeTab === tab ? "bg-white text-primary shadow-card" : "hover:text-slate-900"
                 }`}
               >
                 {tab}
-              </button>
+              </PressableButton>
             ))}
           </div>
         </div>
       </div>
 
+      <AnimatePresence>
       {!isRepliedTab && allSelected ? (
-        <div className="mx-5 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 shadow-sm">
+        <motion.div
+          layout
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8, transition: { duration: DURATION.fast } }}
+          transition={SPRING.gentle}
+          className="mx-5 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-card border border-slate-200 bg-slate-50 px-4 py-2.5 shadow-card">
           <div className="flex items-center gap-3">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#4338ca] text-xs font-bold text-white">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">
               {selectedRows.length}
             </span>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-slate-800">
                 {selectedRows.length} draft{selectedRows.length === 1 ? "" : "s"} selected
               </p>
-              <button
+              <PressableButton
                 type="button"
                 onClick={() => setSelectedRows([])}
                 className="cursor-pointer text-[11px] font-medium text-slate-400 transition hover:text-slate-600 hover:underline"
               >
                 Clear selection
-              </button>
+              </PressableButton>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button
+            <PressableButton
               type="button"
               onClick={() => void handleAcceptAll()}
               disabled={bulkAction !== null || processingId !== null}
-              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-emerald-600 px-4 text-xs font-semibold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-60"
             >
               {bulkAction === "approve" ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -629,12 +648,12 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                 <CheckCircle2 className="h-3.5 w-3.5" />
               )}
               {bulkAction === "approve" ? "Sending..." : "Accept All"}
-            </button>
-            <button
+            </PressableButton>
+            <PressableButton
               type="button"
               onClick={() => void handleRejectAll()}
               disabled={bulkAction !== null || processingId !== null}
-              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-red-500 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-red-600 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-red-500 px-4 text-xs font-semibold text-white shadow-card transition hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
             >
               {bulkAction === "reject" ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -642,10 +661,11 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                 <Trash2 className="h-3.5 w-3.5" />
               )}
               {bulkAction === "reject" ? "Rejecting..." : "Reject All"}
-            </button>
+            </PressableButton>
           </div>
-        </div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
@@ -673,10 +693,13 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
             {filteredGroups.length === 0 ? (
               <tr>
                 <td colSpan={isRepliedTab ? 4 : 6} className="px-5 py-12 text-center">
-                  <p className="text-sm font-bold text-slate-700">
+                  <span className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-control bg-slate-100 text-slate-400">
+                    <MessageSquare className="h-5 w-5" />
+                  </span>
+                  <p className="text-sm font-semibold text-slate-700">
                     {isRepliedTab ? "No replies sent in the last 24 hours" : "No unreplied drafts yet"}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-slate-500">
                     {isRepliedTab
                       ? "Recently approved Instagram replies will appear here."
                       : "New Instagram DM and comment drafts will appear here."}
@@ -684,14 +707,20 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                 </td>
               </tr>
             ) : (
-              pageGroups.map((group) => {
+              <AnimatePresence mode="popLayout" initial={false}>
+                {pageGroups.map((group) => {
                 const hasMultipleMessages = group.messages.length > 1;
                 const isExpanded = expandedGroups.has(group.key);
                 const primaryRow = group.messages[0];
 
                 return (
                   <Fragment key={group.key}>
-                    <tr className="hover:bg-slate-50/70">
+                    <motion.tr
+                      layout
+                      initial={{ opacity: 1 }}
+                      exit={{ opacity: 0, x: 32, transition: { duration: DURATION.base } }}
+                      transition={SPRING.gentle}
+                      className="hover:bg-slate-50/70">
                       {!isRepliedTab ? (
                         <td className="px-5 py-3">
                           <input
@@ -718,7 +747,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                               <span className="h-15 w-15 rounded-full border border-white bg-linear-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
                             )}
                             {hasMultipleMessages ? (
-                              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-[#4338ca] text-[10px] font-bold text-white ring-2 ring-white">
+                              <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-white ring-2 ring-white">
                                 {group.messages.length}
                               </span>
                             ) : null}
@@ -742,7 +771,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                       </td>
                       {hasMultipleMessages ? (
                         <td className="max-w-52 px-3 py-3 text-xs text-slate-500">
-                          <button
+                          <PressableButton
                             type="button"
                             onClick={() => toggleGroupExpanded(group.key)}
                             className="flex w-full cursor-pointer items-center justify-between gap-2 text-left"
@@ -758,7 +787,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                             <ChevronDown
                               className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                             />
-                          </button>
+                          </PressableButton>
                         </td>
                       ) : (
                         renderDraftCell(primaryRow)
@@ -767,28 +796,31 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                         hasMultipleMessages ? (
                           <td className="px-5 py-3">
                             <div className="flex items-center justify-end">
-                              <button
+                              <PressableButton
                                 type="button"
                                 onClick={() => toggleGroupExpanded(group.key)}
                                 aria-label={isExpanded ? "Collapse messages" : "Expand messages"}
                                 title={isExpanded ? "Collapse" : "Expand"}
-                                className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                                className="grid h-8 w-8 cursor-pointer place-items-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
                               >
                                 <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                              </button>
+                              </PressableButton>
                             </div>
                           </td>
                         ) : (
                           renderActionsCell(primaryRow)
                         )
                       ) : null}
-                    </tr>
-                    {hasMultipleMessages && isExpanded
-                      ? group.messages.map((message, index) => renderMessageSubRow(message, index))
-                      : null}
+                    </motion.tr>
+                    <AnimatePresence initial={false}>
+                      {hasMultipleMessages && isExpanded
+                        ? group.messages.map((message, index) => renderMessageSubRow(message, index))
+                        : null}
+                    </AnimatePresence>
                   </Fragment>
                 );
-              })
+                })}
+              </AnimatePresence>
             )}
           </tbody>
         </table>
@@ -797,25 +829,25 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
       <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
         <p>Showing {showingStart}-{showingEnd} of {filteredGroups.length}</p>
         <div className="flex items-center gap-3">
-          <button
+          <PressableButton
             type="button"
             disabled={safeCurrentPage === 1}
             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 font-semibold text-slate-700 shadow-sm transition hover:border-[#4338ca] hover:text-[#4338ca] disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none disabled:hover:border-slate-200"
+            className="inline-flex h-10 items-center rounded-control border border-slate-200 bg-white px-4 font-semibold text-slate-700 shadow-card transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none disabled:hover:border-slate-200"
           >
             Previous
-          </button>
-          <span className="inline-flex h-10 items-center rounded-lg bg-slate-50 px-4 text-sm font-bold text-slate-700">
+          </PressableButton>
+          <span className="inline-flex h-10 items-center rounded-control bg-slate-50 px-4 text-sm font-bold text-slate-700">
             Page {safeCurrentPage} of {totalPages}
           </span>
-          <button
+          <PressableButton
             type="button"
             disabled={safeCurrentPage === totalPages}
             onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-            className="inline-flex h-10 items-center rounded-lg border border-slate-200 bg-white px-4 font-semibold text-slate-700 shadow-sm transition hover:border-[#4338ca] hover:text-[#4338ca] disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none disabled:hover:border-slate-200"
+            className="inline-flex h-10 items-center rounded-control border border-slate-200 bg-white px-4 font-semibold text-slate-700 shadow-card transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:text-slate-300 disabled:shadow-none disabled:hover:border-slate-200"
           >
             Next
-          </button>
+          </PressableButton>
         </div>
       </div>
     </section>

@@ -1,16 +1,80 @@
 @import "tailwindcss";
 
+/*
+ * Visual design tokens. In @theme (not :root) so Tailwind v4 also generates
+ * matching utility classes — e.g. --color-primary gives bg-primary /
+ * text-primary / border-primary, --radius-card gives rounded-card,
+ * --shadow-panel gives shadow-panel. Custom CSS below reads the same
+ * variables via var(...), so hand-written classes and Tailwind utilities
+ * can never drift onto two different values for "the same" color/radius/
+ * shadow the way #4338ca vs indigo-600 did.
+ *
+ * Names are deliberately distinct from Tailwind's own built-in radius and
+ * shadow scale (e.g. "card" / "panel", not "sm" / "lg") so this doesn't
+ * silently override Tailwind's default rounded-lg / shadow-md elsewhere in
+ * the app — this is a new, separate, opt-in scale.
+ */
 @theme {
   --font-sans: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   --font-mono: var(--font-geist-mono), Consolas, monospace;
+
+  /* Brand color scale — single source of truth. Landing's CTAs and the
+     dashboard's primary actions previously used two different hardcoded
+     indigo shades (#4f46e5 vs #4338ca) with no relationship between them.
+     Now there's one scale; #4338ca becomes the *hover* state of the same
+     brand color, not a second, unrelated "primary". */
+  --color-primary: #4f46e5; /* indigo-600 — resting brand color */
+  --color-primary-hover: #4338ca; /* indigo-700 — hover state */
+  --color-primary-active: #3730a3; /* indigo-800 — pressed state */
+  --color-primary-tint: #eef2ff; /* indigo-50 — soft fills: active nav bg, badges */
+
+  /* Radius scale for hand-written CSS classes (Tailwind utility classes on
+     components keep using rounded-lg/rounded-xl etc. as before — this scale
+     is for globals.css's custom classes, which previously picked a new
+     px value per rule with no tiering). */
+  --radius-control: 0.5rem; /* 8px — pills, icon-boxes, inputs, small controls */
+  --radius-card: 0.875rem; /* 14px — cards, panels, preview frames */
+  --radius-panel: 1.5rem; /* 24px — hero-scale panels: CTA, modals */
+
+  /* Elevation scale, same rationale as radius — three deliberate tiers
+     instead of a bespoke rgba() shadow per component. */
+  --shadow-card: 0 10px 24px rgba(15, 23, 42, 0.06); /* resting card */
+  --shadow-card-hover: 0 20px 48px rgba(15, 23, 42, 0.1); /* lifted/hovered card */
+  --shadow-panel: 0 32px 80px rgba(15, 23, 42, 0.16); /* modal / CTA-scale panel */
 }
 
 :root {
   --background: #eef2ff;
   --foreground: #111827;
-  --brand: #4f46e5;
-  --muted: #585f6c;
-  --line: #e7e8ea;
+
+  /* Motion tokens — CSS mirror of lib/motion/tokens.ts. Use these instead of
+     per-component magic numbers. */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-instant: 100ms;
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+  --dur-slow: 400ms;
+  --dur-reveal: 800ms;
+}
+
+/* Lenis smooth scroll (landing group only). The override below keeps native
+   CSS smooth-scrolling from fighting Lenis's programmatic scrolling. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 * {
@@ -55,8 +119,8 @@ a {
   font-weight: 700;
   width: 100%;
   transition:
-    color 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+    color 260ms var(--ease-out-expo),
+    transform 260ms var(--ease-out-expo);
 }
 
 .sidebar-nav-button {
@@ -79,8 +143,8 @@ a {
   opacity: 0;
   transform: translate3d(-16px, 0, 0) scale(0.96);
   transition:
-    opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 320ms var(--ease-out-expo),
+    transform 320ms var(--ease-out-expo);
 }
 
 .sidebar-nav-item::after {
@@ -96,7 +160,7 @@ a {
   transform: scaleY(0.28);
   transition:
     opacity 260ms ease,
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 320ms var(--ease-out-expo);
 }
 
 .sidebar-nav-icon svg {
@@ -105,7 +169,7 @@ a {
   height: 1rem;
   transition:
     color 260ms ease,
-    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 320ms var(--ease-out-expo);
 }
 
 .sidebar-nav-icon {
@@ -142,7 +206,7 @@ a {
   white-space: nowrap;
   transition:
     opacity 180ms ease,
-    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 240ms var(--ease-out-expo);
 }
 
 .sidebar-nav-tooltip::before {
@@ -195,22 +259,6 @@ a {
   background: #eef2ff;
 }
 
-.sidebar-social-panel {
-  height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transform: translate3d(0, -6px, 0);
-  transition:
-    height 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 320ms ease,
-    transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.sidebar-social-panel-open {
-  opacity: 1;
-  transform: translate3d(0, 0, 0);
-}
-
 .sidebar-social-item {
   display: flex;
   width: calc(100% - 1rem);
@@ -230,7 +278,7 @@ a {
   transition:
     background-color 220ms ease,
     color 220ms ease,
-    transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 260ms var(--ease-out-expo);
 }
 
 .sidebar-social-item:hover {
@@ -330,107 +378,6 @@ a {
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(238, 242, 255, 0.56));
 }
 
-.platform-cloud {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: center;
-  gap: 24px 34px;
-}
-
-.platform-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 32px;
-  color: rgba(88, 95, 108, 0.68);
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.platform-more {
-  color: #4f46e5;
-}
-
-.scroll-reveal {
-  --reveal-delay: 0ms;
-  opacity: 0;
-  transform: translate3d(0, 52px, 0) scale(0.975);
-  filter: blur(14px);
-  transition:
-    opacity 820ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 820ms cubic-bezier(0.16, 1, 0.3, 1),
-    filter 820ms cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--reveal-delay);
-  will-change: opacity, transform, filter;
-}
-
-.scroll-reveal--fade {
-  transform: none;
-  filter: blur(12px);
-}
-
-.scroll-reveal--scale {
-  transform: translate3d(0, 34px, 0) scale(0.94);
-}
-
-.scroll-reveal.is-visible {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  filter: blur(0);
-}
-
-.dashboard-reveal {
-  opacity: 0;
-  transform: translate3d(0, 24px, 0) scale(0.985);
-  filter: blur(12px);
-  animation: dashboardReveal 860ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform, filter;
-}
-
-.dashboard-reveal-left {
-  transform: translate3d(-24px, 0, 0) scale(0.99);
-}
-
-.dashboard-reveal-down {
-  transform: translate3d(0, -18px, 0) scale(0.99);
-}
-
-.dashboard-reveal-scale {
-  transform: translate3d(0, 18px, 0) scale(0.97);
-}
-
-.landing-reveal {
-  opacity: 0;
-  transform: translate3d(0, 30px, 0) scale(0.985);
-  filter: blur(14px);
-  animation: dashboardReveal 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform, filter;
-}
-
-.landing-reveal-left {
-  transform: translate3d(-30px, 0, 0) scale(0.99);
-}
-
-.landing-reveal-right {
-  transform: translate3d(30px, 0, 0) scale(0.99);
-}
-
-.landing-reveal-down {
-  transform: translate3d(0, -20px, 0) scale(0.99);
-}
-
-.landing-reveal-scale {
-  transform: translate3d(0, 20px, 0) scale(0.96);
-}
-
-@keyframes dashboardReveal {
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
-    filter: blur(0);
-  }
-}
-
 .video-placeholder {
   position: relative;
   display: grid;
@@ -493,12 +440,14 @@ a {
   background: #4f46e5;
   color: white;
   box-shadow: 0 18px 40px rgba(79, 70, 229, 0.26);
+  transition:
+    transform var(--dur-base) var(--ease-out-expo),
+    box-shadow var(--dur-base) var(--ease-out-expo);
 }
 
-@media (min-width: 720px) {
-  .platform-cloud {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
+.video-placeholder:hover .video-play {
+  transform: scale(1.08);
+  box-shadow: 0 22px 48px rgba(79, 70, 229, 0.34);
 }
 
 .hero-dashboard-image {
@@ -748,6 +697,28 @@ a {
   background: #f8fafc;
 }
 
+/* Bento hero card: full-width row, text beside the screenshot instead of
+   stacked above it. Only switches to the side-by-side layout at lg, the
+   same breakpoint where the grid gives it the full 3-column row to work
+   with — below that it stacks exactly like a standard card. */
+@media (min-width: 1024px) {
+  .feature-card--hero {
+    flex-direction: row;
+    align-items: center;
+    gap: 48px;
+    min-height: 360px;
+  }
+
+  .feature-card--hero .feature-card-header {
+    flex: 0 0 38%;
+  }
+
+  .feature-card--hero .feature-preview-frame {
+    flex: 1;
+    margin-top: 0;
+  }
+}
+
 .feature-card::before {
   content: "";
   position: absolute;
@@ -833,6 +804,24 @@ a {
   background: #ffffff;
   color: #4f46e5;
   box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08);
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+
+.growth-card {
+  transition:
+    transform var(--dur-slow) var(--ease-out-expo),
+    box-shadow var(--dur-slow) var(--ease-out-expo),
+    border-color var(--dur-base) var(--ease-out-expo);
+}
+
+.growth-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(79, 70, 229, 0.35);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.1);
+}
+
+.growth-card:hover .icon-box {
+  transform: translateY(-2px) scale(1.05);
 }
 
 .feature-preview-frame {
@@ -854,25 +843,15 @@ a {
   height: 100%;
   object-fit: cover;
   object-position: center;
-}
-
-.analytics-preview {
-  transform: scale(2.08);
-  object-position: center 50%;
-}
-
-.github-preview {
-  transform: scale(1.22);
-  object-position: center;
+  /* Baseline scale + scroll parallax offset are applied via GSAP (transform,
+     transform-origin) in FeaturesSection.tsx — kept out of CSS so the two
+     never fight over the same property. will-change is toggled just-in-time
+     by that same ScrollTrigger (onToggle), not declared here permanently. */
 }
 
 .feature-card--media .feature-preview-image {
   width: 100%;
   height: 100%;
-}
-
-.feature-card--media .github-preview {
-  object-fit: cover;
 }
 
 .code-preview {
@@ -913,9 +892,14 @@ a {
   filter: drop-shadow(0 20px 28px rgba(15, 23, 42, 0.18));
 }
 
-.cta-shader {
-  position: absolute;
-  inset: 22px 28px;
+/* The CTA panel: previously an absolutely-inset decoration (.cta-shader)
+   sitting behind sibling text content. Now a normal sized wrapper (see
+   CtaSection.tsx) so it can be a single clip-path reveal target, and the
+   sweep is a real child element (not ::before) so GSAP can reach it to
+   pause/resume based on scroll visibility. */
+.cta-panel {
+  position: relative;
+  overflow: hidden;
   border-radius: 28px;
   background:
     radial-gradient(ellipse at 20% 18%, rgba(238, 242, 255, 0.18), transparent 42%),
@@ -924,13 +908,14 @@ a {
   box-shadow: 0 40px 90px rgba(79, 70, 229, 0.26);
 }
 
-.cta-shader::before {
-  content: "";
+.cta-sweep {
   position: absolute;
   inset: 0;
   border-radius: inherit;
   background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.18), transparent);
   animation: ctaSweep 5.5s ease-in-out infinite;
+  animation-play-state: paused;
+  pointer-events: none;
 }
 
 @keyframes ctaSweep {
@@ -945,34 +930,75 @@ a {
   }
 }
 
+/* components/motion primitives (Phase 2) ---------------------------------- */
+
+.hover-card-shadow {
+  transition: box-shadow var(--dur-slow) var(--ease-out-expo);
+}
+
+.hover-card-shadow:hover,
+.hover-card-shadow:focus-within {
+  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.12);
+}
+
+.field-ring {
+  position: absolute;
+  inset: -3px;
+  z-index: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  pointer-events: none;
+}
+
+.field-focus-label {
+  position: absolute;
+  top: -0.6rem;
+  left: 1rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.footer-link {
+  position: relative;
+  display: inline-block;
+}
+
+.footer-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-fast) var(--ease-out-expo);
+}
+
+.footer-link:hover::after,
+.footer-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .scroll-reveal {
-    opacity: 1;
-    transform: none;
-    filter: none;
-    transition: none;
-  }
-
-  .dashboard-reveal {
-    opacity: 1;
-    transform: none;
-    filter: none;
-    animation: none;
-  }
-
-  .landing-reveal {
-    opacity: 1;
-    transform: none;
-    filter: none;
-    animation: none;
-  }
-
   .shader-field::before,
   .shader-field::after,
   .shader-marquee,
   .hero-automation-spin,
   .bars span,
-  .cta-shader::before {
+  .cta-sweep {
     animation: none;
   }
 }
@@ -1023,8 +1049,7 @@ a {
     padding-bottom: 28px;
   }
 
-  .cta-shader {
-    inset: 14px;
+  .cta-panel {
     border-radius: 22px;
   }
 

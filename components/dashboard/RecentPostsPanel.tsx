@@ -1,9 +1,14 @@
 "use client";
 
-import { Clock3, MessageSquare, Save, X } from "lucide-react";
-import Link from "next/link";
+import { Clock3, FileText, MessageSquare, Save, X } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 
+import EmptyState from "./EmptyState";
+import HoverCard from "@/components/motion/HoverCard";
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
+import PressableButton from "@/components/motion/PressableButton";
+import PressableLink from "@/components/motion/PressableLink";
 import PostShareMenu from "./PostShareMenu";
 
 const POST_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
@@ -116,7 +121,7 @@ function UpcomingPostsSkeleton() {
           className="grid gap-3 border-b border-slate-100 px-5 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4"
         >
           <div className="flex min-w-0 items-start gap-3">
-            <span className="mt-0.5 h-9 w-9 shrink-0 animate-pulse rounded-md bg-indigo-50" />
+            <span className="mt-0.5 h-10 w-10 shrink-0 animate-pulse rounded-control bg-primary-tint" />
             <div className="min-w-0 flex-1">
               <div className="h-4 w-2/5 animate-pulse rounded bg-slate-200" />
               <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-slate-100" />
@@ -222,35 +227,34 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
 
   return (
     <>
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-sm font-bold text-slate-950">Upcoming Posts</h2>
-          {/* <button type="button" className="rounded-md px-2 py-1 text-xs font-bold text-[#4338ca] transition hover:bg-indigo-50 hover:text-[#3730a3]">
-            View Calendar
-          </button> */}
         </div>
 
         {isLoadingPosts ? (
           <UpcomingPostsSkeleton />
         ) : posts.length === 0 ? (
-          <div className="grid min-h-56 place-items-center px-5 text-center">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">No posts yet</p>
-              {hasConnectedAccounts ? (
-                <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
-              ) : (
-                <>
-                  <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Connect a social media account to start generating and scheduling posts.</p>
-                  <Link
-                    href="/onboarding"
-                    className="mt-3 inline-flex h-9 items-center rounded-md bg-[#4338ca] px-4 text-xs font-bold text-white transition hover:bg-[#3730a3]"
-                  >
-                    Connect a platform
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="No posts yet"
+            className="min-h-56"
+            description={
+              hasConnectedAccounts
+                ? "Generated drafts and scheduled posts will appear here after you create or automate content."
+                : "Connect a social media account to start generating and scheduling posts."
+            }
+            action={
+              !hasConnectedAccounts && (
+                <PressableLink
+                  href="/onboarding"
+                  className="mt-3 inline-flex h-9 items-center rounded-md bg-primary px-4 text-xs font-bold text-white transition hover:bg-primary-hover"
+                >
+                  Connect a platform
+                </PressableLink>
+              )
+            }
+          />
         ) : (
           <div>
             <div className="hidden grid-cols-[minmax(0,1fr)_112px_128px_40px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500 md:grid">
@@ -259,15 +263,25 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
               <span>Scheduled</span>
               <span className="sr-only">Share</span>
             </div>
+            <AnimatePresence mode="popLayout">
             {posts.map((post) => (
-              <article key={post._id} className="grid gap-3 border-b border-slate-100 px-5 py-4 transition last:border-b-0 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4">
+              <HoverCard
+                as="article"
+                key={post._id}
+                layout
+                liftPx={2}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: 24 }}
+                className="grid gap-3 border-b border-slate-100 px-5 py-4 transition last:border-b-0 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4"
+              >
                 <button
                   type="button"
                   onClick={() => openEditor(post)}
                   className="flex min-w-0 items-start gap-3 text-left"
                   aria-label={`Edit ${post.pr_title || "post"}`}
                 >
-                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-indigo-50 text-[#4338ca]">
+                  <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
                     <MessageSquare className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
@@ -280,7 +294,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
                 </button>
                 <div className="flex flex-wrap items-center gap-3 md:contents">
                   <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-600">
-                    <span className="h-2 w-2 rounded-full bg-[#4338ca]" />
+                    <span className="h-2 w-2 rounded-full bg-primary" />
                     {getPlatformLabel(getPrimaryPlatform(post))}
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
@@ -293,23 +307,25 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
                   initialSharedPlatforms={post.shared_platforms}
                   onPostPublished={() => setPosts((currentPosts) => currentPosts.map((item) => item._id === post._id ? { ...item, status: "published" } : item))}
                 />
-              </article>
+              </HoverCard>
             ))}
+            </AnimatePresence>
           </div>
         )}
       </section>
 
+      <AnimatePresence>
       {editingPost && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
-          <section role="dialog" aria-modal="true" aria-labelledby="edit-post-title" className="w-full max-w-xl rounded-lg border border-slate-200 bg-white shadow-xl">
+        <ModalBackdrop className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
+          <ModalPanel role="dialog" aria-modal="true" aria-labelledby="edit-post-title" className="w-full max-w-xl rounded-panel border border-slate-200 bg-white shadow-panel">
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">PR</p>
                 <h2 id="edit-post-title" className="mt-1 truncate text-base font-bold text-slate-950">{editingPost.pr_title || "Edit post"}</h2>
               </div>
-              <button type="button" onClick={closeEditor} aria-label="Close editor" className="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+              <PressableButton type="button" onClick={closeEditor} aria-label="Close editor" className="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                 <X className="h-4 w-4" />
-              </button>
+              </PressableButton>
             </div>
 
             <div className="space-y-5 px-5 py-5">
@@ -319,7 +335,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
                   value={content}
                   onChange={(event) => setContent(event.target.value)}
                   rows={6}
-                  className="mt-2 w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="mt-2 w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                 />
               </label>
 
@@ -331,7 +347,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
                   onChange={(event) => setScheduledTime(event.target.value)}
                   min={getCurrentKathmanduDatetimeLocal()}
                   max={getScheduleLimit(editingPost)}
-                  className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                 />
                 <p className="mt-1.5 text-xs text-slate-500">Leave empty for no schedule. Posts are kept for 10 days.</p>
               </label>
@@ -340,17 +356,18 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
-              <button type="button" onClick={closeEditor} disabled={isSaving} className="h-9 rounded-md px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
+              <PressableButton type="button" onClick={closeEditor} disabled={isSaving} className="h-9 rounded-md px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
                 Cancel
-              </button>
-              <button type="button" onClick={() => void savePost()} disabled={isSaving} className="inline-flex h-9 items-center gap-2 rounded-md bg-[#4338ca] px-4 text-sm font-bold text-white hover:bg-[#3730a3] disabled:cursor-not-allowed disabled:opacity-60">
+              </PressableButton>
+              <PressableButton type="button" onClick={() => void savePost()} disabled={isSaving} className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
                 <Save className="h-4 w-4" />
                 {isSaving ? "Saving" : "Save changes"}
-              </button>
+              </PressableButton>
             </div>
-          </section>
-        </div>
+          </ModalPanel>
+        </ModalBackdrop>
       )}
+      </AnimatePresence>
     </>
   );
 }
