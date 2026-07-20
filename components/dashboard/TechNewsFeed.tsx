@@ -1,9 +1,15 @@
 "use client";
 
-import { CheckCircle2, Clock3, ExternalLink, ImageIcon, Save, Search, X } from "lucide-react";
+import { CheckCircle2, Clock3, ExternalLink, ImageIcon, Newspaper, Save, Search, X } from "lucide-react";
 import Image from "next/image";
+import { AnimatePresence } from "motion/react";
 import { FormEvent, useEffect, useState } from "react";
 
+import EmptyState from "./EmptyState";
+import HoverCard from "@/components/motion/HoverCard";
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
+import PressableButton from "@/components/motion/PressableButton";
+import { PressableAnchor } from "@/components/motion/PressableLink";
 import NewsShareMenu from "./NewsShareMenu";
 
 type NewsArticle = {
@@ -128,24 +134,16 @@ function NewsImage({ src, size = "table" }: { src?: string | null; size?: "table
 
 function NewsSkeleton() {
   return (
-    <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-      <div className="grid grid-cols-[2.3fr_0.85fr_0.95fr_0.75fr_0.9fr_0.8fr_1.2fr] items-center gap-4 bg-[#114a86] px-4 py-4">
-        {Array.from({ length: 7 }).map((_, index) => (
-          <span key={index} className="h-3 w-20 animate-pulse rounded bg-white/35" />
-        ))}
-      </div>
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          key={index}
-          className="grid grid-cols-[2.3fr_0.85fr_0.95fr_0.75fr_0.9fr_0.8fr_1.2fr] items-center gap-4 border-b border-slate-200 px-4 py-4 last:border-b-0"
-        >
-          <div className="flex items-center gap-4">
-            <span className="h-20 w-32 shrink-0 animate-pulse rounded-md bg-slate-100" />
-            <span className="h-4 w-40 animate-pulse rounded bg-slate-100" />
+    <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
+          <span className="block h-40 w-full animate-pulse bg-slate-100" />
+          <div className="space-y-2 px-4 py-4">
+            <span className="block h-3 w-24 animate-pulse rounded bg-slate-100" />
+            <span className="block h-4 w-full animate-pulse rounded bg-slate-100" />
+            <span className="block h-4 w-4/5 animate-pulse rounded bg-slate-100" />
+            <span className="block h-3 w-full animate-pulse rounded bg-slate-100" />
           </div>
-          {Array.from({ length: 6 }).map((__, itemIndex) => (
-            <span key={itemIndex} className="h-3 w-20 animate-pulse rounded bg-slate-100" />
-          ))}
         </div>
       ))}
     </div>
@@ -309,7 +307,7 @@ export default function TechNewsFeed() {
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-950">News Feed</h1>
           <p className="mt-1 text-sm text-slate-500">Curated technology updates ready to turn into social posts.</p>
           <form onSubmit={handleSearch} className="mt-4 flex w-full max-w-3xl items-center gap-2">
-            <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-slate-400 shadow-sm">
+            <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-control border border-slate-200 bg-white px-3 text-slate-400 shadow-card focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
               <Search className="h-3.5 w-3.5 shrink-0" />
               <input
                 type="search"
@@ -319,12 +317,12 @@ export default function TechNewsFeed() {
                 className="h-full min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
               />
             </label>
-            <button className="h-9 rounded-lg bg-[#4338ca] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[#3730a3] cursor-pointer">
+            <PressableButton className="h-9 rounded-control bg-primary px-4 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover cursor-pointer">
               Search
-            </button>
+            </PressableButton>
           </form>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-[#4338ca]" />
+          <div className="mt-4 inline-flex items-center gap-2 rounded-control border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-800 shadow-card">
+            <span className="h-2 w-2 rounded-full bg-primary" />
             All News
           </div>
         </div>
@@ -333,123 +331,110 @@ export default function TechNewsFeed() {
       {isLoading ? (
         <NewsSkeleton />
       ) : error ? (
-        <div className="mt-5 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        <div className="mt-5 rounded-card border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {error}
         </div>
       ) : newsItems.length === 0 ? (
-        <div className="mt-5 rounded-lg border border-slate-200 bg-white px-4 py-10 text-center shadow-sm">
-          <p className="text-sm font-bold text-slate-800">No news found</p>
-          <p className="mt-1 text-xs text-slate-500">Try a different keyword.</p>
-        </div>
+        <EmptyState
+          icon={Newspaper}
+          title="No news found"
+          description="Try a different keyword."
+          className="mt-5 min-h-56 rounded-card border border-slate-200 bg-white shadow-card"
+        />
       ) : (
-        <div className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="w-full">
-            <div className="w-full">
-              <div className="grid grid-cols-[2.3fr_0.85fr_0.95fr_0.75fr_0.9fr_0.8fr_1.2fr] items-center gap-4 bg-[#114a86] px-4 py-4 text-sm font-bold text-white">
-                <div>News</div>
-                <div>
-                  Date<span className="text-[10px] font-semibold"></span>
-                </div>
-                <div>Country</div>
-                <div>Language</div>
-                <div>Category</div>
-                <div>Publisher</div>
-                <div>Description</div>
-              </div>
+        <>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {visibleNewsItems.map((news, index) => {
+              const publishedAt = formatDate(news.pubDate);
+              const imageSource = news.image_url || null;
+              const savedPost = newsStatuses[newsSourceRef(news)];
 
-              {visibleNewsItems.map((news, index) => {
-                const publishedAt = formatDate(news.pubDate);
-                const imageSource = news.image_url || null;
-                const savedPost = newsStatuses[newsSourceRef(news)];
+              return (
+                <HoverCard
+                  as="article"
+                  key={news.article_id || news.link || `${news.title}-${index}`}
+                  liftPx={2}
+                  onClick={() => openNews(news, imageSource)}
+                  className="flex cursor-pointer flex-col overflow-hidden rounded-card border border-slate-200 bg-white shadow-card transition-colors hover:bg-slate-50"
+                >
+                  <div className="relative h-40 w-full shrink-0 overflow-hidden bg-slate-100">
+                    <NewsImage src={imageSource} />
+                    {savedPost?.status === "published" ? (
+                      <span className="absolute right-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-control bg-emerald-50 px-2.5 text-[11px] font-bold text-emerald-700 shadow-card">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Posted
+                      </span>
+                    ) : savedPost?.status === "scheduled" ? (
+                      <span className="absolute right-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-control bg-blue-50 px-2.5 text-[11px] font-bold text-blue-700 shadow-card">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        {formatScheduledDate(savedPost.scheduled_time)}
+                      </span>
+                    ) : null}
+                  </div>
 
-                return (
-                  <article
-                    key={news.article_id || news.link || `${news.title}-${index}`}
-                    onClick={() => openNews(news, imageSource)}
-                    className="grid cursor-pointer grid-cols-[2.3fr_0.85fr_0.95fr_0.75fr_0.9fr_0.8fr_1.2fr] items-center gap-4 border-b border-slate-200 px-4 py-4 transition-colors last:border-b-0 hover:bg-blue-50"
-                  >
-                    <div className="flex min-w-0 items-center gap-4">
-                      <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-md bg-slate-100">
-                        <NewsImage src={imageSource} />
-                      </div>
-                      <h2 className="line-clamp-3 text-[13px] font-extrabold leading-5 text-slate-950">
-                        {news.title || "Untitled news"}
-                      </h2>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2 px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.08em] text-primary">
+                      {publisherName(news)} • {publishedAt.date}
+                    </p>
+                    <h2 className="line-clamp-2 text-sm font-extrabold leading-5 text-slate-950">
+                      {news.title || "Untitled news"}
+                    </h2>
+                    <p className="line-clamp-2 flex-1 text-xs leading-5 text-slate-500">
+                      {news.description || "No description available."}
+                    </p>
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      <span className="truncate text-[11px] font-medium capitalize text-slate-400">
+                        {listValue(news.category)}
+                      </span>
+                      <NewsShareMenu content={newsShareContent(news)} />
                     </div>
-
-                    <div className="text-xs leading-5 text-slate-950">
-                      <p>{publishedAt.date}</p>
-                      <p>{publishedAt.time}</p>
-                    </div>
-                    <div className="text-xs capitalize leading-5 text-slate-950">{listValue(news.country)}</div>
-                    <div className="text-xs capitalize text-slate-950">{news.language || "Unknown"}</div>
-                    <div className="text-xs capitalize leading-5 text-slate-950">{listValue(news.category)}</div>
-                    <div className="text-xs capitalize text-slate-950">{publisherName(news)}</div>
-                    <div className="min-w-0 space-y-3">
-                      <p className="line-clamp-3 text-[11px] font-semibold uppercase leading-4 text-slate-950">
-                        {news.description || "No description available."}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        {savedPost?.status === "published" ? (
-                          <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-emerald-50 px-3 text-xs font-bold text-emerald-700">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Posted
-                          </span>
-                        ) : savedPost?.status === "scheduled" ? (
-                          <span className="inline-flex h-8 items-center gap-1.5 rounded-md bg-blue-50 px-3 text-xs font-bold text-blue-700">
-                            <Clock3 className="h-3.5 w-3.5" />
-                            {formatScheduledDate(savedPost.scheduled_time)}
-                          </span>
-                        ) : null}
-                        <NewsShareMenu content={newsShareContent(news)} />
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                  </div>
+                </HoverCard>
+              );
+            })}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-card border border-slate-200 bg-white px-4 py-3 shadow-card">
             <p className="text-xs font-medium text-slate-500">
               Showing {pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, newsItems.length)} of {newsItems.length}
             </p>
             <div className="flex items-center gap-2">
-              <button
+              <PressableButton
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 disabled={currentPage === 1}
-                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-8 rounded-control border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
-              </button>
-              <span className="rounded-md bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
+              </PressableButton>
+              <span className="rounded-control bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
                 Page {currentPage} of {totalPages}
               </span>
-              <button
+              <PressableButton
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
                 disabled={currentPage === totalPages}
-                className="h-8 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-8 rounded-control border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 transition cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
-              </button>
+              </PressableButton>
             </div>
           </div>
-        </div>
+        </>
       )}
 
+      <AnimatePresence>
       {selectedNews && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
-          <section
+        <ModalBackdrop className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
+          <ModalPanel
             role="dialog"
             aria-modal="true"
             aria-labelledby="news-detail-title"
-            className="max-h-[96vh] w-full max-w-4xl overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl"
+            className="max-h-[96vh] w-full max-w-4xl overflow-hidden rounded-panel border border-slate-200 bg-white shadow-panel"
           >
             <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
               <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#4338ca]">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
                   {publisherName(selectedNews)}
                 </p>
                 <h2 id="news-detail-title" className="mt-2 line-clamp-2 text-xl font-extrabold leading-7 text-slate-950">
@@ -467,19 +452,19 @@ export default function TechNewsFeed() {
                   <span className="capitalize">{listValue(selectedNews.category)}</span>
                 </div>
               </div>
-              <button
+              <PressableButton
                 type="button"
                 onClick={() => setSelectedNews(null)}
                 aria-label="Close news detail"
                 className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </PressableButton>
             </div>
 
             <div className="max-h-[calc(96vh-112px)] overflow-y-auto">
               <div className="bg-slate-50 px-6 py-4">
-                <div className="relative h-48 overflow-hidden rounded-lg border border-slate-200 bg-white sm:h-56">
+                <div className="relative h-48 overflow-hidden rounded-card border border-slate-200 bg-white sm:h-56">
                   <NewsImage src={selectedNewsImage} size="modal" />
                 </div>
               </div>
@@ -493,18 +478,18 @@ export default function TechNewsFeed() {
                 </div>
 
                 {selectedNews.link && (
-                  <a
+                  <PressableAnchor
                     href={selectedNews.link}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-[#4338ca] hover:bg-[#4338ca] hover:text-white"
+                    className="inline-flex h-10 items-center gap-2 rounded-control border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:border-primary hover:bg-primary hover:text-white"
                   >
                     Read original
                     <ExternalLink className="h-4 w-4" />
-                  </a>
+                  </PressableAnchor>
                 )}
 
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <div className="rounded-card border border-slate-200 bg-slate-50 px-4 py-3">
                   <label className="block">
                     <span className="text-sm font-bold text-slate-800">Schedule this news</span>
                     <input
@@ -513,26 +498,27 @@ export default function TechNewsFeed() {
                       onChange={(event) => setScheduleTime(event.target.value)}
                       min={getCurrentKathmanduDatetimeLocal()}
                       max={getScheduleLimitDatetimeLocal()}
-                      className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                      className="mt-2 block h-10 w-full rounded-control border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                     />
                   </label>
                   <p className="mt-1.5 text-xs text-slate-500">Scheduled news is saved in MongoDB and posted by cron.</p>
                   {scheduleError && <p className="mt-2 text-sm font-semibold text-red-600">{scheduleError}</p>}
-                  <button
+                  <PressableButton
                     type="button"
                     onClick={() => void scheduleSelectedNews()}
                     disabled={isScheduling}
-                    className="mt-3 inline-flex h-9 items-center gap-2 rounded-md bg-[#4338ca] px-4 text-sm font-bold text-white transition hover:bg-[#3730a3] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-3 inline-flex h-9 items-center gap-2 rounded-control bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Save className="h-4 w-4" />
                     {isScheduling ? "Scheduling" : "Schedule news"}
-                  </button>
+                  </PressableButton>
                 </div>
               </div>
             </div>
-          </section>
-        </div>
+          </ModalPanel>
+        </ModalBackdrop>
       )}
+      </AnimatePresence>
     </div>
   );
 }

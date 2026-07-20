@@ -3,6 +3,9 @@
 import { Check, Mail, MessageCircle, Send, User } from "lucide-react";
 import { useState } from "react";
 
+import CharacterCounter from "@/components/motion/CharacterCounter";
+import PressableButton from "@/components/motion/PressableButton";
+
 const MAX_LENGTH = 2000;
 
 export default function FeedbackForm({
@@ -55,14 +58,14 @@ export default function FeedbackForm({
   return (
     <div className="mx-auto w-full max-w-3xl">
       <div className="mb-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#4338ca]">Feedback</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Feedback</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Share your feedback</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
           Tell us what&apos;s working, what&apos;s missing, or what&apos;s broken. We read every message.
         </p>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
         <div className="flex flex-wrap items-center gap-4 border-b border-slate-100 px-5 py-4">
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
             <User className="h-4 w-4 text-slate-400" />
@@ -75,7 +78,7 @@ export default function FeedbackForm({
         </div>
 
         <div className="p-5">
-          <div className="min-h-[220px] rounded-xl border border-slate-200 bg-slate-50/60 p-5 transition focus-within:border-indigo-200 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-50">
+          <div className="relative min-h-[220px] rounded-card border border-slate-200 bg-slate-50/60 p-5 transition focus-within:bg-white">
             <textarea
               value={message}
               maxLength={MAX_LENGTH}
@@ -88,25 +91,23 @@ export default function FeedbackForm({
                 <MessageCircle className="h-4 w-4" />
                 Your feedback goes straight to the team
               </span>
-              <span className="text-xs font-bold text-slate-400">
-                {message.length} / {MAX_LENGTH}
-              </span>
+              <CharacterCounter length={message.length} max={MAX_LENGTH} />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mt-5 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+      <section className="mt-5 rounded-card border border-slate-200 bg-white px-5 py-4 shadow-card">
         <div className="flex flex-wrap items-center justify-end gap-3">
-          <button
+          <PressableButton
             type="button"
             disabled={!hasMessage || submitting}
             onClick={submitFeedback}
-            className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#4338ca] px-5 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition hover:bg-[#3730a3] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            className="inline-flex h-11 items-center gap-2 rounded-control bg-primary px-5 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
           >
             {submitting ? "Sending..." : submitted ? "Feedback Sent" : "Send Feedback"}
             {submitted ? <Check className="h-4 w-4" /> : <Send className="h-4 w-4" />}
-          </button>
+          </PressableButton>
         </div>
         {(submitted || error) && (
           <p aria-live="polite" className={`mt-3 text-right text-sm font-semibold ${error ? "text-red-600" : "text-emerald-600"}`}>

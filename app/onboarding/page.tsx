@@ -2,9 +2,14 @@
 
 import { Suspense, useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { AnimatePresence } from "motion/react";
 import { ArrowLeft, ArrowRight, CheckCircle2, FileText, X } from "lucide-react";
+
+import AuthCardEntrance from "@/components/motion/AuthCardEntrance";
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
+import PressableButton from "@/components/motion/PressableButton";
+import PressableLink from "@/components/motion/PressableLink";
 
 type OnboardingPlatform = {
   name: string;
@@ -235,17 +240,17 @@ const PlatformGrid = ({
         const isComingSoon = name === "Twitter" || name === "Facebook" || name === "Gmail";
 
         return (
-          <button
+          <PressableButton
             key={name}
             type="button"
             onClick={() => !isComingSoon && onPlatformClick(name)}
             disabled={isConnected || isComingSoon}
-            className={`relative flex min-h-28 flex-col items-center justify-center rounded-lg border px-4 py-4 text-center transition disabled:cursor-default ${
+            className={`relative flex min-h-28 flex-col items-center justify-center rounded-card border px-4 py-4 text-center transition disabled:cursor-default ${
               isConnected
-                ? "border-slate-200 bg-slate-50 opacity-60 shadow-sm"
+                ? "border-slate-200 bg-slate-50 opacity-60 shadow-card"
                 : isComingSoon
                   ? "border-slate-200 bg-slate-50 opacity-70"
-                  : "border-slate-200 bg-white hover:cursor-pointer hover:border-indigo-600 hover:bg-indigo-50/20"
+                  : "border-slate-200 bg-white hover:cursor-pointer hover:border-primary hover:bg-primary-tint/40"
             }`}
           >
             {isComingSoon && (
@@ -253,19 +258,19 @@ const PlatformGrid = ({
                 Soon
               </span>
             )}
-            <span className="grid h-12 w-12 place-items-center">
+            <span className="grid h-14 w-14 place-items-center rounded-control bg-slate-50">
               <Logo />
             </span>
             <span className="mt-4 text-sm font-semibold text-slate-950">{name}</span>
             <span
               className={`mt-2 inline-flex items-center gap-1 text-xs font-bold ${
-                isConnected ? "text-emerald-600" : isComingSoon ? "text-slate-400" : "text-[#4338ca]"
+                isConnected ? "text-emerald-600" : isComingSoon ? "text-slate-400" : "text-primary"
               }`}
             >
               {isConnected && <CheckCircle2 className="h-3.5 w-3.5" />}
               {isConnected ? "Connected" : isComingSoon ? "Coming Soon" : "Connect"}
             </span>
-          </button>
+          </PressableButton>
         );
       })}
     </div>
@@ -283,19 +288,19 @@ const InstagramPrerequisiteDialog = ({
   onClose: () => void;
   onConnect: () => void;
 }) => (
-  <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/10 p-4 backdrop-blur-[2px]">
-    <section className="relative flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.38)]">
+  <ModalBackdrop className="fixed inset-0 z-50 grid place-items-center bg-slate-900/10 p-4 backdrop-blur-[2px]">
+    <ModalPanel className="relative flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-panel border border-slate-200 bg-white shadow-panel">
       <div className="px-7 pb-5 pt-7 text-center">
-        <button
+        <PressableButton
           type="button"
           onClick={onClose}
           aria-label="Close Instagram prerequisites"
           className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
         >
           <X className="h-4 w-4" />
-        </button>
+        </PressableButton>
 
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-indigo-100 bg-indigo-50 text-[#4338ca] shadow-sm">
+        <div className="mx-auto grid h-12 w-12 place-items-center rounded-control bg-primary-tint text-primary">
           <FileText className="h-6 w-6" />
         </div>
 
@@ -313,7 +318,7 @@ const InstagramPrerequisiteDialog = ({
       <div className="min-h-0 flex-1 px-7 pb-5">
         <article className="max-h-[44vh] overflow-y-auto px-1 py-2">
           <div className="text-center">
-            <p className="text-xs font-bold text-[#4338ca]">Required by Meta</p>
+            <p className="text-xs font-bold text-primary">Required by Meta</p>
             <h2 className="mt-2 text-base font-bold text-slate-900">
               Instagram Publishing Prerequisites
             </h2>
@@ -348,7 +353,7 @@ const InstagramPrerequisiteDialog = ({
             type="checkbox"
             checked={agreed}
             onChange={(event) => onAgreeChange(event.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#4338ca]"
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-primary"
           />
           <span className="text-xs font-semibold leading-5 text-slate-700">
             I have read and agree. My Instagram account is Creator or Business, and it is linked to a Facebook Page.
@@ -357,24 +362,24 @@ const InstagramPrerequisiteDialog = ({
       </div>
 
       <div className="flex items-center justify-center gap-4 border-t border-slate-100 px-7 py-5">
-        <button
+        <PressableButton
           type="button"
           onClick={onClose}
-          className="inline-flex h-10 min-w-32 items-center justify-center rounded-md border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+          className="inline-flex h-10 min-w-32 items-center justify-center rounded-control border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
         >
           Decline
-        </button>
-        <button
+        </PressableButton>
+        <PressableButton
           type="button"
           disabled={!agreed}
           onClick={onConnect}
-          className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-md bg-slate-800 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+          className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-control bg-slate-800 px-5 text-sm font-bold text-white shadow-card transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
         >
           Accept
-        </button>
+        </PressableButton>
       </div>
-    </section>
-  </div>
+    </ModalPanel>
+  </ModalBackdrop>
 );
 
 const OnboardingContent = () => {
@@ -464,15 +469,16 @@ const OnboardingContent = () => {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] px-6 py-8 text-slate-950">
-      <div
-        className={`mx-auto min-h-[calc(100vh-4rem)] max-w-7xl rounded-xl border border-slate-200 bg-white/80 shadow-sm transition duration-300 ${
+    <main className="min-h-screen bg-[#f6f8fb] px-6 py-8 text-slate-950">
+      <AuthCardEntrance
+        as="div"
+        className={`mx-auto min-h-[calc(100vh-4rem)] max-w-7xl rounded-panel border border-slate-200 bg-white/80 shadow-panel transition duration-300 ${
           showInstagramPrerequisites ? "pointer-events-none select-none" : ""
         }`}
       >
         <div className="mx-auto flex w-full max-w-[680px] flex-col items-center px-6 py-6 sm:py-8">
           <h1 className="text-xl font-bold tracking-tight">AutoPilot Onboarding</h1>
-          <section className="mt-6 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+          <section className="mt-6 w-full overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
             <div className="px-6 py-8">
               <div className="text-center">
                 <h2 className="text-base font-bold">{currentStep.title}</h2>
@@ -495,32 +501,34 @@ const OnboardingContent = () => {
 
 
 
-              <Link
-        href={`/dashboard`}
-                className="inline-flex h-10 items-center gap-2 rounded-md bg-[#4338ca] px-7 text-sm font-bold text-white transition hover:bg-[#3730a3]"
+              <PressableLink
+                href="/dashboard"
+                className="inline-flex h-10 items-center gap-2 rounded-control bg-primary px-7 text-sm font-bold text-white transition hover:bg-primary-hover"
               >
                 Continue
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </PressableLink>
             </div>
           </section>
 
           <p className="mt-6 text-xs text-slate-500">
             Need help setting up?{" "}
-            <a href="mailto:budhathokikushal170@gmail.com" className="font-medium text-[#4338ca] hover:text-[#3730a3]">
+            <a href="mailto:budhathokikushal170@gmail.com" className="font-medium text-primary hover:text-primary-hover">
               Contact our support team
             </a>
           </p>
         </div>
-      </div>
-      {showInstagramPrerequisites && (
-        <InstagramPrerequisiteDialog
-          agreed={instagramPrerequisitesAgreed}
-          onAgreeChange={setInstagramPrerequisitesAgreed}
-          onClose={() => setShowInstagramPrerequisites(false)}
-          onConnect={clickedInstagram}
-        />
-      )}
+      </AuthCardEntrance>
+      <AnimatePresence>
+        {showInstagramPrerequisites && (
+          <InstagramPrerequisiteDialog
+            agreed={instagramPrerequisitesAgreed}
+            onAgreeChange={setInstagramPrerequisitesAgreed}
+            onClose={() => setShowInstagramPrerequisites(false)}
+            onConnect={clickedInstagram}
+          />
+        )}
+      </AnimatePresence>
     </main>
   );
 };

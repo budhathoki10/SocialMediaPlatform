@@ -53,7 +53,7 @@ const statCards = [
   { label: "Total Drafts", key: "totalDrafts", Icon: MessageSquare },
   { label: "Total DM Drafts", key: "totalDmDrafts", Icon: MessageSquare },
   { label: "Total Comment Drafts", key: "totalCommentDrafts", Icon: MessageSquare },
-  { label: "Sent Today", key: "sentToday", Icon: Play, highlight: true },
+  { label: "Sent Today", key: "sentToday", Icon: Play },
 ];
 
 function formatCount(value?: number | null) {
@@ -134,7 +134,7 @@ export default async function InstagramSocialPage() {
           <div className="mx-auto max-w-7xl">
             <h1 className="text-2xl font-bold tracking-tight text-slate-950">Instagram</h1>
 
-            <section className="mt-5 rounded-lg border border-slate-200 bg-white px-5 py-4 shadow-sm">
+            <section className="mt-5 rounded-card border border-slate-200 bg-white px-5 py-4 shadow-card">
               <div className="flex flex-wrap items-center justify-between gap-5">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-slate-50 ring-1 ring-slate-100">
@@ -146,7 +146,7 @@ export default async function InstagramSocialPage() {
                         className="h-14 w-14 rounded-full object-cover"
                       />
                     ) : (
-                      <Image src="/landing/final-center-logo.png" alt="" width={56} height={56} className="h-10 w-10 rounded-xl object-cover" />
+                      <Image src="/landing/final-center-logo.png" alt="" width={56} height={56} className="h-10 w-10 rounded-control object-cover" />
                     )}
                   </span>
                   <div className="min-w-0">
@@ -186,15 +186,17 @@ export default async function InstagramSocialPage() {
             </section>
 
             <section className="mt-5 grid gap-4 md:grid-cols-4">
-              {statCards.map(({ label, key, Icon, highlight }) => (
-                <div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                    <Icon className="h-4 w-4" />
-                    {label}
+              {statCards.map(({ label, key, Icon }) => (
+                <div key={label} className="flex items-center gap-3 rounded-card border border-slate-200 bg-white p-4 shadow-card">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-2xl font-extrabold leading-none text-slate-950">
+                      {formatCount(draftData.stats[key as keyof InstagramDraftStats])}
+                    </p>
+                    <p className="mt-1 truncate text-xs font-semibold text-slate-500">{label}</p>
                   </div>
-                  <p className={`mt-3 text-2xl font-bold ${highlight ? "text-[#4338ca]" : "text-slate-950"}`}>
-                    {formatCount(draftData.stats[key as keyof InstagramDraftStats])}
-                  </p>
                 </div>
               ))}
             </section>
