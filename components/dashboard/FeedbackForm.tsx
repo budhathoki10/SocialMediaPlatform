@@ -7,6 +7,7 @@ import CharacterCounter from "@/components/motion/CharacterCounter";
 import PressableButton from "@/components/motion/PressableButton";
 
 const MAX_LENGTH = 2000;
+const MIN_LENGTH = 10;
 
 export default function FeedbackForm({
   userName,
@@ -19,19 +20,22 @@ export default function FeedbackForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const hasMessage = message.trim().length > 0;
+  const trimmedLength = message.trim().length;
+  const hasMessage = trimmedLength > 0;
+  const belowMin = hasMessage && trimmedLength < MIN_LENGTH;
+  const canSubmit = trimmedLength >= MIN_LENGTH;
+
+  const updateMessage = (value: string) => {
+    setMessage(value);
+    if (submitted) setSubmitted(false);
+    if (error) setError("");
+  };
 
   const submitFeedback = async () => {
     const trimmed = message.trim();
 
     setError("");
     setSubmitted(false);
-
-    if (!trimmed) {
-      setError("Write your feedback before sending.");
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -78,18 +82,37 @@ export default function FeedbackForm({
         </div>
 
         <div className="p-5">
-          <div className="relative min-h-[220px] rounded-card border border-slate-200 bg-slate-50/60 p-5 transition focus-within:bg-white">
+          <label htmlFor="feedback-message" className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400">
+            Your feedback
+          </label>
+          <div
+            className={`relative mt-2 min-h-55 rounded-card border bg-slate-50/60 p-5 transition focus-within:bg-white focus-within:ring-4 ${
+              error
+                ? "border-red-300 focus-within:border-red-400 focus-within:ring-red-100"
+                : "border-slate-200 focus-within:border-primary focus-within:ring-primary/10"
+            }`}
+          >
             <textarea
+              id="feedback-message"
               value={message}
               maxLength={MAX_LENGTH}
-              onChange={(event) => setMessage(event.target.value)}
+              onChange={(event) => updateMessage(event.target.value)}
               placeholder="What would you like us to know?"
+              aria-invalid={Boolean(error)}
+              aria-describedby="feedback-hint"
               className="min-h-[160px] w-full resize-none border-0 bg-transparent text-lg font-semibold leading-8 text-slate-800 outline-none placeholder:text-slate-300"
             />
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-              <span className="inline-flex items-center gap-2 text-xs font-bold text-slate-400">
+              <span
+                id="feedback-hint"
+                className={`inline-flex items-center gap-2 text-xs font-bold ${
+                  belowMin ? "text-amber-600" : "text-slate-400"
+                }`}
+              >
                 <MessageCircle className="h-4 w-4" />
-                Your feedback goes straight to the team
+                {belowMin
+                  ? `Write ${MIN_LENGTH - trimmedLength} more character${MIN_LENGTH - trimmedLength === 1 ? "" : "s"}`
+                  : "Your feedback goes straight to the team"}
               </span>
               <CharacterCounter length={message.length} max={MAX_LENGTH} />
             </div>
@@ -101,7 +124,7 @@ export default function FeedbackForm({
         <div className="flex flex-wrap items-center justify-end gap-3">
           <PressableButton
             type="button"
-            disabled={!hasMessage || submitting}
+            disabled={!canSubmit || submitting}
             onClick={submitFeedback}
             className="inline-flex h-11 items-center gap-2 rounded-control bg-primary px-5 text-sm font-bold text-white shadow-card transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
           >
@@ -110,7 +133,11 @@ export default function FeedbackForm({
           </PressableButton>
         </div>
         {(submitted || error) && (
-          <p aria-live="polite" className={`mt-3 text-right text-sm font-semibold ${error ? "text-red-600" : "text-emerald-600"}`}>
+          <p
+            role={error ? "alert" : "status"}
+            aria-live={error ? "assertive" : "polite"}
+            className={`mt-3 text-right text-sm font-semibold ${error ? "text-red-600" : "text-emerald-600"}`}
+          >
             {error || "Thanks! Your feedback has been sent."}
           </p>
         )}
