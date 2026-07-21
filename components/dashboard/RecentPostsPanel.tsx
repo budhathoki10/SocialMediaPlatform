@@ -10,11 +10,12 @@ import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
 import PressableButton from "@/components/motion/PressableButton";
 import PressableLink from "@/components/motion/PressableLink";
 import PostShareMenu from "./PostShareMenu";
-
-const POST_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
-const KATHMANDU_OFFSET_MS = (5 * 60 + 45) * 60 * 1000;
-const DATETIME_LOCAL_PATTERN =
-  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/;
+import {
+  dateToKathmanduDatetimeLocal,
+  getCurrentKathmanduDatetimeLocal,
+  getScheduleLimit,
+  parseKathmanduDatetimeLocal,
+} from "@/lib/client/post-schedule";
 
 type DashboardPost = {
   _id: string;
@@ -36,44 +37,6 @@ function formatDate(value: string) {
     minute: "2-digit",
     timeZone: "UTC",
   }).format(new Date(value));
-}
-
-function parseKathmanduDatetimeLocal(value: string) {
-  const match = value.match(DATETIME_LOCAL_PATTERN);
-
-  if (!match) return null;
-
-  const [, year, month, day, hour, minute, second = "0"] = match;
-
-  return new Date(
-    Date.UTC(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hour),
-      Number(minute),
-      Number(second),
-    ),
-  );
-}
-
-function dateToKathmanduDatetimeLocal(value: string | null) {
-  if (!value) return "";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toISOString().slice(0, 16);
-}
-
-function getCurrentKathmanduDatetimeLocal() {
-  return new Date(Date.now() + KATHMANDU_OFFSET_MS).toISOString().slice(0, 16);
-}
-
-function getScheduleLimit(post: DashboardPost) {
-  const expirationDate = new Date(new Date(post.created_at).getTime() + POST_RETENTION_MS);
-  return dateToKathmanduDatetimeLocal(expirationDate.toISOString());
 }
 
 function getPostStatusClasses(status: DashboardPost["status"]) {
@@ -143,6 +106,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
   const [editingPost, setEditingPost] = useState<DashboardPost | null>(null);
   const [content, setContent] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [prTitle, setPrTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -176,6 +140,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
   function openEditor(post: DashboardPost) {
     setEditingPost(post);
     setContent(post.content);
+    setPrTitle(post.pr_title || "");
     setScheduledTime(dateToKathmanduDatetimeLocal(post.scheduled_time));
     setSaveError(null);
   }
@@ -187,11 +152,27 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
     }
   }
 
+  const scheduledDateValue = scheduledTime ? parseKathmanduDatetimeLocal(scheduledTime) : null;
+  const nowValue = parseKathmanduDatetimeLocal(getCurrentKathmanduDatetimeLocal());
+  const scheduleLimitValue = editingPost ? parseKathmanduDatetimeLocal(getScheduleLimit(editingPost.created_at)) : null;
+  const scheduleHint =
+    scheduledDateValue && nowValue && scheduledDateValue.getTime() < nowValue.getTime()
+      ? "Scheduled time can't be in the past."
+      : scheduledDateValue && scheduleLimitValue && scheduledDateValue.getTime() > scheduleLimitValue.getTime()
+        ? "Posts can only be scheduled within 10 days of being created."
+        : null;
+
   async function savePost() {
     if (!editingPost) return;
 
     const scheduledDate = scheduledTime ? parseKathmanduDatetimeLocal(scheduledTime) : null;
-    const scheduleLimit = parseKathmanduDatetimeLocal(getScheduleLimit(editingPost));
+    const now = parseKathmanduDatetimeLocal(getCurrentKathmanduDatetimeLocal());
+    const scheduleLimit = parseKathmanduDatetimeLocal(getScheduleLimit(editingPost.created_at));
+
+    if (scheduledDate && now && scheduledDate.getTime() < now.getTime()) {
+      setSaveError("Scheduled time can't be in the past.");
+      return;
+    }
 
     if (scheduledDate && scheduleLimit && scheduledDate.getTime() > scheduleLimit.getTime()) {
       setSaveError("Posts can only be scheduled within 10 days of being created.");
@@ -207,6 +188,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content,
+          pr_title: prTitle,
           scheduled_time: scheduledTime || null,
         }),
       });
@@ -216,7 +198,9 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
         throw new Error(data.error || "Unable to save post.");
       }
 
-      setPosts((currentPosts) => currentPosts.map((post) => (post._id === data.post._id ? data.post : post)));
+      setPosts((currentPosts) =>
+        currentPosts.map((post) => (post._id === data.post._id ? { ...post, ...data.post } : post)),
+      );
       setEditingPost(null);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Unable to save post.");
@@ -321,7 +305,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">PR</p>
-                <h2 id="edit-post-title" className="mt-1 truncate text-base font-bold text-slate-950">{editingPost.pr_title || "Edit post"}</h2>
+                <h2 id="edit-post-title" className="mt-1 truncate text-base font-bold text-slate-950">{prTitle || "Edit post"}</h2>
               </div>
               <PressableButton type="button" onClick={closeEditor} aria-label="Close editor" className="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                 <X className="h-4 w-4" />
@@ -329,6 +313,17 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
             </div>
 
             <div className="space-y-5 px-5 py-5">
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-800">Heading</span>
+                <input
+                  type="text"
+                  value={prTitle}
+                  onChange={(event) => setPrTitle(event.target.value)}
+                  placeholder="Generated post"
+                  className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                />
+              </label>
+
               <label className="block">
                 <span className="text-sm font-semibold text-slate-800">Content</span>
                 <textarea
@@ -346,10 +341,17 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
                   value={scheduledTime}
                   onChange={(event) => setScheduledTime(event.target.value)}
                   min={getCurrentKathmanduDatetimeLocal()}
-                  max={getScheduleLimit(editingPost)}
-                  className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                  max={getScheduleLimit(editingPost.created_at)}
+                  aria-invalid={Boolean(scheduleHint)}
+                  className={`mt-2 block h-10 w-full rounded-md border bg-white px-3 text-sm text-slate-700 outline-none transition focus:ring-2 ${
+                    scheduleHint
+                      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                      : "border-slate-200 focus:border-primary focus:ring-primary/15"
+                  }`}
                 />
-                <p className="mt-1.5 text-xs text-slate-500">Leave empty for no schedule. Posts are kept for 10 days.</p>
+                <p className={`mt-1.5 text-xs ${scheduleHint ? "font-semibold text-red-600" : "text-slate-500"}`}>
+                  {scheduleHint || "Leave empty for no schedule. Posts are kept for 10 days."}
+                </p>
               </label>
 
               {saveError && <p className="text-sm font-medium text-red-600">{saveError}</p>}
@@ -359,7 +361,7 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
               <PressableButton type="button" onClick={closeEditor} disabled={isSaving} className="h-9 rounded-md px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
                 Cancel
               </PressableButton>
-              <PressableButton type="button" onClick={() => void savePost()} disabled={isSaving} className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
+              <PressableButton type="button" onClick={() => void savePost()} disabled={isSaving || Boolean(scheduleHint)} className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
                 <Save className="h-4 w-4" />
                 {isSaving ? "Saving" : "Save changes"}
               </PressableButton>
