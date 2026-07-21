@@ -9,14 +9,13 @@ import {
   Clock3,
   Hash,
   ImagePlus,
-  Link2,
   Save,
   Send,
   Smile,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion, type Variants } from "motion/react";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 import CharacterCounter from "@/components/motion/CharacterCounter";
 import PressableButton from "@/components/motion/PressableButton";
@@ -36,7 +35,7 @@ const EMOJI_OPTIONS = [
   "😉", "😢", "😮", "🤝", "👍", "👎", "⭐", "🏆", "🧠", "⚡",
 ];
 type SaveMode = "draft" | "scheduled";
-type ToolbarPopover = "link" | "emoji" | null;
+type ToolbarPopover = "emoji" | null;
 
 function padDatePart(value: number) {
   return value.toString().padStart(2, "0");
@@ -98,7 +97,6 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [activePopover, setActivePopover] = useState<ToolbarPopover>(null);
-  const [linkValue, setLinkValue] = useState("");
   const [scheduleEnabled, setScheduleEnabled] = useState(false);
   const [publishDate, setPublishDate] = useState(() => toDateInputValue(new Date()));
   const [publishTime, setPublishTime] = useState("09:00");
@@ -173,17 +171,6 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
     reader.onload = () => setMediaPreview(typeof reader.result === "string" ? reader.result : null);
     reader.onerror = () => setMediaError("Unable to read that image.");
     reader.readAsDataURL(file);
-  }
-
-  function submitLink(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmedLink = linkValue.trim();
-
-    if (!trimmedLink) return;
-
-    insertAtCursor(trimmedLink);
-    setLinkValue("");
-    setActivePopover(null);
   }
 
   function insertEmoji(emoji: string) {
@@ -316,51 +303,6 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
                     <ImagePlus className="h-4 w-4" />
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setActivePopover((current) => (current === "link" ? null : "link"))}
-                      aria-label="Insert link"
-                      title="Insert link"
-                      aria-expanded={activePopover === "link"}
-                      className={`grid h-9 w-9 place-items-center rounded-control text-slate-400 transition hover:bg-white hover:text-primary hover:shadow-card ${
-                        activePopover === "link" ? "bg-white text-primary shadow-card" : ""
-                      }`}
-                    >
-                      <Link2 className="h-4 w-4" />
-                    </button>
-                    <AnimatePresence>
-                      {activePopover === "link" && (
-                        <motion.form
-                          onSubmit={submitLink}
-                          initial={{ opacity: 0, scale: 0.94, y: 6 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.94, y: 6 }}
-                          transition={SPRING.gentle}
-                          className="absolute bottom-11 left-0 z-30 w-64 rounded-card border border-slate-200 bg-white p-3 shadow-panel"
-                        >
-                          <label className="block text-[10px] font-black uppercase tracking-[0.08em] text-slate-400">
-                            Link URL
-                          </label>
-                          <input
-                            type="url"
-                            autoFocus
-                            value={linkValue}
-                            onChange={(event) => setLinkValue(event.target.value)}
-                            placeholder="https://example.com"
-                            className="mt-1.5 h-9 w-full rounded-control border border-slate-200 bg-slate-50 px-2.5 text-sm text-slate-700 outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
-                          />
-                          <PressableButton
-                            type="submit"
-                            className="mt-2 h-8 w-full rounded-control bg-primary text-xs font-bold text-white transition hover:bg-primary-hover"
-                          >
-                            Insert
-                          </PressableButton>
-                        </motion.form>
-                      )}
-                    </AnimatePresence>
-                  </div>
 
                   <div className="relative">
                     <button

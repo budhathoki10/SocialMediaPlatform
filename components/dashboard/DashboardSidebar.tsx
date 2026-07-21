@@ -32,7 +32,7 @@ const sidebarItems = [
 ];
 
 const socialItems = [
-  { label: "WhatsApp", image: "/landing/whatsapp.png", message: "clicked in whatsapp" },
+  { label: "WhatsApp", image: "/landing/whatsapp.png", message: "clicked in whatsapp  " },
   { label: "Facebook", image: "/landing/facebook.png", message: "clicked in facebook" },
   { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
   { label: "Gmail", image: "/landing/gmail.png", message: "clicked in gmail" },
@@ -86,7 +86,19 @@ export default function DashboardSidebar() {
           const active = href !== "#" && pathname === href;
 
           return (
-            <Link key={label} href={href} className={`sidebar-nav-item ${active ? "sidebar-nav-item-active" : ""}`}>
+            <Link
+              key={label}
+              href={href}
+              onClick={
+                label === "Auto Reply"
+                  ? (event) => {
+                      event.preventDefault();
+                      alert("Auto Reply is coming soon — we are currently working on this feature");
+                    }
+                  : undefined
+              }
+              className={`sidebar-nav-item ${active ? "sidebar-nav-item-active" : ""}`}
+            >
               <SidebarIconTooltip label={label}>
                 <Icon />
               </SidebarIconTooltip>
