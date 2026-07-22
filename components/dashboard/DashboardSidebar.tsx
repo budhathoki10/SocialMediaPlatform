@@ -27,7 +27,7 @@ const sidebarItems = [
   { label: "Dashboard", Icon: LayoutDashboard, href: "/dashboard" },
   { label: "Create Post", Icon: CirclePlus, href: "/dashboard/create-post" },
   { label: "Scheduled Posts", Icon: CalendarDays, href: "/dashboard/scheduled-posts" },
-  { label: "Auto Reply", Icon: MessageSquare, href: "#" },
+  { label: "Auto Reply", Icon: MessageSquare, href: "/dashboard/auto-reply" },
   { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news" },
 ];
 
@@ -83,24 +83,11 @@ export default function DashboardSidebar() {
           const active = href !== "#" && pathname === href;
 
           return (
-            <Link
-              key={label}
-              href={href}
-              onClick={
-                label === "Auto Reply"
-                  ? (event) => {
-                      event.preventDefault();
-                      alert("Auto Reply is coming soon — we are currently working on this feature");
-                    }
-                  : undefined
-              }
-              className={`sidebar-nav-item ${active ? "sidebar-nav-item-active" : ""}`}
-            >
+            <Link key={label} href={href} className={`sidebar-nav-item ${active ? "sidebar-nav-item-active" : ""}`}>
               <SidebarIconTooltip label={label}>
                 <Icon />
               </SidebarIconTooltip>
               <span className="sidebar-nav-label">{label}</span>
-              {label === "Auto Reply" && comingSoonPill}
             </Link>
           );
         })}
