@@ -62,7 +62,7 @@ const DEFAULT_SETTINGS: AutoReplySettingsData = {
     signOffStyle: "team_name",
     customSignOff: "AutoPilot Support Team",
     linkCtaEnabled: true,
-    maxRepliesPerContact: 3,
+    maxRepliesPerContact: 1,
     businessHoursAware: false,
   },
 };
@@ -287,9 +287,11 @@ const GREETING_OPTIONS: { value: AutoReplySettingsData["responseStyle"]["greetin
 export default function AutoReplySettingsPanel({
   initialSettings,
   initialLogs,
+  connectedPlatforms,
 }: {
   initialSettings: AutoReplySettingsData | null;
   initialLogs: AutoReplyLogRow[];
+  connectedPlatforms: string[];
 }) {
   const baseline = initialSettings || DEFAULT_SETTINGS;
   const [settings, setSettings] = useState<AutoReplySettingsData>(() => cloneSettings(baseline));
@@ -300,6 +302,7 @@ export default function AutoReplySettingsPanel({
   const [justSaved, setJustSaved] = useState(false);
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const logs = initialLogs;
+  const connectedPlatformRows = PLATFORM_ROWS.filter((row) => connectedPlatforms.includes(row.key));
 
   useEffect(() => () => clearTimeout(savedTimeoutRef.current), []);
 
@@ -391,6 +394,12 @@ export default function AutoReplySettingsPanel({
         </div>
 
         <div className="inline-flex items-center gap-3 rounded-control border border-slate-200 bg-white px-4 py-2.5 shadow-card">
+          <motion.span
+            key={settings.enabled ? "on" : "off"}
+            animate={{ opacity: [1, 0.35, 1] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            className={`h-2.5 w-2.5 shrink-0 rounded-full ${settings.enabled ? "bg-emerald-500" : "bg-red-500"}`}
+          />
           <div className="text-right">
             <p className="text-xs font-bold text-slate-800">{settings.enabled ? "Automation on" : "Automation off"}</p>
             <p className="text-[11px] text-slate-400">Applies to all connected platforms</p>
@@ -399,8 +408,8 @@ export default function AutoReplySettingsPanel({
         </div>
       </motion.div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr]">
-        <div className="space-y-5">
+      <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr] lg:items-start">
+        <div className="space-y-5 lg:sticky lg:top-6">
           <Card>
             <SectionHeader title="Reply behavior" description="The personality and judgment auto-replies use." />
             <RowList>
@@ -444,7 +453,7 @@ export default function AutoReplySettingsPanel({
           </Card>
 
           <Card>
-            <SectionHeader title="Recent activity" description="The last replies AutoPilot sent on your behalf." />
+            <SectionHeader title="Recent activity" description="The last 2 replies AutoPilot sent on your behalf." />
             {logs.length === 0 ? (
               <p className="pt-4 text-sm text-slate-400">No auto-replies sent yet.</p>
             ) : (
@@ -469,30 +478,36 @@ export default function AutoReplySettingsPanel({
         <div className="space-y-5">
           <Card>
             <SectionHeader title="Platform access" description="Choose which connected accounts auto-reply may act on." />
-            <RowList>
-              {PLATFORM_ROWS.map(({ key, label, image, subtitle }) => (
-                <div key={key} className="flex items-center justify-between gap-4 py-3.5">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-slate-50 ring-1 ring-slate-200">
-                      {image ? (
-                        <Image src={image} alt="" width={20} height={20} className="h-4 w-4 object-contain" />
-                      ) : (
-                        <XIcon className="h-4 w-4 text-slate-500" />
-                      )}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-800">{label}</p>
-                      <p className="text-xs text-slate-500">{subtitle}</p>
+            {connectedPlatformRows.length === 0 ? (
+              <p className="pt-4 text-sm text-slate-400">
+                No social accounts connected yet. Connect one from Socials in the sidebar to enable auto-reply on it.
+              </p>
+            ) : (
+              <RowList>
+                {connectedPlatformRows.map(({ key, label, image, subtitle }) => (
+                  <div key={key} className="flex items-center justify-between gap-4 py-3.5">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-slate-50 ring-1 ring-slate-200">
+                        {image ? (
+                          <Image src={image} alt="" width={20} height={20} className="h-4 w-4 object-contain" />
+                        ) : (
+                          <XIcon className="h-4 w-4 text-slate-500" />
+                        )}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-800">{label}</p>
+                        <p className="text-xs text-slate-500">{subtitle}</p>
+                      </div>
                     </div>
+                    <Toggle
+                      checked={settings.platformPermissions[key]}
+                      onChange={(value) => updatePlatform(key, value)}
+                      label={`Enable auto-reply on ${label}`}
+                    />
                   </div>
-                  <Toggle
-                    checked={settings.platformPermissions[key]}
-                    onChange={(value) => updatePlatform(key, value)}
-                    label={`Enable auto-reply on ${label}`}
-                  />
-                </div>
-              ))}
-            </RowList>
+                ))}
+              </RowList>
+            )}
           </Card>
 
           <Card>
@@ -626,12 +641,12 @@ export default function AutoReplySettingsPanel({
                 label="Sign-off style"
                 description="What every reply ends with."
                 control={
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <select
                       value={settings.responseStyle.signOffStyle}
                       onChange={(event) => updateResponseStyle({ signOffStyle: event.target.value })}
                       aria-label="Sign-off style"
-                      className={inputClassName}
+                      className={`${inputClassName} shrink-0`}
                     >
                       <option value="team_name">Team name</option>
                       <option value="personal_name">Personal name</option>
@@ -640,8 +655,11 @@ export default function AutoReplySettingsPanel({
                     <input
                       value={settings.responseStyle.customSignOff}
                       onChange={(event) => updateResponseStyle({ customSignOff: event.target.value })}
+                      disabled={settings.responseStyle.signOffStyle === "none"}
                       aria-label="Custom sign-off text"
-                      className={`${inputClassName} w-44`}
+                      title={settings.responseStyle.customSignOff}
+                      placeholder="Sign-off text"
+                      className={`${inputClassName} w-56 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400`}
                     />
                   </div>
                 }
@@ -658,19 +676,20 @@ export default function AutoReplySettingsPanel({
                 }
               />
               <Row
-                label="Max replies per contact"
+                label="Max auto replies per user"
                 description="Daily auto-reply limit for the same person."
                 control={
                   <div className="flex items-center gap-3">
                     <PressableButton
                       type="button"
                       aria-label="Decrease max replies per contact"
+                      disabled={settings.responseStyle.maxRepliesPerContact <= 1}
                       onClick={() =>
                         updateResponseStyle({
-                          maxRepliesPerContact: Math.max(0, settings.responseStyle.maxRepliesPerContact - 1),
+                          maxRepliesPerContact: Math.max(1, settings.responseStyle.maxRepliesPerContact - 1),
                         })
                       }
-                      className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 hover:bg-slate-50"
+                      className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </PressableButton>

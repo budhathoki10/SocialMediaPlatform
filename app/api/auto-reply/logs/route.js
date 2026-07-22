@@ -5,7 +5,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { AutoReplyLog, User } from "@/lib/models";
 
-const RECENT_LIMIT = 5;
+const RECENT_LIMIT = 2;
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
