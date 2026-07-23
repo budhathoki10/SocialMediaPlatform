@@ -698,8 +698,8 @@ export default function AutoReplySettingsPanel({
                 }
               />
               <Row
-                label="Max auto replies per user"
-                description="Daily auto-reply limit for the same person."
+                label="Max auto replies and AI drafts per user"
+                description="Daily auto-reply and AI draft limit for the same person."
                 control={
                   <div className="flex items-center gap-3">
                     <PressableButton
