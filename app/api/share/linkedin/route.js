@@ -75,7 +75,7 @@ export async function publishLinkedInPost({ postId, userId, content }) {
     headers: {
       "Authorization": `Bearer ${account.access_token}`,
       "Content-Type": "application/json",
-      "LinkedIn-Version": "202506",           // required — YYYYMM format
+      "LinkedIn-Version": "202607",           // required — YYYYMM format
       "X-Restli-Protocol-Version": "2.0.0",  // required
     },
     body: JSON.stringify({
