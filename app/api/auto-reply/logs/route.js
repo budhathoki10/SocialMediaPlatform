@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { AutoReplyLog, User } from "@/lib/models";
-
+// it reads the recent 2 auto reply logs for the current user and returns them in a structured format
+// this is shown in dashboard
 const RECENT_LIMIT = 2;
 
 async function getCurrentUser() {
