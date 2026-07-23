@@ -1,4 +1,4 @@
-import { Bell, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import Image from "next/image";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import CreatePostComposer from "@/components/dashboard/CreatePostComposer";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import NotificationsButton from "@/components/dashboard/NotificationsButton";
 
 type SessionUser = {
   image?: string | null;
@@ -21,11 +22,8 @@ function Toolbar({ user }: { user?: SessionUser }) {
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-        <button aria-label="Notifications" className="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </button>
-        <button aria-label="Settings" className="hidden h-9 w-9 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
+        <NotificationsButton />
+        <button aria-label="Settings" title="Settings — coming soon" className="hidden h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
           <Settings className="h-5 w-5" />
         </button>
         <div className="hidden h-8 w-px bg-slate-200 sm:block" />

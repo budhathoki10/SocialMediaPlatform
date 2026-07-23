@@ -1,14 +1,21 @@
 "use client";
 
-import { Clock3, MessageSquare, Save, X } from "lucide-react";
+import { Clock3, FileText, MessageSquare, Save, X } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 
+import EmptyState from "./EmptyState";
+import HoverCard from "@/components/motion/HoverCard";
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
+import PressableButton from "@/components/motion/PressableButton";
+import PressableLink from "@/components/motion/PressableLink";
 import PostShareMenu from "./PostShareMenu";
-
-const POST_RETENTION_MS = 10 * 24 * 60 * 60 * 1000;
-const KATHMANDU_OFFSET_MS = (5 * 60 + 45) * 60 * 1000;
-const DATETIME_LOCAL_PATTERN =
-  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?$/;
+import {
+  dateToKathmanduDatetimeLocal,
+  getCurrentKathmanduDatetimeLocal,
+  getScheduleLimit,
+  parseKathmanduDatetimeLocal,
+} from "@/lib/client/post-schedule";
 
 type DashboardPost = {
   _id: string;
@@ -30,44 +37,6 @@ function formatDate(value: string) {
     minute: "2-digit",
     timeZone: "UTC",
   }).format(new Date(value));
-}
-
-function parseKathmanduDatetimeLocal(value: string) {
-  const match = value.match(DATETIME_LOCAL_PATTERN);
-
-  if (!match) return null;
-
-  const [, year, month, day, hour, minute, second = "0"] = match;
-
-  return new Date(
-    Date.UTC(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hour),
-      Number(minute),
-      Number(second),
-    ),
-  );
-}
-
-function dateToKathmanduDatetimeLocal(value: string | null) {
-  if (!value) return "";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return "";
-
-  return date.toISOString().slice(0, 16);
-}
-
-function getCurrentKathmanduDatetimeLocal() {
-  return new Date(Date.now() + KATHMANDU_OFFSET_MS).toISOString().slice(0, 16);
-}
-
-function getScheduleLimit(post: DashboardPost) {
-  const expirationDate = new Date(new Date(post.created_at).getTime() + POST_RETENTION_MS);
-  return dateToKathmanduDatetimeLocal(expirationDate.toISOString());
 }
 
 function getPostStatusClasses(status: DashboardPost["status"]) {
@@ -115,7 +84,7 @@ function UpcomingPostsSkeleton() {
           className="grid gap-3 border-b border-slate-100 px-5 py-4 last:border-b-0 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4"
         >
           <div className="flex min-w-0 items-start gap-3">
-            <span className="mt-0.5 h-9 w-9 shrink-0 animate-pulse rounded-md bg-indigo-50" />
+            <span className="mt-0.5 h-10 w-10 shrink-0 animate-pulse rounded-control bg-primary-tint" />
             <div className="min-w-0 flex-1">
               <div className="h-4 w-2/5 animate-pulse rounded bg-slate-200" />
               <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-slate-100" />
@@ -131,12 +100,13 @@ function UpcomingPostsSkeleton() {
   );
 }
 
-export default function RecentPostsPanel() {
+export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnectedAccounts: boolean }) {
   const [posts, setPosts] = useState<DashboardPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [editingPost, setEditingPost] = useState<DashboardPost | null>(null);
   const [content, setContent] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
+  const [prTitle, setPrTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -170,6 +140,7 @@ export default function RecentPostsPanel() {
   function openEditor(post: DashboardPost) {
     setEditingPost(post);
     setContent(post.content);
+    setPrTitle(post.pr_title || "");
     setScheduledTime(dateToKathmanduDatetimeLocal(post.scheduled_time));
     setSaveError(null);
   }
@@ -181,11 +152,27 @@ export default function RecentPostsPanel() {
     }
   }
 
+  const scheduledDateValue = scheduledTime ? parseKathmanduDatetimeLocal(scheduledTime) : null;
+  const nowValue = parseKathmanduDatetimeLocal(getCurrentKathmanduDatetimeLocal());
+  const scheduleLimitValue = editingPost ? parseKathmanduDatetimeLocal(getScheduleLimit(editingPost.created_at)) : null;
+  const scheduleHint =
+    scheduledDateValue && nowValue && scheduledDateValue.getTime() < nowValue.getTime()
+      ? "Scheduled time can't be in the past."
+      : scheduledDateValue && scheduleLimitValue && scheduledDateValue.getTime() > scheduleLimitValue.getTime()
+        ? "Posts can only be scheduled within 10 days of being created."
+        : null;
+
   async function savePost() {
     if (!editingPost) return;
 
     const scheduledDate = scheduledTime ? parseKathmanduDatetimeLocal(scheduledTime) : null;
-    const scheduleLimit = parseKathmanduDatetimeLocal(getScheduleLimit(editingPost));
+    const now = parseKathmanduDatetimeLocal(getCurrentKathmanduDatetimeLocal());
+    const scheduleLimit = parseKathmanduDatetimeLocal(getScheduleLimit(editingPost.created_at));
+
+    if (scheduledDate && now && scheduledDate.getTime() < now.getTime()) {
+      setSaveError("Scheduled time can't be in the past.");
+      return;
+    }
 
     if (scheduledDate && scheduleLimit && scheduledDate.getTime() > scheduleLimit.getTime()) {
       setSaveError("Posts can only be scheduled within 10 days of being created.");
@@ -201,6 +188,7 @@ export default function RecentPostsPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content,
+          pr_title: prTitle,
           scheduled_time: scheduledTime || null,
         }),
       });
@@ -210,7 +198,9 @@ export default function RecentPostsPanel() {
         throw new Error(data.error || "Unable to save post.");
       }
 
-      setPosts((currentPosts) => currentPosts.map((post) => (post._id === data.post._id ? data.post : post)));
+      setPosts((currentPosts) =>
+        currentPosts.map((post) => (post._id === data.post._id ? { ...post, ...data.post } : post)),
+      );
       setEditingPost(null);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : "Unable to save post.");
@@ -221,23 +211,34 @@ export default function RecentPostsPanel() {
 
   return (
     <>
-      <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <h2 className="text-sm font-bold text-slate-950">Upcoming Posts</h2>
-          {/* <button type="button" className="rounded-md px-2 py-1 text-xs font-bold text-[#4338ca] transition hover:bg-indigo-50 hover:text-[#3730a3]">
-            View Calendar
-          </button> */}
         </div>
 
         {isLoadingPosts ? (
           <UpcomingPostsSkeleton />
         ) : posts.length === 0 ? (
-          <div className="grid min-h-56 place-items-center px-5 text-center">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">No posts yet</p>
-              <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">Generated drafts and scheduled posts will appear here after you create or automate content.</p>
-            </div>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="No posts yet"
+            className="min-h-56"
+            description={
+              hasConnectedAccounts
+                ? "Generated drafts and scheduled posts will appear here after you create or automate content."
+                : "Connect a social media account to start generating and scheduling posts."
+            }
+            action={
+              !hasConnectedAccounts && (
+                <PressableLink
+                  href="/onboarding"
+                  className="mt-3 inline-flex h-9 items-center rounded-md bg-primary px-4 text-xs font-bold text-white transition hover:bg-primary-hover"
+                >
+                  Connect a platform
+                </PressableLink>
+              )
+            }
+          />
         ) : (
           <div>
             <div className="hidden grid-cols-[minmax(0,1fr)_112px_128px_40px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-black uppercase tracking-[0.08em] text-slate-500 md:grid">
@@ -246,15 +247,25 @@ export default function RecentPostsPanel() {
               <span>Scheduled</span>
               <span className="sr-only">Share</span>
             </div>
+            <AnimatePresence mode="popLayout">
             {posts.map((post) => (
-              <article key={post._id} className="grid gap-3 border-b border-slate-100 px-5 py-4 transition last:border-b-0 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4">
+              <HoverCard
+                as="article"
+                key={post._id}
+                layout
+                liftPx={2}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: 24 }}
+                className="grid gap-3 border-b border-slate-100 px-5 py-4 transition last:border-b-0 hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_112px_128px_40px] md:items-center md:gap-4"
+              >
                 <button
                   type="button"
                   onClick={() => openEditor(post)}
                   className="flex min-w-0 items-start gap-3 text-left"
                   aria-label={`Edit ${post.pr_title || "post"}`}
                 >
-                  <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-md bg-indigo-50 text-[#4338ca]">
+                  <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
                     <MessageSquare className="h-4 w-4" />
                   </span>
                   <div className="min-w-0">
@@ -267,7 +278,7 @@ export default function RecentPostsPanel() {
                 </button>
                 <div className="flex flex-wrap items-center gap-3 md:contents">
                   <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-600">
-                    <span className="h-2 w-2 rounded-full bg-[#4338ca]" />
+                    <span className="h-2 w-2 rounded-full bg-primary" />
                     {getPlatformLabel(getPrimaryPlatform(post))}
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
@@ -280,33 +291,46 @@ export default function RecentPostsPanel() {
                   initialSharedPlatforms={post.shared_platforms}
                   onPostPublished={() => setPosts((currentPosts) => currentPosts.map((item) => item._id === post._id ? { ...item, status: "published" } : item))}
                 />
-              </article>
+              </HoverCard>
             ))}
+            </AnimatePresence>
           </div>
         )}
       </section>
 
+      <AnimatePresence>
       {editingPost && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
-          <section role="dialog" aria-modal="true" aria-labelledby="edit-post-title" className="w-full max-w-xl rounded-lg border border-slate-200 bg-white shadow-xl">
+        <ModalBackdrop className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm" role="presentation">
+          <ModalPanel role="dialog" aria-modal="true" aria-labelledby="edit-post-title" className="w-full max-w-xl rounded-panel border border-slate-200 bg-white shadow-panel">
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">PR</p>
-                <h2 id="edit-post-title" className="mt-1 truncate text-base font-bold text-slate-950">{editingPost.pr_title || "Edit post"}</h2>
+                <h2 id="edit-post-title" className="mt-1 truncate text-base font-bold text-slate-950">{prTitle || "Edit post"}</h2>
               </div>
-              <button type="button" onClick={closeEditor} aria-label="Close editor" className="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+              <PressableButton type="button" onClick={closeEditor} aria-label="Close editor" className="grid h-8 w-8 place-items-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700">
                 <X className="h-4 w-4" />
-              </button>
+              </PressableButton>
             </div>
 
             <div className="space-y-5 px-5 py-5">
+              <label className="block">
+                <span className="text-sm font-semibold text-slate-800">Heading</span>
+                <input
+                  type="text"
+                  value={prTitle}
+                  onChange={(event) => setPrTitle(event.target.value)}
+                  placeholder="Generated post"
+                  className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                />
+              </label>
+
               <label className="block">
                 <span className="text-sm font-semibold text-slate-800">Content</span>
                 <textarea
                   value={content}
                   onChange={(event) => setContent(event.target.value)}
                   rows={6}
-                  className="mt-2 w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  className="mt-2 w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
                 />
               </label>
 
@@ -317,27 +341,35 @@ export default function RecentPostsPanel() {
                   value={scheduledTime}
                   onChange={(event) => setScheduledTime(event.target.value)}
                   min={getCurrentKathmanduDatetimeLocal()}
-                  max={getScheduleLimit(editingPost)}
-                  className="mt-2 block h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                  max={getScheduleLimit(editingPost.created_at)}
+                  aria-invalid={Boolean(scheduleHint)}
+                  className={`mt-2 block h-10 w-full rounded-md border bg-white px-3 text-sm text-slate-700 outline-none transition focus:ring-2 ${
+                    scheduleHint
+                      ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                      : "border-slate-200 focus:border-primary focus:ring-primary/15"
+                  }`}
                 />
-                <p className="mt-1.5 text-xs text-slate-500">Leave empty for no schedule. Posts are kept for 10 days.</p>
+                <p className={`mt-1.5 text-xs ${scheduleHint ? "font-semibold text-red-600" : "text-slate-500"}`}>
+                  {scheduleHint || "Leave empty for no schedule. Posts are kept for 10 days."}
+                </p>
               </label>
 
               {saveError && <p className="text-sm font-medium text-red-600">{saveError}</p>}
             </div>
 
             <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
-              <button type="button" onClick={closeEditor} disabled={isSaving} className="h-9 rounded-md px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
+              <PressableButton type="button" onClick={closeEditor} disabled={isSaving} className="h-9 rounded-md px-4 text-sm font-semibold text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60">
                 Cancel
-              </button>
-              <button type="button" onClick={() => void savePost()} disabled={isSaving} className="inline-flex h-9 items-center gap-2 rounded-md bg-[#4338ca] px-4 text-sm font-bold text-white hover:bg-[#3730a3] disabled:cursor-not-allowed disabled:opacity-60">
+              </PressableButton>
+              <PressableButton type="button" onClick={() => void savePost()} disabled={isSaving || Boolean(scheduleHint)} className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60">
                 <Save className="h-4 w-4" />
                 {isSaving ? "Saving" : "Save changes"}
-              </button>
+              </PressableButton>
             </div>
-          </section>
-        </div>
+          </ModalPanel>
+        </ModalBackdrop>
       )}
+      </AnimatePresence>
     </>
   );
 }

@@ -1,3 +1,6 @@
+// in this file it recieves the code from instagram and exchanges it for an access token, fetches Instagram account info, then saves the connected account in MongoDB.
+
+
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -7,6 +10,16 @@ import { ConnectedAccount, User, getKathmanduDate } from "@/lib/models";
 
 function appUrl(path) {
   return `${process.env.NEXTAUTH_URL || "http://localhost:3000"}${path}`;
+}
+
+function getTokenExpirationDate(expiresIn) {
+  const seconds = Number(expiresIn);
+
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return null;
+  }
+
+  return new Date(Date.now() + seconds * 1000);
 }
 
 async function getCurrentUser() {
@@ -47,7 +60,6 @@ export async function GET(req) {
     })
   );
   const tokenData = await tokenRes.json();
-  console.log("token data", tokenData);
 
   if (!tokenData.access_token) {
     return NextResponse.redirect(appUrl("/onboarding?error=instagram_token_failed"));
@@ -58,7 +70,6 @@ export async function GET(req) {
     `https://graph.facebook.com/v18.0/me/accounts?access_token=${tokenData.access_token}`
   );
   const userData = await accountRes.json();
-  console.log("pages data", userData);
 
   //  no pages found
   if (!userData.data || userData.data.length === 0) {
@@ -68,36 +79,46 @@ export async function GET(req) {
   const pageId = userData.data[0].id;
   const pageAccessToken = userData.data[0].access_token;
 
+  if (!pageAccessToken) {
+    return NextResponse.redirect(appUrl("/onboarding?error=instagram_page_token_failed"));
+  }
+
 // Get Instagram account
   const igRes = await fetch(
-    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name,profile_picture_url}&access_token=${pageAccessToken}`
+    `https://graph.facebook.com/v18.0/${pageId}?fields=instagram_business_account{id,username,name,biography,profile_picture_url,media_count,followers_count,follows_count}&access_token=${pageAccessToken}`
   );
   const igData = await igRes.json();
-  console.log("instagram account", igData);
 
   const igAccount = igData.instagram_business_account;
-  console.log("igaccount", igAccount);
 
 
   if (!igAccount) {
     return NextResponse.redirect(appUrl("/onboarding?error=no_instagram_linked"));
   }
 
+  const expiresAt = getTokenExpirationDate(tokenData.expires_in);
 
+  // save the instagram details in the connected accounts collection
   await ConnectedAccount.findOneAndUpdate(
     { user_id: currentUser._id, platform: "instagram" },
     {
       $set: {
-        access_token: tokenData.access_token,
+        access_token: pageAccessToken,
         platform_user_id: igAccount.id,
-        platform_username: igAccount.username || igAccount.name,
+        page_id: pageId,
+        platform_username: igAccount.username || igAccount.name || igAccount.id,
+        name: igAccount.name || igAccount.username || "",
+        biography: igAccount.biography || "",
+        totalpost: igAccount.media_count || 0,
+        followers: igAccount.followers_count || 0,
+        following: igAccount.follows_count || 0,
         profilePictureUrl: igAccount.profile_picture_url,
-        expires_at: new Date(Date.now() + tokenData.expires_in * 1000),
+        expires_at: expiresAt,
         connected_at: getKathmanduDate(),
         status: "active",
       },
     },
-    { new: true, upsert: true, runValidators: true }
+    { returnDocument: "after", upsert: true, runValidators: true }
   );
 
   return NextResponse.redirect(appUrl("/onboarding?instagram=connected"));

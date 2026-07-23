@@ -58,6 +58,8 @@ export async function PATCH(request, context) {
     return NextResponse.json({ error: "Post content is required." }, { status: 400 });
   }
 
+  const prTitle = typeof body.pr_title === "string" ? body.pr_title.trim() : undefined;
+
   const post = await Post.findOne({ _id: postId, user_id: currentUser._id });
 
   if (!post) {
@@ -82,6 +84,10 @@ export async function PATCH(request, context) {
   post.content = content;
   post.scheduled_time = scheduledTime;
   post.expires_at = expiresAt;
+
+  if (prTitle !== undefined) {
+    post.pr_title = prTitle || null;
+  }
 
   if (scheduledTime && ["draft", "scheduled"].includes(post.status)) {
     post.status = "scheduled";

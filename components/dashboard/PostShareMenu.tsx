@@ -2,7 +2,11 @@
 
 import { Check, Share2 } from "lucide-react";
 import Image from "next/image";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+
+import PressableButton from "@/components/motion/PressableButton";
+import { SPRING } from "@/lib/motion/tokens";
 
 const sharePlatforms = [
   { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin" },
@@ -74,24 +78,30 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
 
   return (
     <div ref={menuRef} className="relative shrink-0">
-      <button
+      <PressableButton
         type="button"
         onClick={() => setIsOpen((open) => !open)}
-        className="grid h-9 w-9 place-items-center rounded-md text-slate-400 transition hover:bg-indigo-50 hover:text-[#4338ca]"
+        className="grid h-9 w-9 place-items-center rounded-control text-slate-400 transition hover:bg-primary-tint hover:text-primary"
         aria-label="Share post"
       >
         <Share2 className="h-4 w-4" />
-      </button>
+      </PressableButton>
 
-      {isOpen && (
-        <div className="absolute bottom-0 right-10 z-20 w-40 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg">
-          {sharePlatforms.map((platform) => (
-            (() => {
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 6 }}
+            transition={SPRING.gentle}
+            className="absolute bottom-0 right-10 z-20 w-40 rounded-card border border-slate-200 bg-white p-1.5 shadow-panel"
+          >
+            {sharePlatforms.map((platform) => {
               const hasBeenShared = sharedPlatforms.includes(platform.action);
               const isSharing = sharingPlatform === platform.action;
 
               return (
-                <button
+                <PressableButton
                   key={platform.name}
                   type="button"
                   disabled={hasBeenShared || isSharing}
@@ -103,14 +113,13 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
                   <span className="flex-1">{platform.name}</span>
                   {hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
                   {isSharing && <span className="text-[10px] text-slate-500">Posting…</span>}
-                </button>
+                </PressableButton>
               );
-            })()
-          ))}
-          {shareError && <p className="px-2 pb-1 pt-1 text-xs font-medium text-red-600">{shareError}</p>}
-        </div>
-      )}
-
+            })}
+            {shareError && <p className="px-2 pb-1 pt-1 text-xs font-medium text-red-600">{shareError}</p>}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

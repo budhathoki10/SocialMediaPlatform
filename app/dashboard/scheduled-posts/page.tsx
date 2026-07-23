@@ -1,24 +1,15 @@
-import {
-  Bell,
-  CalendarRange,
-  CheckCircle2,
-  Clock3,
-  FileText,
-  Grid2X2,
-  List,
-  MessageSquare,
-  Newspaper,
-  Search,
-  Settings,
-} from "lucide-react";
+import { CalendarRange, CheckCircle2, Clock3, FileText, List, Search, Settings } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
+import NotificationsButton from "@/components/dashboard/NotificationsButton";
 import { ScheduledPostFilters } from "@/components/dashboard/ScheduledPostFilters";
+import ScheduledPostsList, { type ScheduledPost } from "@/components/dashboard/ScheduledPostsList";
+import PressableButton from "@/components/motion/PressableButton";
+import PressableLink from "@/components/motion/PressableLink";
 import { connectDB } from "@/lib/db";
 import { Post, PostPlatform, User } from "@/lib/models";
 
@@ -34,38 +25,10 @@ type DashboardUser = {
   plan?: string | null;
 };
 
-type ScheduledPost = {
-  _id: string;
-  content: string;
-  pr_title?: string | null;
-  media_url?: string | null;
-  status: "draft" | "scheduled" | "published" | "failed" | "cancelled";
-  scheduled_time?: Date | null;
-  created_at: Date;
-  source: string;
-};
-
 type PostPlatformSummary = {
   post_id: string;
   platform: string;
   status: "pending" | "published" | "failed";
-};
-
-const platformImages: Record<string, string> = {
-  github: "/landing/githubs.png",
-  linkedin: "/landing/linkedin.png",
-  instagram: "/landing/insta.png",
-  facebook: "/landing/facebook.png",
-  gmail: "/landing/gmail.png",
-};
-
-const platformLabels: Record<string, string> = {
-  facebook: "Facebook",
-  github: "GitHub",
-  instagram: "Instagram",
-  linkedin: "LinkedIn",
-  twitter: "Twitter (X)",
-  x: "Twitter (X)",
 };
 
 const statusOptions = ["all", "scheduled", "published", "draft"];
@@ -104,48 +67,6 @@ function buildPageHref({ page, search, status, platform }: { page: number; searc
   return query ? `/dashboard/scheduled-posts?${query}` : "/dashboard/scheduled-posts";
 }
 
-function formatDateParts(value?: Date | null) {
-  if (!value) return { date: "No schedule", time: "Not set" };
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return { date: "No schedule", time: "Not set" };
-
-  return {
-    date: new Intl.DateTimeFormat("en", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      timeZone: "UTC",
-    }).format(date),
-    time: new Intl.DateTimeFormat("en", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "UTC",
-    }).format(date),
-  };
-}
-
-function statusClasses(status: ScheduledPost["status"]) {
-  const styles = {
-    cancelled: "bg-amber-50 text-amber-700",
-    draft: "bg-slate-100 text-slate-600",
-    failed: "bg-red-50 text-red-700",
-    published: "bg-emerald-50 text-emerald-700",
-    scheduled: "bg-blue-50 text-blue-700",
-  };
-
-  return styles[status] || styles.draft;
-}
-
-function StatusIcon({ status }: { status: ScheduledPost["status"] }) {
-  if (status === "published") return <CheckCircle2 className="h-3.5 w-3.5" />;
-  if (status === "scheduled") return <Clock3 className="h-3.5 w-3.5" />;
-  if (status === "draft") return <FileText className="h-3.5 w-3.5" />;
-
-  return null;
-}
-
 function getPlatformForPost(post: ScheduledPost, platformMap: Map<string, string>) {
   return platformMap.get(post._id.toString()) || "linkedin";
 }
@@ -159,43 +80,6 @@ function UserAvatar({ user }: { user: DashboardUser }) {
       height={36}
       className="h-9 w-9 rounded-full object-cover ring-2 ring-white"
     />
-  );
-}
-
-function PlatformBadge({ platform }: { platform: string }) {
-  const imageSource = platformImages[platform];
-
-  return (
-    <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-slate-100">
-        {imageSource ? (
-          <Image src={imageSource} alt="" width={18} height={18} className="h-4.5 w-4.5 object-contain" />
-        ) : (
-          <span className="text-[10px] font-black uppercase text-slate-500">{platform.slice(0, 2)}</span>
-        )}
-      </span>
-      {platformLabels[platform] || platform}
-    </span>
-  );
-}
-
-function ContentPreview({ post }: { post: ScheduledPost }) {
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-slate-100">
-        {post.media_url ? (
-          <Image src={post.media_url} alt="" fill sizes="48px" className="object-cover" unoptimized />
-        ) : (
-          <span className="grid h-full w-full place-items-center text-slate-500">
-            {post.source === "tech_news" ? <Newspaper className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
-          </span>
-        )}
-      </div>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-bold text-slate-900">{post.pr_title || "Generated post"}</p>
-        <p className="mt-1 line-clamp-1 text-xs text-slate-500">{post.content}</p>
-      </div>
-    </div>
   );
 }
 
@@ -241,6 +125,20 @@ export default async function ScheduledPostsPage({
   const platform = readParam(params, "platform", "all");
   const requestedPage = Number(readParam(params, "page", "1"));
   const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
+
+  const statusCounts = await Post.aggregate<{ _id: string; count: number }>([
+    { $match: { user_id: user._id } },
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+  const countByStatus = new Map(statusCounts.map((entry) => [entry._id, entry.count]));
+  const totalPostCount = statusCounts.reduce((sum, entry) => sum + entry.count, 0);
+
+  const overviewStats = [
+    { key: "all", label: "Total Queue", value: totalPostCount, icon: List },
+    { key: "scheduled", label: "Scheduled", value: countByStatus.get("scheduled") || 0, icon: Clock3 },
+    { key: "published", label: "Published", value: countByStatus.get("published") || 0, icon: CheckCircle2 },
+    { key: "draft", label: "Drafts", value: countByStatus.get("draft") || 0, icon: FileText },
+  ];
 
   const postQuery: Record<string, unknown> = { user_id: user._id };
 
@@ -300,20 +198,17 @@ export default async function ScheduledPostsPage({
                 name="q"
                 defaultValue={search}
                 placeholder="Search scheduled content..."
-                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                className="h-9 w-full rounded-control border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
               />
               <input type="hidden" name="status" value={status} />
               <input type="hidden" name="platform" value={platform} />
             </form>
 
             <div className="ml-auto flex items-center gap-2">
-              <button aria-label="Notifications" className="relative grid h-9 w-9 place-items-center rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-900">
-                <Bell className="h-4 w-4" />
-                <span className="absolute right-2.5 top-2 h-1.5 w-1.5 rounded-full bg-red-500" />
-              </button>
-              <button aria-label="Settings" className="grid h-9 w-9 place-items-center rounded-md text-slate-500 hover:bg-slate-50 hover:text-slate-900">
+              <NotificationsButton />
+              <PressableButton aria-label="Settings" title="Settings — coming soon" className="grid h-9 w-9 place-items-center rounded-control text-slate-500 hover:bg-slate-50 hover:text-slate-900">
                 <Settings className="h-4 w-4" />
-              </button>
+              </PressableButton>
               <div className="ml-2 hidden h-8 w-px bg-slate-200 sm:block" />
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-bold leading-4 text-slate-800">{user.name || "User"}</p>
@@ -331,16 +226,49 @@ export default async function ScheduledPostsPage({
                   <p className="mt-1 text-sm text-slate-500">Manage and monitor your upcoming social automation queue.</p>
                 </div>
 
-                <div className="flex rounded-lg bg-slate-100 p-1">
-                  <button className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-bold text-slate-500">
+                <div className="flex rounded-control bg-slate-100 p-1">
+                  <PressableButton
+                    disabled
+                    title="Calendar view — coming soon"
+                    className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-control px-3 text-sm font-bold text-slate-400"
+                  >
                     <CalendarRange className="h-4 w-4" />
                     Calendar
-                  </button>
-                  <button className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-bold text-[#4338ca] shadow-sm">
+                  </PressableButton>
+                  <PressableButton className="inline-flex h-9 items-center gap-2 rounded-control bg-white px-3 text-sm font-bold text-primary shadow-sm">
                     <List className="h-4 w-4" />
                     List View
-                  </button>
+                  </PressableButton>
                 </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {overviewStats.map((stat) => {
+                  const isActive = status === stat.key;
+                  const Icon = stat.icon;
+
+                  return (
+                    <PressableLink
+                      key={stat.key}
+                      href={buildPageHref({ page: 1, search, status: stat.key, platform })}
+                      className={`flex items-center gap-3 rounded-card border p-4 shadow-card transition-colors ${
+                        isActive ? "border-primary bg-primary-tint" : "border-slate-200 bg-white hover:bg-slate-50"
+                      }`}
+                    >
+                      <span
+                        className={`grid h-10 w-10 shrink-0 place-items-center rounded-control ${
+                          isActive ? "bg-white text-primary" : "bg-primary-tint text-primary"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-2xl font-extrabold leading-none text-slate-950">{stat.value}</p>
+                        <p className="mt-1 truncate text-xs font-semibold text-slate-500">{stat.label}</p>
+                      </div>
+                    </PressableLink>
+                  );
+                })}
               </div>
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -363,93 +291,49 @@ export default async function ScheduledPostsPage({
                     Showing {visibleRows.length === 0 ? 0 : pageStart + 1}-{Math.min(pageStart + PAGE_SIZE, rows.length)} of {rows.length} posts
                   </p>
                   {(search || status !== "all" || platform !== "all") && (
-                    <Link href="/dashboard/scheduled-posts" className="text-xs font-bold text-[#4338ca] hover:text-[#3730a3]">
+                    <PressableLink href="/dashboard/scheduled-posts" className="text-xs font-bold text-primary hover:text-primary-hover">
                       Clear filters
-                    </Link>
+                    </PressableLink>
                   )}
                 </div>
               </div>
 
-              <section className="mt-5 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-                <div className="hidden grid-cols-[minmax(0,1fr)_150px_150px_126px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-4 text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 md:grid">
+              <section className="mt-5">
+                <div className="hidden grid-cols-[minmax(0,1fr)_150px_150px_126px] gap-4 px-5 pb-2 text-[11px] font-black uppercase tracking-[0.1em] text-slate-400 md:grid">
                   <span>Content Preview</span>
                   <span>Platform</span>
                   <span>Scheduled Date</span>
                   <span>Status</span>
                 </div>
 
-                {visibleRows.length === 0 ? (
-                  <div className="grid min-h-64 place-items-center px-6 py-12 text-center">
-                    <div>
-                      <Grid2X2 className="mx-auto h-8 w-8 text-slate-300" />
-                      <p className="mt-3 text-sm font-bold text-slate-800">No posts found</p>
-                      <p className="mt-1 text-xs text-slate-500">Scheduled, draft, and published posts will appear here.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    {visibleRows.map(({ post, platform: rowPlatform }) => {
-                      const scheduled = formatDateParts(post.scheduled_time || post.created_at);
+                <ScheduledPostsList rows={visibleRows} />
 
-                      return (
-                        <article
-                          key={post._id.toString()}
-                          className="grid gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0 hover:bg-blue-50 md:grid-cols-[minmax(0,1fr)_150px_150px_126px] md:items-center"
-                        >
-                          <ContentPreview post={post} />
-                          <div>
-                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400 md:hidden">Platform</p>
-                            <PlatformBadge platform={rowPlatform} />
-                          </div>
-                          <div>
-                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400 md:hidden">Scheduled Date</p>
-                            <div className="inline-flex items-start gap-2 text-sm font-semibold text-slate-700">
-                              <Clock3 className="mt-0.5 h-4 w-4 text-slate-400" />
-                              <span>
-                                <span className="block">{scheduled.date}</span>
-                                <span className="mt-0.5 block text-xs font-medium text-slate-500">{scheduled.time}</span>
-                              </span>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400 md:hidden">Status</p>
-                            <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold capitalize ${statusClasses(post.status)}`}>
-                              <StatusIcon status={post.status} />
-                              {post.status === "published" ? "Published" : post.status}
-                            </span>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-card border border-slate-200 bg-white px-5 py-4 shadow-card">
                   <p className="text-xs font-medium text-slate-500">
                     Showing {visibleRows.length === 0 ? 0 : pageStart + 1} to {Math.min(pageStart + PAGE_SIZE, rows.length)} of {rows.length} posts
                   </p>
                   <div className="flex items-center gap-2">
-                    <Link
+                    <PressableLink
                       href={previousHref}
                       aria-disabled={safePage === 1}
-                      className={`inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-xs font-bold ${
+                      className={`inline-flex h-8 items-center rounded-control border border-slate-200 bg-white px-3 text-xs font-bold ${
                         safePage === 1 ? "pointer-events-none text-slate-300" : "text-slate-600 hover:bg-slate-50"
                       }`}
                     >
                       Previous
-                    </Link>
-                    <span className="rounded-md bg-white px-3 py-2 text-xs font-bold text-slate-500">
+                    </PressableLink>
+                    <span className="rounded-control bg-slate-50 px-3 py-2 text-xs font-bold text-slate-500">
                       Page {safePage} of {totalPages}
                     </span>
-                    <Link
+                    <PressableLink
                       href={nextHref}
                       aria-disabled={safePage === totalPages}
-                      className={`inline-flex h-8 items-center rounded-md border border-slate-200 bg-white px-3 text-xs font-bold ${
-                        safePage === totalPages ? "pointer-events-none text-slate-300" : "text-[#4338ca] hover:bg-slate-50"
+                      className={`inline-flex h-8 items-center rounded-control border border-slate-200 bg-white px-3 text-xs font-bold ${
+                        safePage === totalPages ? "pointer-events-none text-slate-300" : "text-primary hover:bg-primary-tint"
                       }`}
                     >
                       Next
-                    </Link>
+                    </PressableLink>
                   </div>
                 </div>
               </section>

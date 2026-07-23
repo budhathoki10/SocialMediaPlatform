@@ -5,6 +5,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 
+import AuthCardEntrance from "@/components/motion/AuthCardEntrance";
+import PressableButton from "@/components/motion/PressableButton";
+
 function GoogleLogo() {
   return (
     <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 18 18">
@@ -36,7 +39,14 @@ function getCallbackUrl() {
   }
 
   const normalizeCallbackPath = (url: string) => {
-    if (url === "/login" || url.startsWith("/login?")) {
+    if (
+      url === "/login" ||
+      url.startsWith("/login?") ||
+      url === "/error" ||
+      url.startsWith("/error?") ||
+      url === "/api/auth/error" ||
+      url.startsWith("/api/auth/error?")
+    ) {
       return fallback;
     }
 
@@ -83,8 +93,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-6 py-12 text-slate-950">
-      <section className="w-full max-w-[420px] rounded-2xl border border-slate-200 bg-white px-9 py-10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f6f8fb] px-6 py-12 text-slate-950">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[720px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-primary-tint/60 blur-3xl"
+      />
+      <AuthCardEntrance className="relative w-full max-w-[420px] rounded-panel border border-slate-200 bg-white px-9 py-10 shadow-panel sm:px-10">
         <div className="flex justify-center">
           <Image
             src="/landing/autopilot-logo.png"
@@ -102,15 +116,15 @@ export default function LoginPage() {
           <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to manage your automation workflows.</p>
         </div>
 
-        <button
+        <PressableButton
           type="button"
           onClick={handleGoogleLogin}
           disabled={isLoading || status === "authenticated"}
-          className="mt-8 flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-1400 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+          className="mt-8 flex h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-control border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-card transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
         >
           <GoogleLogo />
           {isLoading || status === "authenticated" ? "Onboarding..." : "Continue with Google"}
-        </button>
+        </PressableButton>
 
         <div className="mt-12 border-t border-slate-100 pt-5">
           <div className="flex items-center justify-between text-xs text-slate-500">
@@ -122,7 +136,7 @@ export default function LoginPage() {
             </a>
           </div>
         </div>
-      </section>
+      </AuthCardEntrance>
     </main>
   );
 }
