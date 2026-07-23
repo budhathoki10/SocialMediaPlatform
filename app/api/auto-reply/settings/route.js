@@ -9,6 +9,7 @@ const TONE_VALUES = ["professional", "friendly", "creative", "concise"];
 const EMOJI_VALUES = ["none", "minimal", "moderate"];
 const LENGTH_VALUES = ["short", "standard", "detailed"];
 const GREETING_VALUES = ["first_name", "generic"];
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -59,6 +60,8 @@ function formatSettings(doc) {
       linkCtaEnabled: doc.response_style?.link_cta_enabled,
       maxRepliesPerContact: doc.response_style?.max_replies_per_contact,
       businessHoursAware: doc.response_style?.business_hours_aware,
+      businessHoursStart: doc.response_style?.business_hours_start,
+      businessHoursEnd: doc.response_style?.business_hours_end,
     },
   };
 }
@@ -144,6 +147,12 @@ export async function PUT(request) {
     }
     if (typeof style.businessHoursAware === "boolean") {
       update["response_style.business_hours_aware"] = style.businessHoursAware;
+    }
+    if (typeof style.businessHoursStart === "string" && TIME_PATTERN.test(style.businessHoursStart)) {
+      update["response_style.business_hours_start"] = style.businessHoursStart;
+    }
+    if (typeof style.businessHoursEnd === "string" && TIME_PATTERN.test(style.businessHoursEnd)) {
+      update["response_style.business_hours_end"] = style.businessHoursEnd;
     }
   }
 

@@ -35,6 +35,8 @@ export type AutoReplySettingsData = {
     linkCtaEnabled: boolean;
     maxRepliesPerContact: number;
     businessHoursAware: boolean;
+    businessHoursStart: string;
+    businessHoursEnd: string;
   };
 };
 
@@ -64,6 +66,8 @@ const DEFAULT_SETTINGS: AutoReplySettingsData = {
     linkCtaEnabled: true,
     maxRepliesPerContact: 1,
     businessHoursAware: false,
+    businessHoursStart: "09:00",
+    businessHoursEnd: "18:00",
   },
 };
 
@@ -106,6 +110,9 @@ const itemVariants: Variants = {
 
 const inputClassName =
   "h-10 rounded-control border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10";
+
+const timeInputClassName =
+  "h-8 w-[8.5rem] rounded-control border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-700 outline-none transition [&::-webkit-calendar-picker-indicator]:h-3 [&::-webkit-calendar-picker-indicator]:w-3 [&::-webkit-calendar-picker-indicator]:opacity-50 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10";
 
 function Toggle({
   checked,
@@ -394,12 +401,21 @@ export default function AutoReplySettingsPanel({
         </div>
 
         <div className="inline-flex items-center gap-3 rounded-control border border-slate-200 bg-white px-4 py-2.5 shadow-card">
-          <motion.span
-            key={settings.enabled ? "on" : "off"}
-            animate={{ opacity: [1, 0.35, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            className={`h-2.5 w-2.5 shrink-0 rounded-full ${settings.enabled ? "bg-emerald-500" : "bg-red-500"}`}
-          />
+          <span className="relative flex h-2.5 w-2.5 shrink-0 items-center justify-center">
+            {settings.enabled && (
+              <motion.span
+                aria-hidden="true"
+                className="absolute inline-flex h-full w-full rounded-full bg-emerald-400"
+                animate={{ scale: [1, 2.4], opacity: [0.6, 0] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
+              />
+            )}
+            <span
+              className={`relative h-2.5 w-2.5 rounded-full transition-colors duration-300 ${
+                settings.enabled ? "bg-emerald-500 shadow-[0_0_8px_2px_rgba(16,185,129,0.6)]" : "bg-red-500"
+              }`}
+            />
+          </span>
           <div className="text-right">
             <p className="text-xs font-bold text-slate-800">{settings.enabled ? "Automation on" : "Automation off"}</p>
             <p className="text-[11px] text-slate-400">Applies to all connected platforms</p>
@@ -408,7 +424,13 @@ export default function AutoReplySettingsPanel({
         </div>
       </motion.div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr] lg:items-start">
+      <div
+        className={`mt-6 grid gap-5 transition-all duration-[350ms] ease-out lg:grid-cols-[360px_1fr] lg:items-start ${
+          settings.enabled ? "opacity-100 blur-[0px]" : "pointer-events-none select-none opacity-55 blur-[3px]"
+        }`}
+        inert={!settings.enabled}
+        aria-hidden={!settings.enabled}
+      >
         <div className="space-y-5 lg:sticky lg:top-6">
           <Card>
             <SectionHeader title="Reply behavior" description="The personality and judgment auto-replies use." />
@@ -722,10 +744,37 @@ export default function AutoReplySettingsPanel({
                   />
                 }
               />
+              <div
+                className={`flex flex-wrap items-center gap-3 pb-4 transition-opacity duration-300 ${
+                  settings.responseStyle.businessHoursAware ? "opacity-100" : "pointer-events-none opacity-50"
+                }`}
+                inert={!settings.responseStyle.businessHoursAware}
+              >
+                <label className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400">From</span>
+                  <input
+                    type="time"
+                    value={settings.responseStyle.businessHoursStart}
+                    onChange={(event) => updateResponseStyle({ businessHoursStart: event.target.value })}
+                    aria-label="Business hours start time"
+                    className={timeInputClassName}
+                  />
+                </label>
+                <label className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400">To</span>
+                  <input
+                    type="time"
+                    value={settings.responseStyle.businessHoursEnd}
+                    onChange={(event) => updateResponseStyle({ businessHoursEnd: event.target.value })}
+                    aria-label="Business hours end time"
+                    className={timeInputClassName}
+                  />
+                </label>
+              </div>
             </RowList>
           </Card>
         </div>
-      </div>
+        </div>
 
       <AnimatePresence>
         {(isDirty || justSaved) && (
