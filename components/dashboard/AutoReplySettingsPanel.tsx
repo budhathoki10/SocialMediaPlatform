@@ -393,10 +393,10 @@ export default function AutoReplySettingsPanel({
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="pb-24">
       <motion.div variants={itemVariants} className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Automation</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Configuration</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Auto-Reply</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-            Configure how AutoPilot responds to messages and comments across LinkedIn, X, Instagram, and WhatsApp.
+            Configure how AutoPilot drafts responses to messages and comments across LinkedIn, X, Instagram, and WhatsApp. Every draft below always applies, regardless of the auto-post agent switch — a human still approves every send today.
           </p>
         </div>
 
@@ -417,20 +417,14 @@ export default function AutoReplySettingsPanel({
             />
           </span>
           <div className="text-right">
-            <p className="text-xs font-bold text-slate-800">{settings.enabled ? "Automation on" : "Automation off"}</p>
-            <p className="text-[11px] text-slate-400">Applies to all connected platforms</p>
+            <p className="text-xs font-bold text-slate-800">{settings.enabled ? "Auto-post agent on" : "Auto-post agent off"}</p>
+            <p className="text-[11px] text-slate-400">Coming soon — sends replies without review</p>
           </div>
-          <Toggle checked={settings.enabled} onChange={updateEnabled} label="Enable auto-reply automation" />
+          <Toggle checked={settings.enabled} onChange={updateEnabled} label="Enable auto-post agent" />
         </div>
       </motion.div>
 
-      <div
-        className={`mt-6 grid gap-5 transition-all duration-[350ms] ease-out lg:grid-cols-[360px_1fr] lg:items-start ${
-          settings.enabled ? "opacity-100 blur-[0px]" : "pointer-events-none select-none opacity-55 blur-[3px]"
-        }`}
-        inert={!settings.enabled}
-        aria-hidden={!settings.enabled}
-      >
+      <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr] lg:items-start">
         <div className="space-y-5 lg:sticky lg:top-6">
           <Card>
             <SectionHeader title="Reply behavior" description="The personality and judgment auto-replies use." />

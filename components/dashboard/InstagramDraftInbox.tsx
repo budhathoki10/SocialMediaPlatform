@@ -622,14 +622,15 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">
               {selectedRows.length}
             </span>
-            <div className="leading-tight">
+            <div className="flex items-center gap-2.5">
               <p className="text-sm font-semibold text-slate-800">
                 {selectedRows.length} draft{selectedRows.length === 1 ? "" : "s"} selected
               </p>
+              <span className="h-3.5 w-px bg-slate-300" aria-hidden="true" />
               <PressableButton
                 type="button"
                 onClick={() => setSelectedRows([])}
-                className="cursor-pointer text-[11px] font-medium text-slate-400 transition hover:text-slate-600 hover:underline"
+                className="cursor-pointer text-xs font-semibold text-primary transition hover:text-primary-hover hover:underline"
               >
                 Clear selection
               </PressableButton>
@@ -640,7 +641,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
               type="button"
               onClick={() => void handleAcceptAll()}
               disabled={bulkAction !== null || processingId !== null}
-              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-emerald-600 px-4 text-xs font-semibold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-emerald-50 px-4 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20 disabled:cursor-wait disabled:opacity-50"
             >
               {bulkAction === "approve" ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -653,7 +654,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
               type="button"
               onClick={() => void handleRejectAll()}
               disabled={bulkAction !== null || processingId !== null}
-              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-red-500 px-4 text-xs font-semibold text-white shadow-card transition hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-red-50 px-4 text-xs font-semibold text-red-600 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/20 disabled:cursor-wait disabled:opacity-50"
             >
               {bulkAction === "reject" ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />

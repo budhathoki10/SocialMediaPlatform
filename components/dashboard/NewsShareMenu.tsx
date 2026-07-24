@@ -45,14 +45,7 @@ export default function NewsShareMenu({ content }: NewsShareMenuProps) {
   }, []);
 
   async function shareNews(platform: (typeof sharePlatforms)[number]["action"]) {
-    const platformConfig = sharePlatforms.find((item) => item.action === platform);
-    const platformName = platformConfig?.name || platform;
-
-    if (!platformConfig?.enabled) {
-      setShareError(`${platformName} sharing is not connected yet.`);
-      return;
-    }
-
+    const platformName = sharePlatforms.find((item) => item.action === platform)?.name || platform;
     const confirmed = window.confirm(`Share this news on ${platformName}?`);
     if (!confirmed) return;
 
@@ -99,11 +92,11 @@ export default function NewsShareMenu({ content }: NewsShareMenuProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: -6 }}
+            initial={{ opacity: 0, scale: 0.94, y: 6 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: -6 }}
+            exit={{ opacity: 0, scale: 0.94, y: 6 }}
             transition={SPRING.gentle}
-            className="absolute right-0 top-10 z-20 w-44 rounded-card border border-slate-200 bg-white p-1.5 shadow-panel"
+            className="absolute bottom-10 right-0 z-20 w-44 rounded-card border border-slate-200 bg-white p-1.5 shadow-panel"
           >
             {sharePlatforms.map((platform) => {
               const hasBeenShared = sharedPlatforms.includes(platform.action);
@@ -113,15 +106,16 @@ export default function NewsShareMenu({ content }: NewsShareMenuProps) {
                 <PressableButton
                   key={platform.name}
                   type="button"
-                  disabled={hasBeenShared || isSharing}
+                  disabled={!platform.enabled || hasBeenShared || isSharing}
                   onClick={() => void shareNews(platform.action)}
-                  title={!platform.enabled ? `${platform.name} sharing coming soon` : undefined}
+                  title={!platform.enabled ? `${platform.name} sharing is coming soon` : undefined}
                   className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:opacity-70"
                 >
                   <Image src={platform.image} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
                   <span className="flex-1">{platform.name}</span>
-                  {hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
-                  {isSharing && <span className="text-[10px] text-slate-500">Posting...</span>}
+                  {!platform.enabled && <span className="text-[10px] text-slate-400">Coming soon</span>}
+                  {platform.enabled && hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
+                  {platform.enabled && isSharing && <span className="text-[10px] text-slate-500">Posting...</span>}
                 </PressableButton>
               );
             })}
