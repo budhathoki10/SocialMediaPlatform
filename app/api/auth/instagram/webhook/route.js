@@ -12,7 +12,12 @@ function getValueText(value) {
 function getSenderUsername(sender) {
   return sender?.username || sender?.name || sender?.id || "instagram_user";
 }
+// This function creates one unique text ID by joining a prefix and several values with colons:
+/*
+for example createExternalId("dm", "user123", "message456");
+then it will return "dm:user123:message456"
 
+*/
 function createExternalId(prefix, ...parts) {
   return [prefix, ...parts.filter(Boolean)].join(":");
 }
@@ -131,8 +136,8 @@ async function getInstagramSenderProfile(senderId, accessTokens) {
       profileUrl.searchParams.set("access_token", accessToken);
 
       const response = await fetch(profileUrl, {
-        cache: "no-store",
-        signal: AbortSignal.timeout(5_000),
+        cache: "no-store", // do not cache the response, always get the latest data from Instagram
+        signal: AbortSignal.timeout(5_000),   //cancel the request if it takes more than 5 seconds
       });
 
       const profile = await response.json();
@@ -152,7 +157,7 @@ async function getInstagramSenderProfile(senderId, accessTokens) {
   console.warn("Unable to load Instagram sender profile.", { senderId });
   return null;
 }
-
+//This GET handler is used by Instagram/Meta to verify that your webhook endpoint belongs to you 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
 
@@ -168,7 +173,10 @@ export async function GET(req) {
   });
 
   if (
-    mode === "subscribe" &&
+    mode === "subscribe" && // if it is true then it is a verification request from Instagram
+    token && // if it is true then the token is provided in the request
+    challenge && // if it is true then the challenge is provided in the request
+    process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN && // if it is true then the verify token is set in the environment variable
     token === process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN
   ) {
     return new Response(challenge, {
@@ -204,6 +212,7 @@ export async function POST(req) {
         continue;
       }
 
+      // check if the comment is sent by the connected account itself, if yes then mark the comment as sent and do not create a draft for it. This is to avoid creating a draft for the comments that are sent by the connected account itself.
       const isOutgoingCommentReply =
         webhookEvent.source === "comment" &&
         webhookEvent.senderId &&

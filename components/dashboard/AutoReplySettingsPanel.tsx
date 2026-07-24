@@ -396,7 +396,7 @@ export default function AutoReplySettingsPanel({
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Configuration</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Auto-Reply</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-            Configure how AutoPilot drafts responses to messages and comments across LinkedIn, X, Instagram, and WhatsApp. Every draft below always applies, regardless of the auto-post agent switch — a human still approves every send today.
+            Configure how AutoPilot drafts responses to messages and comments across LinkedIn, X, Instagram, and WhatsApp. Every draft below always applies. On Instagram, turning on the auto-post agent sends high-confidence drafts automatically — anything uncertain still waits for your review.
           </p>
         </div>
 
@@ -418,7 +418,7 @@ export default function AutoReplySettingsPanel({
           </span>
           <div className="text-right">
             <p className="text-xs font-bold text-slate-800">{settings.enabled ? "Auto-post agent on" : "Auto-post agent off"}</p>
-            <p className="text-[11px] text-slate-400">Coming soon — sends replies without review</p>
+            <p className="text-[11px] text-slate-400">Sends high-confidence Instagram replies without review</p>
           </div>
           <Toggle checked={settings.enabled} onChange={updateEnabled} label="Enable auto-post agent" />
         </div>
