@@ -66,6 +66,7 @@ export async function PATCH(request, { params }) {
       draft: {
         id: draft._id.toString(),
         draft: draft.draft_reply,
+        confidence: draft.confidence,
       },
     });
   } catch (error) {

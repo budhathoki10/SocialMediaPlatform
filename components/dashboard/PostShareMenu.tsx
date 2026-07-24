@@ -9,9 +9,9 @@ import PressableButton from "@/components/motion/PressableButton";
 import { SPRING } from "@/lib/motion/tokens";
 
 const sharePlatforms = [
-  { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin" },
-  { name: "Instagram", image: "/landing/insta.png", action: "instagram" },
-  { name: "Facebook", image: "/landing/facebook.png", action: "facebook" },
+  { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin", available: true },
+  { name: "Instagram", image: "/landing/insta.png", action: "instagram", available: false },
+  { name: "Facebook", image: "/landing/facebook.png", action: "facebook", available: false },
 ] as const;
 
 type PostShareMenuProps = {
@@ -104,15 +104,22 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
                 <PressableButton
                   key={platform.name}
                   type="button"
-                  disabled={hasBeenShared || isSharing}
+                  disabled={!platform.available || hasBeenShared || isSharing}
                   onClick={() => void sharePost(platform.action)}
-                  title={hasBeenShared ? `Already posted on ${platform.name}` : undefined}
+                  title={
+                    !platform.available
+                      ? `${platform.name} posting is coming soon`
+                      : hasBeenShared
+                        ? `Already posted on ${platform.name}`
+                        : undefined
+                  }
                   className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:opacity-70"
                 >
                   <Image src={platform.image} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
                   <span className="flex-1">{platform.name}</span>
-                  {hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
-                  {isSharing && <span className="text-[10px] text-slate-500">Posting…</span>}
+                  {!platform.available && <span className="text-[10px] text-slate-400">Coming soon</span>}
+                  {platform.available && hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
+                  {platform.available && isSharing && <span className="text-[10px] text-slate-500">Posting…</span>}
                 </PressableButton>
               );
             })}

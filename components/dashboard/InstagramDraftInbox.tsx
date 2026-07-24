@@ -16,6 +16,7 @@ type DraftRow = {
   source: string;
   message: string;
   draft: string;
+  confidence: number | null;
   tone: string;
   status: string;
   createdAt: string | null;
@@ -75,6 +76,35 @@ function groupRowsByConversation(rows: DraftRow[]): MessageGroup[] {
   return [...groups.values()];
 }
 
+function averageConfidence(messages: DraftRow[]): number | null {
+  const scored = messages.filter((message): message is DraftRow & { confidence: number } => message.confidence !== null);
+
+  if (scored.length === 0) {
+    return null;
+  }
+
+  const total = scored.reduce((sum, message) => sum + message.confidence, 0);
+  return Math.round(total / scored.length);
+}
+
+function ConfidenceBadge({ value }: { value: number }) {
+  const colorClasses =
+    value >= 80
+      ? "bg-emerald-50 text-emerald-700"
+      : value >= 50
+        ? "bg-amber-50 text-amber-700"
+        : "bg-red-50 text-red-600";
+
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${colorClasses}`}
+      title="AI confidence"
+    >
+      {value}%
+    </span>
+  );
+}
+
 export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) {
   const [draftRows, setDraftRows] = useState<DraftRow[]>(rows);
   // this state is used to track which rows are selected for bulk actions. It stores the IDs of the selected drafts.
@@ -89,6 +119,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [expandedRows, setExpandedReplies] = useState<Set<string>>(new Set());
   const isRepliedTab = activeTab === "Replied";
   const filteredRows = draftRows.filter((row) => {
     if (isRepliedTab) {
@@ -192,6 +223,20 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     });
   }
 
+  function toggleRowExpanded(id: string) {
+    setExpandedReplies((currentIds) => {
+      const nextIds = new Set(currentIds);
+
+      if (nextIds.has(id)) {
+        nextIds.delete(id);
+      } else {
+        nextIds.add(id);
+      }
+
+      return nextIds;
+    });
+  }
+
   function handleTabChange(tab: DraftTab) {
     setActiveTab(tab);
     setCurrentPage(1);
@@ -199,6 +244,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     setEditingDraftId(null);
     setDraftEditValue("");
     setExpandedGroups(new Set());
+    setExpandedReplies(new Set());
   }
 
   function handleStartEdit(row: DraftRow) {
@@ -238,7 +284,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
       const data = (await response.json()) as {
         error?: string;
         message?: string;
-        draft?: { id: string; draft: string };
+        draft?: { id: string; draft: string; confidence: number | null };
       };
 
       if (!response.ok) {
@@ -247,7 +293,11 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
       }
 
       setDraftRows((currentRows) =>
-        currentRows.map((row) => (row.id === draftId ? { ...row, draft: data.draft?.draft || trimmedDraft } : row)),
+        currentRows.map((row) =>
+          row.id === draftId
+            ? { ...row, draft: data.draft?.draft || trimmedDraft, confidence: data.draft?.confidence ?? row.confidence }
+            : row,
+        ),
       );
       setEditingDraftId(null);
       setDraftEditValue("");
@@ -448,11 +498,43 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     }
   }
 
+  function renderMessagePreview(row: DraftRow, moreCount?: number) {
+    const isExpanded = expandedRows.has(row.id);
+
+    return (
+      <td className="min-w-[22rem] px-3 py-3 align-top text-xs text-slate-500">
+        <PressableButton
+          type="button"
+          onClick={() => toggleRowExpanded(row.id)}
+          className="w-full cursor-pointer text-left"
+        >
+          <span className={isExpanded ? "block whitespace-pre-wrap break-words" : "block truncate"}>
+            &quot;{row.message}&quot;
+            {moreCount ? (
+              <span className="ml-1 text-[10px] font-semibold text-slate-400">+{moreCount} more</span>
+            ) : null}
+          </span>
+        </PressableButton>
+      </td>
+    );
+  }
+
   function renderDraftCell(row: DraftRow) {
     return (
       <td className={`max-w-52 px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
         {isRepliedTab ? (
-          <span className="block truncate">&quot;{row.draft}&quot;</span>
+          <PressableButton
+            type="button"
+            onClick={() => toggleRowExpanded(row.id)}
+            className="w-full cursor-pointer text-left"
+          >
+            <span className={expandedRows.has(row.id) ? "block whitespace-pre-wrap break-words" : "block truncate"}>
+              &quot;{row.draft}&quot;
+            </span>
+            <span className="mt-1 block text-[11px] text-slate-400">
+              {expandedRows.has(row.id) ? "Click to collapse" : "Click to view full reply"}
+            </span>
+          </PressableButton>
         ) : editingDraftId === row.id ? (
           <div className="space-y-2">
             <textarea
@@ -490,6 +572,14 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
             <span className="mt-1 block text-[11px] text-slate-400">Click to edit</span>
           </PressableButton>
         )}
+      </td>
+    );
+  }
+
+  function renderConfidenceCell(confidence: number | null) {
+    return (
+      <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
+        {confidence !== null ? <ConfidenceBadge value={confidence} /> : <span className="text-slate-300">—</span>}
       </td>
     );
   }
@@ -571,10 +661,9 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
           Message {index + 1}
         </td>
         <td className="px-3 py-2.5" />
-        <td className="min-w-[22rem] whitespace-pre-wrap break-words px-3 py-2.5 align-top text-xs text-slate-500">
-          &quot;{row.message}&quot;
-        </td>
+        {renderMessagePreview(row)}
         {renderDraftCell(row)}
+        {renderConfidenceCell(row.confidence)}
         {!isRepliedTab ? renderActionsCell(row) : null}
       </motion.tr>
     );
@@ -622,14 +711,15 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">
               {selectedRows.length}
             </span>
-            <div className="leading-tight">
+            <div className="flex items-center gap-2.5">
               <p className="text-sm font-semibold text-slate-800">
                 {selectedRows.length} draft{selectedRows.length === 1 ? "" : "s"} selected
               </p>
+              <span className="h-3.5 w-px bg-slate-300" aria-hidden="true" />
               <PressableButton
                 type="button"
                 onClick={() => setSelectedRows([])}
-                className="cursor-pointer text-[11px] font-medium text-slate-400 transition hover:text-slate-600 hover:underline"
+                className="cursor-pointer text-xs font-semibold text-primary transition hover:text-primary-hover hover:underline"
               >
                 Clear selection
               </PressableButton>
@@ -640,7 +730,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
               type="button"
               onClick={() => void handleAcceptAll()}
               disabled={bulkAction !== null || processingId !== null}
-              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-emerald-600 px-4 text-xs font-semibold text-white shadow-card transition hover:bg-emerald-700 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-emerald-50 px-4 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/20 disabled:cursor-wait disabled:opacity-50"
             >
               {bulkAction === "approve" ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -653,7 +743,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
               type="button"
               onClick={() => void handleRejectAll()}
               disabled={bulkAction !== null || processingId !== null}
-              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-red-500 px-4 text-xs font-semibold text-white shadow-card transition hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex h-9 min-w-[116px] cursor-pointer items-center justify-center gap-1.5 rounded-control bg-red-50 px-4 text-xs font-semibold text-red-600 transition hover:bg-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/20 disabled:cursor-wait disabled:opacity-50"
             >
               {bulkAction === "reject" ? (
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -686,13 +776,14 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
               <th className="px-3 py-3">Source</th>
               <th className="px-3 py-3">Message Preview</th>
               <th className="px-3 py-3">{isRepliedTab ? "Replied" : "AI Draft Preview"}</th>
+              <th className="px-3 py-3">Confidence</th>
               {!isRepliedTab ? <th className="px-5 py-3 text-right">Actions</th> : null}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredGroups.length === 0 ? (
               <tr>
-                <td colSpan={isRepliedTab ? 4 : 6} className="px-5 py-12 text-center">
+                <td colSpan={isRepliedTab ? 5 : 7} className="px-5 py-12 text-center">
                   <span className="mx-auto mb-3 grid h-10 w-10 place-items-center rounded-control bg-slate-100 text-slate-400">
                     <MessageSquare className="h-5 w-5" />
                   </span>
@@ -712,6 +803,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                 const hasMultipleMessages = group.messages.length > 1;
                 const isExpanded = expandedGroups.has(group.key);
                 const primaryRow = group.messages[0];
+                const groupConfidence = averageConfidence(group.messages);
 
                 return (
                   <Fragment key={group.key}>
@@ -761,14 +853,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                       <td className="px-3 py-3">
                         <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{group.source}</span>
                       </td>
-                      <td className="min-w-[22rem] whitespace-pre-wrap break-words px-3 py-3 align-top text-xs text-slate-500">
-                        &quot;{primaryRow.message}&quot;
-                        {hasMultipleMessages ? (
-                          <span className="ml-1 text-[10px] font-semibold text-slate-400">
-                            +{group.messages.length - 1} more
-                          </span>
-                        ) : null}
-                      </td>
+                      {renderMessagePreview(primaryRow, hasMultipleMessages ? group.messages.length - 1 : undefined)}
                       {hasMultipleMessages ? (
                         <td className="max-w-52 px-3 py-3 text-xs text-slate-500">
                           <PressableButton
@@ -792,6 +877,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                       ) : (
                         renderDraftCell(primaryRow)
                       )}
+                      {renderConfidenceCell(hasMultipleMessages ? groupConfidence : primaryRow.confidence)}
                       {!isRepliedTab ? (
                         hasMultipleMessages ? (
                           <td className="px-5 py-3">

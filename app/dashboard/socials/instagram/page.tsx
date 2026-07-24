@@ -36,6 +36,7 @@ type InstagramDraftRow = {
   source: string;
   message: string;
   draft: string;
+  confidence: number | null;
   tone: string;
   status: string;
   createdAt: string | null;

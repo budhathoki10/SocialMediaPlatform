@@ -355,9 +355,9 @@ export default function TechNewsFeed() {
                   key={news.article_id || news.link || `${news.title}-${index}`}
                   liftPx={2}
                   onClick={() => openNews(news, imageSource)}
-                  className="flex cursor-pointer flex-col overflow-hidden rounded-card border border-slate-200 bg-white shadow-card transition-colors hover:bg-slate-50"
+                  className="flex cursor-pointer flex-col rounded-card border border-slate-200 bg-white shadow-card transition-colors hover:bg-slate-50"
                 >
-                  <div className="relative h-40 w-full shrink-0 overflow-hidden bg-slate-100">
+                  <div className="relative h-40 w-full shrink-0 overflow-hidden rounded-t-card bg-slate-100">
                     <NewsImage src={imageSource} />
                     {savedPost?.status === "published" ? (
                       <span className="absolute right-3 top-3 inline-flex h-7 items-center gap-1.5 rounded-control bg-emerald-50 px-2.5 text-[11px] font-bold text-emerald-700 shadow-card">
