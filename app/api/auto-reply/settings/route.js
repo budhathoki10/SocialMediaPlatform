@@ -9,6 +9,7 @@ const TONE_VALUES = ["professional", "friendly", "creative", "concise"];
 const EMOJI_VALUES = ["none", "minimal", "moderate"];
 const LENGTH_VALUES = ["short", "standard", "detailed"];
 const GREETING_VALUES = ["first_name", "generic"];
+const SIGN_OFF_VALUES = ["team_name", "none"];
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 async function getCurrentUser() {
@@ -124,9 +125,17 @@ export async function PUT(request) {
   }
 
   if (Array.isArray(body.keywordExclusions)) {
+    const seenLowercase = new Set();
+
     update.keyword_exclusions = body.keywordExclusions
       .filter((word) => typeof word === "string" && word.trim())
       .map((word) => word.trim())
+      .filter((word) => {
+        const key = word.toLowerCase();
+        if (seenLowercase.has(key)) return false;
+        seenLowercase.add(key);
+        return true;
+      })
       .slice(0, 50);
   }
 
@@ -140,7 +149,7 @@ export async function PUT(request) {
     if (EMOJI_VALUES.includes(style.emojiUsage)) update["response_style.emoji_usage"] = style.emojiUsage;
     if (LENGTH_VALUES.includes(style.responseLength)) update["response_style.response_length"] = style.responseLength;
     if (GREETING_VALUES.includes(style.greetingStyle)) update["response_style.greeting_style"] = style.greetingStyle;
-    if (typeof style.signOffStyle === "string") update["response_style.sign_off_style"] = style.signOffStyle;
+    if (SIGN_OFF_VALUES.includes(style.signOffStyle)) update["response_style.sign_off_style"] = style.signOffStyle;
     if (typeof style.customSignOff === "string") update["response_style.custom_sign_off"] = style.customSignOff.trim();
     if (typeof style.linkCtaEnabled === "boolean") update["response_style.link_cta_enabled"] = style.linkCtaEnabled;
     if (Number.isFinite(style.maxRepliesPerContact)) {
