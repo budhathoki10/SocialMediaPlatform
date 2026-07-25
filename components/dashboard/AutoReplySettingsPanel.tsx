@@ -81,6 +81,15 @@ function cloneSettings(value: AutoReplySettingsData): AutoReplySettingsData {
   };
 }
 
+// "Personal name" sign-off is no longer offered (replies shouldn't carry a
+// staffer's personal name) — fold any settings saved under the old option
+// into the business-name option so the dropdown never shows a stale value.
+function normalizeSettings(value: AutoReplySettingsData): AutoReplySettingsData {
+  if (value.responseStyle.signOffStyle !== "personal_name") return value;
+
+  return { ...value, responseStyle: { ...value.responseStyle, signOffStyle: "team_name" } };
+}
+
 function timeAgo(value: string | null) {
   if (!value) return "";
 
@@ -300,7 +309,7 @@ export default function AutoReplySettingsPanel({
   initialLogs: AutoReplyLogRow[];
   connectedPlatforms: string[];
 }) {
-  const baseline = initialSettings || DEFAULT_SETTINGS;
+  const baseline = normalizeSettings(initialSettings || DEFAULT_SETTINGS);
   const [settings, setSettings] = useState<AutoReplySettingsData>(() => cloneSettings(baseline));
   const [savedSettings, setSavedSettings] = useState<AutoReplySettingsData>(() => cloneSettings(baseline));
   const [keywordDraft, setKeywordDraft] = useState("");
@@ -337,7 +346,10 @@ export default function AutoReplySettingsPanel({
 
   function addKeyword() {
     const word = keywordDraft.trim();
-    if (!word || settings.keywordExclusions.includes(word)) return;
+    const isDuplicate = settings.keywordExclusions.some(
+      (entry) => entry.toLowerCase() === word.toLowerCase(),
+    );
+    if (!word || isDuplicate) return;
 
     setSettings((prev) => ({ ...prev, keywordExclusions: [...prev.keywordExclusions, word] }));
     setKeywordDraft("");
@@ -645,7 +657,7 @@ export default function AutoReplySettingsPanel({
                   onChange={(value) => updateResponseStyle({ responseLength: value })}
                 />
               </FullRow>
-              <FullRow label="Greeting style">
+              <FullRow label="Greeting style" description="Applies to the first reply in a conversation only — later replies skip straight to the point.">
                 <Segmented
                   layoutId="greeting-pill"
                   options={GREETING_OPTIONS}
@@ -664,8 +676,7 @@ export default function AutoReplySettingsPanel({
                       aria-label="Sign-off style"
                       className={`${inputClassName} shrink-0`}
                     >
-                      <option value="team_name">Team name</option>
-                      <option value="personal_name">Personal name</option>
+                      <option value="team_name">Business name</option>
                       <option value="none">No sign-off</option>
                     </select>
                     <input
