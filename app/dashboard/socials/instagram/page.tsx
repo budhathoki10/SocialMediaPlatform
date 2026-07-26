@@ -70,44 +70,49 @@ function formatCount(value?: number | null) {
   return new Intl.NumberFormat("en-US").format(number);
 }
 
-async function getInstagramProfileFromRoute() {
-  const response = await getInstagramRoute();
+const EMPTY_DRAFT_DATA = {
+  drafts: [] as InstagramDraftRow[],
+  stats: {
+    totalDrafts: 0,
+    totalDmDrafts: 0,
+    totalCommentDrafts: 0,
+    sentToday: 0,
+  } as InstagramDraftStats,
+};
 
-  if (!response.ok) {
+async function getInstagramProfileFromRoute() {
+  try {
+    const response = await getInstagramRoute();
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as { profile?: InstagramProfile | null };
+
+    return data.profile || null;
+  } catch {
     return null;
   }
-
-  const data = (await response.json()) as { profile?: InstagramProfile | null };
-
-  return data.profile || null;
 }
 
 async function getInstagramDraftsFromRoute() {
-  const response = await getInstagramDraftsRoute();
+  try {
+    const response = await getInstagramDraftsRoute();
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return EMPTY_DRAFT_DATA;
+    }
+
+    const data = (await response.json()) as { drafts?: InstagramDraftRow[]; stats?: InstagramDraftStats };
+
     return {
-      drafts: [],
-      stats: {
-        totalDrafts: 0,
-        totalDmDrafts: 0,
-        totalCommentDrafts: 0,
-        sentToday: 0,
-      },
+      drafts: data.drafts || [],
+      stats: data.stats || EMPTY_DRAFT_DATA.stats,
     };
+  } catch {
+    return EMPTY_DRAFT_DATA;
   }
-
-  const data = (await response.json()) as { drafts?: InstagramDraftRow[]; stats?: InstagramDraftStats };
-
-  return {
-    drafts: data.drafts || [],
-    stats: data.stats || {
-      totalDrafts: 0,
-      totalDmDrafts: 0,
-      totalCommentDrafts: 0,
-      sentToday: 0,
-    },
-  };
 }
 
 export default async function InstagramSocialPage() {
@@ -117,8 +122,10 @@ export default async function InstagramSocialPage() {
     redirect("/login?callbackUrl=/dashboard/socials/instagram");
   }
 
-  const instagramProfile = await getInstagramProfileFromRoute();
-  const draftData = await getInstagramDraftsFromRoute();
+  const [instagramProfile, draftData] = await Promise.all([
+    getInstagramProfileFromRoute(),
+    getInstagramDraftsFromRoute(),
+  ]);
   const draftRows = draftData.drafts;
   const instagramUsername = instagramProfile?.username || null;
   const instagramDisplayName = instagramProfile?.name || instagramUsername || "Instagram account";

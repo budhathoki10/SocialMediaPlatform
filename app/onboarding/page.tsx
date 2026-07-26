@@ -429,27 +429,29 @@ const OnboardingContent = () => {
         instagram: null,
       };
 
-      for (const platform of platformsToLoad) {
-        try {
-          const response = await fetch(platform.endpoint, { cache: "no-store" });
+      await Promise.all(
+        platformsToLoad.map(async (platform) => {
+          try {
+            const response = await fetch(platform.endpoint, { cache: "no-store" });
 
-          if (!response.ok) {
-            continue;
+            if (!response.ok) {
+              return;
+            }
+
+            const data = (await response.json()) as PlatformConnection;
+
+            if (data.connected) {
+              nextConnections[platform.key as keyof ConnectedAccounts] = {
+                connected: true,
+                username: data.username || null,
+                connected_at: data.connected_at || null,
+              };
+            }
+          } catch (error) {
+            console.error(`Unable to load ${platform.key} connection status:`, error);
           }
-
-          const data = (await response.json()) as PlatformConnection;
-
-          if (data.connected) {
-            nextConnections[platform.key as keyof ConnectedAccounts] = {
-              connected: true,
-              username: data.username || null,
-              connected_at: data.connected_at || null,
-            };
-          }
-        } catch (error) {
-          console.error(`Unable to load ${platform.key} connection status:`, error);
-        }
-      }
+        }),
+      );
 
       if (!isMounted) {
         return;
