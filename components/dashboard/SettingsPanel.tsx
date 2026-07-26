@@ -1,8 +1,7 @@
 "use client";
 
-import { AlertTriangle, Camera, LogOut, Receipt, X, Zap } from "lucide-react";
+import { AlertTriangle, Camera, Link2, Receipt, Unlink, X, Zap } from "lucide-react";
 import Image from "next/image";
-import { signOut } from "next-auth/react";
 import { AnimatePresence } from "motion/react";
 import { useMemo, useState } from "react";
 
@@ -306,18 +305,6 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
           <p className="mt-1 text-xs text-slate-500">Used for greetings and scheduling times across AutoPilot.</p>
           <p className="mt-3 text-sm font-semibold text-slate-800">{baseline.profile.timezone}</p>
         </div>
-
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
-          <p className="text-xs text-slate-500">Signed in as {baseline.profile.email}</p>
-          <PressableButton
-            type="button"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="inline-flex items-center gap-2 text-sm font-bold text-red-600 transition hover:text-red-700"
-          >
-            <LogOut className="h-4 w-4" />
-            Log out
-          </PressableButton>
-        </div>
       </Card>
 
       {/* Connected Platforms */}
@@ -378,12 +365,19 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
                     <PressableButton
                       type="button"
                       onClick={() => setPendingAction({ type: "disconnect", platform: account.platform })}
-                      className="text-xs font-bold text-red-600 transition hover:text-red-700"
+                      aria-label={`Disconnect ${platformNames[account.platform]}`}
+                      className="inline-flex items-center gap-1.5 rounded-control border border-red-200 bg-white px-2.5 py-1.5 text-xs font-bold text-red-600 transition hover:border-red-300 hover:bg-red-50"
                     >
+                      <Unlink className="h-3.5 w-3.5" />
                       Disconnect
                     </PressableButton>
                   ) : (
-                    <PressableLink href="/onboarding" className="text-xs font-bold text-primary hover:text-primary-hover">
+                    <PressableLink
+                      href="/onboarding"
+                      aria-label={`Connect ${platformNames[account.platform]}`}
+                      className="inline-flex items-center gap-1.5 rounded-control border border-primary/20 bg-white px-2.5 py-1.5 text-xs font-bold text-primary transition hover:border-primary/40 hover:bg-primary-tint"
+                    >
+                      <Link2 className="h-3.5 w-3.5" />
                       Connect
                     </PressableLink>
                   )}
