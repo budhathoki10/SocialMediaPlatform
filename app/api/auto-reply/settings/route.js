@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { AutoReplySettings, User } from "@/lib/models";
+import { AutoReplySettings, normalizeMaxRepliesPerContact, User } from "@/lib/models";
 
 const TONE_VALUES = ["professional", "friendly", "creative", "concise"];
 const EMOJI_VALUES = ["none", "minimal", "moderate"];
@@ -153,7 +153,7 @@ export async function PUT(request) {
     if (typeof style.customSignOff === "string") update["response_style.custom_sign_off"] = style.customSignOff.trim();
     if (typeof style.linkCtaEnabled === "boolean") update["response_style.link_cta_enabled"] = style.linkCtaEnabled;
     if (Number.isFinite(style.maxRepliesPerContact)) {
-      update["response_style.max_replies_per_contact"] = Math.min(20, Math.max(1, style.maxRepliesPerContact));
+      update["response_style.max_replies_per_contact"] = normalizeMaxRepliesPerContact(style.maxRepliesPerContact);
     }
     if (typeof style.businessHoursAware === "boolean") {
       update["response_style.business_hours_aware"] = style.businessHoursAware;

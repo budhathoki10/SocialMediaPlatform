@@ -71,6 +71,13 @@ const DEFAULT_SETTINGS: AutoReplySettingsData = {
   },
 };
 
+// Valid values are 1, or any integer > 2 (uncapped) — 2 is skipped in both directions,
+// mirroring normalizeMaxRepliesPerContact in lib/models.js.
+function stepMaxRepliesPerContact(current: number, direction: 1 | -1): number {
+  if (direction === 1) return current === 1 ? 3 : current + 1;
+  return current <= 3 ? 1 : current - 1;
+}
+
 function cloneSettings(value: AutoReplySettingsData): AutoReplySettingsData {
   return {
     ...value,
@@ -713,7 +720,7 @@ export default function AutoReplySettingsPanel({
                       disabled={settings.responseStyle.maxRepliesPerContact <= 1}
                       onClick={() =>
                         updateResponseStyle({
-                          maxRepliesPerContact: Math.max(1, settings.responseStyle.maxRepliesPerContact - 1),
+                          maxRepliesPerContact: stepMaxRepliesPerContact(settings.responseStyle.maxRepliesPerContact, -1),
                         })
                       }
                       className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
@@ -728,7 +735,7 @@ export default function AutoReplySettingsPanel({
                       aria-label="Increase max replies per contact"
                       onClick={() =>
                         updateResponseStyle({
-                          maxRepliesPerContact: Math.min(20, settings.responseStyle.maxRepliesPerContact + 1),
+                          maxRepliesPerContact: stepMaxRepliesPerContact(settings.responseStyle.maxRepliesPerContact, 1),
                         })
                       }
                       className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 hover:bg-slate-50"
