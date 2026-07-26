@@ -529,12 +529,12 @@ export default function AutoReplySettingsPanel({
                       </span>
                     </div>
                     {log.originalMessage ? (
-                      <p className="mt-2 text-sm text-slate-600">
+                      <p className="mt-2 line-clamp-1 text-sm text-slate-600">
                         <span className="font-semibold text-slate-500">Them: </span>
                         &ldquo;{log.originalMessage}&rdquo;
                       </p>
                     ) : null}
-                    <p className="mt-1 text-sm text-slate-700">
+                    <p className="mt-1 line-clamp-2 text-sm text-slate-700">
                       <span className="font-semibold text-slate-500">You: </span>
                       &ldquo;{log.reply}&rdquo;
                     </p>
