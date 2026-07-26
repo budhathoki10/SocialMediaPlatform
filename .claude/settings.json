@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(git rev-list *)",
+      "PowerShell(Get-Command gh -ErrorAction SilentlyContinue)",
+      "Bash(claude --version)",
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp list 2>&1)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\kushal budhathoki"
+    ]
+  }
+}

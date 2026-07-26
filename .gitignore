@@ -42,3 +42,6 @@ server.err.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code (personal, machine-specific)
+.claude/settings.local.json
