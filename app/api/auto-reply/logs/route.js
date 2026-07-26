@@ -45,6 +45,10 @@ export async function GET() {
     logs: logs.map((log) => ({
       id: log._id.toString(),
       platform: log.platform,
+      senderName: log.sender_name,
+      senderUsername: log.sender_username,
+      senderProfilePictureUrl: log.sender_profile_picture_url,
+      originalMessage: log.original_comment,
       reply: log.reply_sent,
       createdAt: log.created_at?.toISOString?.() || log.created_at || null,
     })),

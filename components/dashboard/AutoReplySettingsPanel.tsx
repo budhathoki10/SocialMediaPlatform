@@ -43,6 +43,10 @@ export type AutoReplySettingsData = {
 export type AutoReplyLogRow = {
   id: string;
   platform: string;
+  senderName: string | null;
+  senderUsername: string | null;
+  senderProfilePictureUrl: string | null;
+  originalMessage: string | null;
   reply: string;
   createdAt: string | null;
 };
@@ -496,13 +500,44 @@ export default function AutoReplySettingsPanel({
                 {logs.map((log) => (
                   <div key={log.id} className="py-3.5">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold capitalize text-slate-600">{log.platform}</span>
-                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="grid h-7 w-7 shrink-0 place-items-center overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200">
+                          {log.senderProfilePictureUrl ? (
+                            <Image
+                              src={log.senderProfilePictureUrl}
+                              alt=""
+                              width={28}
+                              height={28}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs font-bold text-slate-400">
+                              {(log.senderName || log.senderUsername || "?").charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-800">
+                            {log.senderName || log.senderUsername || "Unknown sender"}
+                          </p>
+                          <p className="text-xs font-bold capitalize text-slate-500">{log.platform}</p>
+                        </div>
+                      </div>
+                      <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-slate-400">
                         <Check className="h-3 w-3 text-emerald-500" />
                         Sent {timeAgo(log.createdAt)}
                       </span>
                     </div>
-                    <p className="mt-1 line-clamp-2 text-sm text-slate-700">&ldquo;{log.reply}&rdquo;</p>
+                    {log.originalMessage ? (
+                      <p className="mt-2 line-clamp-1 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-500">Them: </span>
+                        &ldquo;{log.originalMessage}&rdquo;
+                      </p>
+                    ) : null}
+                    <p className="mt-1 line-clamp-2 text-sm text-slate-700">
+                      <span className="font-semibold text-slate-500">You: </span>
+                      &ldquo;{log.reply}&rdquo;
+                    </p>
                   </div>
                 ))}
               </RowList>

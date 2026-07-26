@@ -126,20 +126,6 @@ export default async function ScheduledPostsPage({
   const requestedPage = Number(readParam(params, "page", "1"));
   const currentPage = Number.isFinite(requestedPage) && requestedPage > 0 ? Math.floor(requestedPage) : 1;
 
-  const statusCounts = await Post.aggregate<{ _id: string; count: number }>([
-    { $match: { user_id: user._id } },
-    { $group: { _id: "$status", count: { $sum: 1 } } },
-  ]);
-  const countByStatus = new Map(statusCounts.map((entry) => [entry._id, entry.count]));
-  const totalPostCount = statusCounts.reduce((sum, entry) => sum + entry.count, 0);
-
-  const overviewStats = [
-    { key: "all", label: "Total Queue", value: totalPostCount, icon: List },
-    { key: "scheduled", label: "Scheduled", value: countByStatus.get("scheduled") || 0, icon: Clock3 },
-    { key: "published", label: "Published", value: countByStatus.get("published") || 0, icon: CheckCircle2 },
-    { key: "draft", label: "Drafts", value: countByStatus.get("draft") || 0, icon: FileText },
-  ];
-
   const postQuery: Record<string, unknown> = { user_id: user._id };
 
   if (statusOptions.includes(status) && status !== "all") {
@@ -151,11 +137,26 @@ export default async function ScheduledPostsPage({
     postQuery.$or = [{ pr_title: pattern }, { content: pattern }, { source: pattern }];
   }
 
-  const posts = await Post.find(postQuery)
-    .select("content pr_title media_url status scheduled_time created_at source")
-    .sort({ created_at: -1 })
-    .limit(100)
-    .lean<ScheduledPost[]>();
+  const [statusCounts, posts] = await Promise.all([
+    Post.aggregate<{ _id: string; count: number }>([
+      { $match: { user_id: user._id } },
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+    Post.find(postQuery)
+      .select("content pr_title media_url status scheduled_time created_at source")
+      .sort({ created_at: -1 })
+      .limit(100)
+      .lean<ScheduledPost[]>(),
+  ]);
+  const countByStatus = new Map(statusCounts.map((entry) => [entry._id, entry.count]));
+  const totalPostCount = statusCounts.reduce((sum, entry) => sum + entry.count, 0);
+
+  const overviewStats = [
+    { key: "all", label: "Total Queue", value: totalPostCount, icon: List },
+    { key: "scheduled", label: "Scheduled", value: countByStatus.get("scheduled") || 0, icon: Clock3 },
+    { key: "published", label: "Published", value: countByStatus.get("published") || 0, icon: CheckCircle2 },
+    { key: "draft", label: "Drafts", value: countByStatus.get("draft") || 0, icon: FileText },
+  ];
 
   const postIds = posts.map((post) => post._id);
   const postPlatforms = postIds.length

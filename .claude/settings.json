@@ -6,10 +6,13 @@
       "PowerShell(Get-Command gh -ErrorAction SilentlyContinue)",
       "Bash(claude --version)",
       "Bash(claude mcp *)",
-      "PowerShell(claude mcp list 2>&1)"
+      "PowerShell(claude mcp list 2>&1)",
+      "Bash(rtk next *)",
+      "Bash(rtk proxy *)"
     ],
     "additionalDirectories": [
-      "C:\\Users\\kushal budhathoki"
+      "C:\\Users\\kushal budhathoki",
+      "\\tmp"
     ]
   }
 }
