@@ -13,21 +13,29 @@ import AutoReplySettingsPanel, {
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 
 async function getSettingsFromRoute(): Promise<AutoReplySettingsData | null> {
-  const response = await getAutoReplySettingsRoute();
+  try {
+    const response = await getAutoReplySettingsRoute();
 
-  if (!response.ok) return null;
+    if (!response.ok) return null;
 
-  const data = (await response.json()) as { settings?: AutoReplySettingsData };
-  return data.settings || null;
+    const data = (await response.json()) as { settings?: AutoReplySettingsData };
+    return data.settings || null;
+  } catch {
+    return null;
+  }
 }
 
 async function getLogsFromRoute(): Promise<AutoReplyLogRow[]> {
-  const response = await getAutoReplyLogsRoute();
+  try {
+    const response = await getAutoReplyLogsRoute();
 
-  if (!response.ok) return [];
+    if (!response.ok) return [];
 
-  const data = (await response.json()) as { logs?: AutoReplyLogRow[] };
-  return data.logs || [];
+    const data = (await response.json()) as { logs?: AutoReplyLogRow[] };
+    return data.logs || [];
+  } catch {
+    return [];
+  }
 }
 
 /** Only LinkedIn and Instagram have real OAuth integrations today — X and
