@@ -22,7 +22,6 @@ import RecentPostsPanel from "@/components/dashboard/RecentPostsPanel";
 import RecentTechNewsPanel from "@/components/dashboard/RecentTechNewsPanel";
 import CountUp from "@/components/motion/CountUp";
 import HoverCard from "@/components/motion/HoverCard";
-import PressableButton from "@/components/motion/PressableButton";
 import PressableLink from "@/components/motion/PressableLink";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerReveal";
 
@@ -143,9 +142,9 @@ const Toolbar = ({ user }: { user: DashboardUser }) => (
 
     <div className="flex shrink-0 items-center gap-2 sm:gap-3">
       <NotificationsButton />
-      <PressableButton aria-label="Settings" title="Settings — coming soon" className="hidden h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
+      <PressableLink href="/dashboard/settings" aria-label="Settings" className="hidden h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
         <Settings className="h-5 w-5" />
-      </PressableButton>
+      </PressableLink>
       <div className="hidden h-8 w-px bg-slate-200 sm:block" />
       <div className="flex min-w-0 items-center gap-3 rounded-control border border-slate-200 bg-slate-50 px-2.5 py-1.5">
         <div className="hidden text-right sm:block">

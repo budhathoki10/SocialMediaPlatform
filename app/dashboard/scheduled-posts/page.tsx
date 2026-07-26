@@ -207,9 +207,9 @@ export default async function ScheduledPostsPage({
 
             <div className="ml-auto flex items-center gap-2">
               <NotificationsButton />
-              <PressableButton aria-label="Settings" title="Settings — coming soon" className="grid h-9 w-9 place-items-center rounded-control text-slate-500 hover:bg-slate-50 hover:text-slate-900">
+              <PressableLink href="/dashboard/settings" aria-label="Settings" className="grid h-9 w-9 place-items-center rounded-control text-slate-500 hover:bg-slate-50 hover:text-slate-900">
                 <Settings className="h-4 w-4" />
-              </PressableButton>
+              </PressableLink>
               <div className="ml-2 hidden h-8 w-px bg-slate-200 sm:block" />
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-bold leading-4 text-slate-800">{user.name || "User"}</p>
