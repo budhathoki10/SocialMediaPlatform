@@ -1,36 +1,41 @@
-import { Settings } from "lucide-react";
+import { Settings as SettingsIcon } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { GET as getSettingsRoute } from "@/app/api/settings/route";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import FeedbackForm from "@/components/dashboard/FeedbackForm";
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
+import SettingsPanel, { type SettingsData } from "@/components/dashboard/SettingsPanel";
 
 type SessionUser = {
   image?: string | null;
   name?: string | null;
 };
 
+async function getSettingsFromRoute(): Promise<SettingsData | null> {
+  try {
+    const response = await getSettingsRoute();
+
+    if (!response.ok) return null;
+
+    return (await response.json()) as SettingsData;
+  } catch {
+    return null;
+  }
+}
+
 function Toolbar({ user }: { user?: SessionUser }) {
   return (
     <header className="flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 sm:px-6 lg:px-8">
       <div className="min-w-0">
         <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Workspace</p>
-        <p className="mt-0.5 truncate text-sm font-bold text-slate-800">AutoPilot Feedback</p>
+        <p className="mt-0.5 truncate text-sm font-bold text-slate-800">Account Settings</p>
       </div>
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <NotificationsButton />
-        <Link
-          href="/dashboard/settings"
-          aria-label="Settings"
-          className="hidden h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid"
-        >
-          <Settings className="h-5 w-5" />
-        </Link>
         <div className="hidden h-8 w-px bg-slate-200 sm:block" />
         <div className="hidden text-right sm:block">
           <p className="max-w-40 truncate text-sm font-bold leading-4 text-slate-700">{user?.name || "User"}</p>
@@ -48,12 +53,14 @@ function Toolbar({ user }: { user?: SessionUser }) {
   );
 }
 
-export default async function FeedbackPage() {
+export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    redirect("/login?callbackUrl=/dashboard/feedback");
+    redirect("/login?callbackUrl=/dashboard/settings");
   }
+
+  const settings = await getSettingsFromRoute();
 
   return (
     <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
@@ -62,8 +69,23 @@ export default async function FeedbackPage() {
 
         <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
           <Toolbar user={session.user} />
+
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
-            <FeedbackForm userName={session.user.name} userEmail={session.user.email} />
+            <div className="mx-auto max-w-3xl">
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-control bg-primary-tint text-primary">
+                  <SettingsIcon className="h-5 w-5" />
+                </span>
+                <div>
+                  <h1 className="text-xl font-bold tracking-tight text-slate-950">Settings</h1>
+                  <p className="text-sm text-slate-500">Manage your profile, timezone, and connected accounts.</p>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <SettingsPanel initialSettings={settings} />
+              </div>
+            </div>
           </div>
         </section>
       </div>

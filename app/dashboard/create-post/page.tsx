@@ -1,5 +1,6 @@
 import { Settings } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
@@ -23,9 +24,13 @@ function Toolbar({ user }: { user?: SessionUser }) {
 
       <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <NotificationsButton />
-        <button aria-label="Settings" title="Settings — coming soon" className="hidden h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
+        <Link
+          href="/dashboard/settings"
+          aria-label="Settings"
+          className="hidden h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid"
+        >
           <Settings className="h-5 w-5" />
-        </button>
+        </Link>
         <div className="hidden h-8 w-px bg-slate-200 sm:block" />
         <div className="hidden text-right sm:block">
           <p className="max-w-40 truncate text-sm font-bold leading-4 text-slate-700">{user?.name || "User"}</p>

@@ -147,12 +147,14 @@ export default function DashboardSidebar() {
           <span className="sidebar-nav-label">Feedback</span>
         </Link>
 
-        <Link href="#" className="sidebar-nav-item">
+        <Link
+          href="/dashboard/settings"
+          className={`sidebar-nav-item ${pathname === "/dashboard/settings" ? "sidebar-nav-item-active" : ""}`}
+        >
           <SidebarIconTooltip label="Settings">
             <Settings />
           </SidebarIconTooltip>
           <span className="sidebar-nav-label">Settings</span>
-          {comingSoonPill}
         </Link>
       </nav>
 
