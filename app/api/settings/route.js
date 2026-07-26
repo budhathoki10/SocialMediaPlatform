@@ -34,15 +34,6 @@ async function getCurrentUser() {
   return null;
 }
 
-function isValidTimeZone(timeZone) {
-  try {
-    Intl.DateTimeFormat(undefined, { timeZone });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function GET() {
   const user = await getCurrentUser();
 
@@ -88,33 +79,6 @@ export async function GET() {
     billing: {
       postsThisMonth,
       postCap: FREE_PLAN_MONTHLY_POST_CAP,
-    },
-  });
-}
-
-export async function PATCH(request) {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Login required." }, { status: 401 });
-  }
-
-  const body = await request.json().catch(() => ({}));
-
-  if (typeof body.timezone !== "string" || !isValidTimeZone(body.timezone)) {
-    return NextResponse.json({ error: "A valid timezone is required." }, { status: 400 });
-  }
-
-  user.timezone = body.timezone;
-  await user.save();
-
-  return NextResponse.json({
-    profile: {
-      name: user.name,
-      email: user.email,
-      avatarUrl: user.avatar_url,
-      plan: user.plan,
-      timezone: user.timezone,
     },
   });
 }

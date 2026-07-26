@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Camera, Check, LogOut, Receipt, X, Zap } from "lucide-react";
+import { AlertTriangle, Camera, LogOut, Receipt, X, Zap } from "lucide-react";
 import Image from "next/image";
 import { signOut } from "next-auth/react";
 import { AnimatePresence } from "motion/react";
@@ -60,14 +60,6 @@ const disconnectEndpoints: Record<string, string> = {
   linkedin: "/api/auth/linkedin/disconnect",
   instagram: "/api/auth/instagram/disconnect",
 };
-
-function getTimeZoneOptions() {
-  try {
-    return Intl.supportedValuesOf("timeZone");
-  } catch {
-    return ["Asia/Kathmandu", "UTC", "America/New_York", "America/Los_Angeles", "Europe/London", "Asia/Kolkata"];
-  }
-}
 
 function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -225,21 +217,6 @@ function ConfirmDialog({
 
 export default function SettingsPanel({ initialSettings }: { initialSettings: SettingsData | null }) {
   const baseline = initialSettings || DEFAULT_SETTINGS;
-  const [timezone, setTimezone] = useState(baseline.profile.timezone);
-  const [savedTimezone, setSavedTimezone] = useState(baseline.profile.timezone);
-  const [savingTimezone, setSavingTimezone] = useState(false);
-  const [timezoneError, setTimezoneError] = useState("");
-  const [justSaved, setJustSaved] = useState(false);
-  const timeZoneOptions = useMemo(() => {
-    const options = getTimeZoneOptions();
-    // Intl.supportedValuesOf("timeZone") only returns canonical IANA names —
-    // e.g. it has "Asia/Katmandu", not the "Asia/Kathmandu" this app stores
-    // as its default (lib/models.js KATHMANDU_TIME_ZONE). Both resolve to the
-    // same real timezone, but a <select> whose value isn't one of its own
-    // <option>s silently falls back to displaying the first option instead.
-    return options.includes(savedTimezone) ? options : [savedTimezone, ...options];
-  }, [savedTimezone]);
-  const isTimezoneDirty = timezone !== savedTimezone;
 
   const [connectedAccounts, setConnectedAccounts] = useState(baseline.connectedAccounts);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
@@ -248,32 +225,6 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
 
   const hasAnyConnection = connectedAccounts.some((account) => account.connected);
   const usagePercent = Math.min(100, Math.round((baseline.billing.postsThisMonth / baseline.billing.postCap) * 100));
-
-  async function handleSaveTimezone() {
-    setSavingTimezone(true);
-    setTimezoneError("");
-
-    try {
-      const response = await fetch("/api/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timezone }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || "Unable to save timezone.");
-      }
-
-      setSavedTimezone(timezone);
-      setJustSaved(true);
-      setTimeout(() => setJustSaved(false), 2000);
-    } catch (error) {
-      setTimezoneError(error instanceof Error ? error.message : "Unable to save timezone.");
-    } finally {
-      setSavingTimezone(false);
-    }
-  }
 
   async function disconnectPlatform(platform: string) {
     const response = await fetch(disconnectEndpoints[platform], { method: "POST" });
@@ -353,37 +304,7 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
         <div className="mt-6 border-t border-slate-100 pt-5">
           <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Timezone</p>
           <p className="mt-1 text-xs text-slate-500">Used for greetings and scheduling times across AutoPilot.</p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <select
-              value={timezone}
-              onChange={(event) => setTimezone(event.target.value)}
-              className="h-10 min-w-0 flex-1 rounded-control border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
-            >
-              {timeZoneOptions.map((zone) => (
-                <option key={zone} value={zone}>
-                  {zone}
-                </option>
-              ))}
-            </select>
-            <PressableButton
-              type="button"
-              disabled={!isTimezoneDirty || savingTimezone}
-              onClick={handleSaveTimezone}
-              className="inline-flex h-10 items-center gap-2 rounded-control bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {justSaved ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Saved
-                </>
-              ) : savingTimezone ? (
-                "Saving..."
-              ) : (
-                "Save"
-              )}
-            </PressableButton>
-          </div>
-          {timezoneError ? <p className="mt-2 text-xs font-semibold text-red-600">{timezoneError}</p> : null}
+          <p className="mt-3 text-sm font-semibold text-slate-800">{baseline.profile.timezone}</p>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
