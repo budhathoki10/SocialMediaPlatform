@@ -99,6 +99,7 @@ Set these in a local `.env` (never commit real values — `.env*` is gitignored)
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | GitHub OAuth connect |
 | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth connect + publish |
 | `INSTAGRAM_CLIENT_ID`, `INSTAGRAM_CLIENT_SECRET`, `INSTAGRAM_WEBHOOK_VERIFY_TOKEN`, `INSTAGRAM_REPLIED_ACCESSTOKEN` | Instagram OAuth, webhook verification, sender profile lookups |
+| `WHATSAPP_WEBHOOK_VERIFY_TOKEN` | WhatsApp webhook verification only — no connect flow or message processing exists yet |
 | `NVIDIA_API_KEY`, `NVIDIA_BASE_URL`, `NVIDIA_MODEL`, `NVIDIA_TEMPERATURE`, `NVIDIA_TOP_P`, `NVIDIA_MAX_TOKENS`, `NVIDIA_REASONING_BUDGET` | AI drafting (posts + auto-replies) |
 | `NEWS_API_KEY` | newsdata.io tech news feed |
 | `CRON_SECRET` | Optional bearer/query auth for `/api/cron` |
