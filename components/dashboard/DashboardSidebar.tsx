@@ -32,7 +32,7 @@ const sidebarItems = [
 ];
 
 const socialItems = [
-  { label: "WhatsApp", image: "/landing/whatsapp.png", message: "clicked in whatsapp  " },
+  { label: "WhatsApp", image: "/landing/whatsapp.png", href: "/dashboard/socials/whatsapp" },
   { label: "Facebook", image: "/landing/facebook.png", message: "clicked in facebook" },
   { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
   { label: "Gmail", image: "/landing/gmail.png", message: "clicked in gmail" },
