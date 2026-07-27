@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import CreatePostComposer from "@/components/dashboard/CreatePostComposer";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
 
 type SessionUser = {
@@ -56,17 +55,11 @@ export default async function CreatePostPage() {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
-
-        <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-          <Toolbar user={session.user} />
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
-            <CreatePostComposer userName={session.user.name} />
-          </div>
-        </section>
+    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+      <Toolbar user={session.user} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
+        <CreatePostComposer userName={session.user.name} />
       </div>
-    </main>
+    </section>
   );
 }

@@ -12,7 +12,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "../api/auth/[...nextauth]/route";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, GithubEvent, Post, User } from "@/lib/models";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
@@ -216,12 +215,8 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen bg-[#f6f8fb]">
-        <DashboardSidebar />
-
-        <section className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
-          <Toolbar user={user} />
+    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
+      <Toolbar user={user} />
 
           <StaggerGroup className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-7 sm:px-6 lg:px-8">
             <StaggerItem className="flex flex-wrap items-start justify-between gap-4">
@@ -378,9 +373,7 @@ export default async function DashboardPage() {
                 </StaggerItem>
               </div>
             </div>
-          </StaggerGroup>
-        </section>
-      </div>
-    </main>
+      </StaggerGroup>
+    </section>
   );
 }

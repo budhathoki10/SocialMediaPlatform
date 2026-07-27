@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import WhatsAppDraftInboxPreview from "@/components/dashboard/WhatsAppDraftInboxPreview";
 
 // WhatsApp has no OAuth connect flow or API integration yet (see README
@@ -25,13 +24,9 @@ export default async function WhatsAppSocialPage() {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
-
-        <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">WhatsApp</h1>
+    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950">WhatsApp</h1>
 
             <section className="mt-5 rounded-card border border-slate-200 bg-white px-5 py-4 shadow-card">
               <div className="flex flex-wrap items-center justify-between gap-5">
@@ -68,10 +63,8 @@ export default async function WhatsAppSocialPage() {
               ))}
             </section>
 
-            <WhatsAppDraftInboxPreview />
-          </div>
-        </section>
+        <WhatsAppDraftInboxPreview />
       </div>
-    </main>
+    </section>
   );
 }

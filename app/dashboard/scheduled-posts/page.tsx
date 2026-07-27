@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
 import { ScheduledPostFilters } from "@/components/dashboard/ScheduledPostFilters";
 import ScheduledPostsList, { type ScheduledPost } from "@/components/dashboard/ScheduledPostsList";
@@ -187,12 +186,8 @@ export default async function ScheduledPostsPage({
   const nextHref = buildPageHref({ page: Math.min(totalPages, safePage + 1), search, status, platform });
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
-
-        <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-          <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-5">
+    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-5">
             <form action="/dashboard/scheduled-posts" className="relative hidden min-w-0 flex-1 md:block">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -337,11 +332,9 @@ export default async function ScheduledPostsPage({
                     </PressableLink>
                   </div>
                 </div>
-              </section>
-            </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
-    </main>
+    </section>
   );
 }

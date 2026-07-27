@@ -10,7 +10,6 @@ import AutoReplySettingsPanel, {
   type AutoReplyLogRow,
   type AutoReplySettingsData,
 } from "@/components/dashboard/AutoReplySettingsPanel";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 
 async function getSettingsFromRoute(): Promise<AutoReplySettingsData | null> {
   try {
@@ -74,16 +73,10 @@ export default async function AutoReplyPage() {
   ]);
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
-
-        <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <AutoReplySettingsPanel initialSettings={settings} initialLogs={logs} connectedPlatforms={connectedPlatforms} />
-          </div>
-        </section>
+    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <AutoReplySettingsPanel initialSettings={settings} initialLogs={logs} connectedPlatforms={connectedPlatforms} />
       </div>
-    </main>
+    </section>
   );
 }
