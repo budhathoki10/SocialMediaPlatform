@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
-import EmptyState from "@/components/dashboard/EmptyState";
+import WhatsAppDraftInboxPreview from "@/components/dashboard/WhatsAppDraftInboxPreview";
 
 // WhatsApp has no OAuth connect flow or API integration yet (see README
 // "Not Yet Implemented") — this page is a static preview of what the
@@ -68,14 +68,7 @@ export default async function WhatsAppSocialPage() {
               ))}
             </section>
 
-            <section className="mt-5 rounded-card border border-slate-200 bg-white shadow-card">
-              <EmptyState
-                icon={MessageSquare}
-                title="WhatsApp automation is coming soon"
-                description="Once WhatsApp Business connects here, incoming messages and AI-drafted replies will show up in this inbox — grouped by conversation, just like Instagram."
-                className="min-h-72"
-              />
-            </section>
+            <WhatsAppDraftInboxPreview />
           </div>
         </section>
       </div>
