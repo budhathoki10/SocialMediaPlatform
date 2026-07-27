@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { GET as getInstagramDraftsRoute } from "@/app/api/socials/instagram/drafts/route";
 import { GET as getInstagramRoute } from "@/app/api/socials/instagram/route";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import InstagramDraftInbox from "@/components/dashboard/InstagramDraftInbox";
 
 type InstagramProfile = {
@@ -134,13 +133,9 @@ export default async function InstagramSocialPage() {
   const isInstagramConnected = Boolean(instagramProfile?.connected);
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
-
-        <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-950">Instagram</h1>
+    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950">Instagram</h1>
 
             <section className="mt-5 rounded-card border border-slate-200 bg-white px-5 py-4 shadow-card">
               <div className="flex flex-wrap items-center justify-between gap-5">
@@ -209,11 +204,8 @@ export default async function InstagramSocialPage() {
               ))}
             </section>
 
-            <InstagramDraftInbox rows={draftRows} />
-
-          </div>
-        </section>
+        <InstagramDraftInbox rows={draftRows} />
       </div>
-    </main>
+    </section>
   );
 }

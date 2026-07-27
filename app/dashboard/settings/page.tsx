@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { GET as getSettingsRoute } from "@/app/api/settings/route";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
 import SettingsPanel, { type SettingsData } from "@/components/dashboard/SettingsPanel";
 
@@ -63,32 +62,26 @@ export default async function SettingsPage() {
   const settings = await getSettingsFromRoute();
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
+    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+      <Toolbar user={session.user} />
 
-        <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-          <Toolbar user={session.user} />
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-3xl">
-              <div className="flex items-center gap-3">
-                <span className="grid h-10 w-10 place-items-center rounded-control bg-primary-tint text-primary">
-                  <SettingsIcon className="h-5 w-5" />
-                </span>
-                <div>
-                  <h1 className="text-xl font-bold tracking-tight text-slate-950">Settings</h1>
-                  <p className="text-sm text-slate-500">Manage your profile, timezone, and connected accounts.</p>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <SettingsPanel initialSettings={settings} />
-              </div>
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-control bg-primary-tint text-primary">
+              <SettingsIcon className="h-5 w-5" />
+            </span>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-slate-950">Settings</h1>
+              <p className="text-sm text-slate-500">Manage your profile, timezone, and connected accounts.</p>
             </div>
           </div>
-        </section>
+
+          <div className="mt-6">
+            <SettingsPanel initialSettings={settings} />
+          </div>
+        </div>
       </div>
-    </main>
+    </section>
   );
 }

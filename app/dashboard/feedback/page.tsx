@@ -5,7 +5,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import FeedbackForm from "@/components/dashboard/FeedbackForm";
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
 
@@ -56,17 +55,11 @@ export default async function FeedbackPage() {
   }
 
   return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
-
-        <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-          <Toolbar user={session.user} />
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
-            <FeedbackForm userName={session.user.name} userEmail={session.user.email} />
-          </div>
-        </section>
+    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+      <Toolbar user={session.user} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
+        <FeedbackForm userName={session.user.name} userEmail={session.user.email} />
       </div>
-    </main>
+    </section>
   );
 }
