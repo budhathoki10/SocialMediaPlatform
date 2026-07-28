@@ -9,8 +9,8 @@ import PressableButton from "@/components/motion/PressableButton";
 import { SPRING } from "@/lib/motion/tokens";
 
 const sharePlatforms = [
-  { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin", enabled: true },
-  { name: "Instagram", image: "/landing/insta.png", action: "instagram", enabled: false },
+  { name: "LinkedIn", image: "/landing/linkedin.svg", action: "linkedin", enabled: true },
+  { name: "Instagram", image: "/landing/instagram.svg", action: "instagram", enabled: false },
 ] as const;
 
 type NewsShareMenuProps = {

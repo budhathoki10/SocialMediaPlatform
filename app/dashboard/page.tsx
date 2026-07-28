@@ -53,10 +53,10 @@ type GithubEventSummary = {
 };
 
 const platformImages: Record<string, string> = {
-  github: "/landing/githubs.png",
-  linkedin: "/landing/linkedin.png",
-  instagram: "/landing/insta.png",
-  whatsapp: "/landing/whatsapps.png",
+  github: "/landing/github.svg",
+  linkedin: "/landing/linkedin.svg",
+  instagram: "/landing/instagram.svg",
+  whatsapp: "/landing/whatsapp.svg",
 };
 
 const platformNames: Record<string, string> = {
