@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
+import { prepareLinkedInCommentary } from "@/lib/linkedin-post";
 import { ConnectedAccount, Post, PostPlatform, User, getKathmanduDate } from "@/lib/models";
 
 export async function getCurrentUser() {
@@ -36,7 +37,7 @@ export async function publishLinkedInPost({ postId, userId, content }) {
 
   const directContent = typeof content === "string" ? content.trim() : "";
   let post = null;
-  let commentary = directContent;
+  let postBody = directContent;
 
   if (postId) {
     if (!mongoose.isValidObjectId(postId)) {
@@ -51,11 +52,22 @@ export async function publishLinkedInPost({ postId, userId, content }) {
       return { ok: false, statusCode: 404, error: "Post not found." };
     }
 
-    commentary = [post.pr_title, post.content].filter(Boolean).join("\n");
+    postBody = post.content;
   }
 
-  if (!commentary) {
-    return { ok: false, statusCode: 400, error: "Post content is required." };
+  let commentary;
+
+  try {
+    // pr_title is dashboard metadata, not the LinkedIn post body. Publishing
+    // only the body also prevents a missing body from becoming a successful
+    // heading-only LinkedIn post.
+    commentary = prepareLinkedInCommentary(postBody);
+  } catch (error) {
+    return {
+      ok: false,
+      statusCode: 400,
+      error: error instanceof Error ? error.message : "Post content is required.",
+    };
   }
 
   const account = await ConnectedAccount.findOne({

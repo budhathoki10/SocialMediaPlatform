@@ -12,14 +12,17 @@ import {
   Newspaper,
   Settings,
   Share2,
+  X,
   Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { signOut } from "next-auth/react";
+import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
 import PressableButton from "@/components/motion/PressableButton";
 import { SPRING } from "@/lib/motion/tokens";
 
@@ -56,11 +59,20 @@ function SidebarIconTooltip({ label, children }: { children: React.ReactNode; la
 export default function DashboardSidebar() {
   const pathname = usePathname();
   const [socialOpen, setSocialOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const socialActive = pathname.startsWith("/dashboard/socials");
 
+  async function confirmLogout() {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    await signOut({ callbackUrl: "/login" });
+  }
+
   return (
-    
-    <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
+    <>
+      <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
       <div>
         <Link href="/dashboard" className="inline-flex items-center gap-2">
           <span className="relative h-8 w-8 overflow-hidden rounded-control">
@@ -180,12 +192,79 @@ export default function DashboardSidebar() {
             <CircleHelp className="h-4 w-4" />
             Help Center
           </a>
-          <Link href="/logoutPage" className="flex h-9 items-center gap-3 rounded-control px-4 text-sm font-medium text-red-500 hover:bg-red-50">
+          <button
+            type="button"
+            onClick={() => setLogoutOpen(true)}
+            className="flex h-9 w-full items-center gap-3 rounded-control px-4 text-sm font-medium text-red-500 hover:bg-red-50"
+          >
             <LogOut className="h-4 w-4" />
             Logout
-          </Link>
+          </button>
         </div>
       </div>
-    </aside>
+      </aside>
+
+      <AnimatePresence>
+        {logoutOpen && (
+          <ModalBackdrop
+            role="presentation"
+            onClick={() => !isLoggingOut && setLogoutOpen(false)}
+            className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/45 p-4 backdrop-blur-md"
+          >
+            <ModalPanel
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="logout-confirmation-title"
+              aria-describedby="logout-confirmation-description"
+              onClick={(event) => event.stopPropagation()}
+              className="relative w-full max-w-[410px] overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_28px_80px_-20px_rgba(15,23,42,0.45)]"
+            >
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-red-50/90 to-transparent" />
+              <PressableButton
+                type="button"
+                onClick={() => setLogoutOpen(false)}
+                disabled={isLoggingOut}
+                aria-label="Close logout confirmation"
+                className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-white hover:text-slate-700 hover:shadow-sm disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+              </PressableButton>
+
+              <div className="relative px-7 pb-7 pt-8">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border-[6px] border-red-50 bg-red-100 text-red-600 shadow-sm">
+                  <LogOut className="h-6 w-6" strokeWidth={2.25} />
+                </div>
+                <h2 id="logout-confirmation-title" className="mt-5 text-center text-[22px] font-extrabold tracking-tight text-slate-950">
+                  Ready to log out?
+                </h2>
+                <p id="logout-confirmation-description" className="mx-auto mt-2 max-w-xs text-center text-sm leading-6 text-slate-500">
+                  Your work is safely saved. You’ll need to sign in again to return to your dashboard.
+                </p>
+
+                <div className="mt-7 grid grid-cols-2 gap-3">
+                  <PressableButton
+                    type="button"
+                    onClick={() => setLogoutOpen(false)}
+                    disabled={isLoggingOut}
+                    className="h-11 cursor-pointer rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Cancel
+                  </PressableButton>
+                  <PressableButton
+                    type="button"
+                    onClick={() => void confirmLogout()}
+                    disabled={isLoggingOut}
+                    className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-500 text-sm font-bold text-white shadow-[0_8px_20px_-8px_rgba(239,68,68,0.8)] hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {isLoggingOut ? "Logging out…" : "Log out"}
+                  </PressableButton>
+                </div>
+              </div>
+            </ModalPanel>
+          </ModalBackdrop>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
