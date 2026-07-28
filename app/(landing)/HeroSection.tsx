@@ -15,10 +15,8 @@ type SocialPlatform = {
   Logo: () => ReactNode;
 };
 
-// GitHub gets an inline SVG (matches onboarding's own choice — crisper than
-// the PNG at small badge sizes) so LinkedIn/Instagram (real PNG assets) and
-// GitHub/YouTube/TikTok (no usable asset) don't end up as a mixed
-// icon-vs-plain-text trust bar.
+// GitHub gets an inline SVG (matches onboarding's own choice and stays crisp
+// at small badge sizes); the other supported platforms use their real assets.
 const GitHubLogo = () => (
   <svg aria-hidden="true" className="h-full w-full" viewBox="0 0 44 44">
     <rect width="44" height="44" rx="12" fill="#24292F" />
@@ -33,33 +31,19 @@ const LinkedInLogo = () => (
   <Image src="/landing/linkedin.png" alt="" width={44} height={44} className="h-full w-full object-contain" />
 );
 
-const YouTubeLogo = () => (
-  <svg aria-hidden="true" className="h-full w-full" viewBox="0 0 44 44">
-    <rect width="44" height="44" rx="12" fill="#FF0000" />
-    <path fill="#FFFFFF" d="M18.5 15.8v12.4l10.9-6.2-10.9-6.2Z" />
-  </svg>
-);
-
 const InstagramLogo = () => (
   <Image src="/landing/insta.png" alt="" width={44} height={44} className="h-full w-full scale-150 object-contain" />
 );
 
-const TikTokLogo = () => (
-  <svg aria-hidden="true" className="h-full w-full" viewBox="0 0 44 44">
-    <rect width="44" height="44" rx="12" fill="#000000" />
-    <path
-      fill="#FFFFFF"
-      d="M25.6 8.8c.6 2.6 2.4 4.4 5.2 4.6v3.5c-1.8.1-3.4-.4-5-1.4v7.3c0 4.4-3.2 7.7-7.5 7.7-3.9 0-7.2-3-7.2-7.1 0-4.3 3.9-7.5 8.2-6.8v3.7c-.5-.1-1-.2-1.5-.2-1.9 0-3.4 1.5-3.4 3.4 0 1.9 1.5 3.4 3.4 3.4 2.1 0 3.9-1.7 3.9-3.9V8.8h3.9Z"
-    />
-  </svg>
+const WhatsAppLogo = () => (
+  <Image src="/landing/whatsapps.png" alt="" width={44} height={44} className="h-full w-full object-contain" />
 );
 
 const socialPlatforms: SocialPlatform[] = [
   { name: "GitHub", Logo: GitHubLogo },
   { name: "LinkedIn", Logo: LinkedInLogo },
-  { name: "YouTube", Logo: YouTubeLogo },
   { name: "Instagram", Logo: InstagramLogo },
-  { name: "TikTok", Logo: TikTokLogo },
+  { name: "WhatsApp", Logo: WhatsAppLogo },
 ];
 
 export default function HeroSection() {
@@ -289,9 +273,6 @@ function TrustBar() {
             <span className="text-[15px] font-bold text-slate-500">{name}</span>
           </span>
         ))}
-        <span data-hero="pill" className="text-[15px] font-bold text-primary">
-          20+ more
-        </span>
       </div>
     </div>
   );

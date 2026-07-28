@@ -74,16 +74,6 @@ const LinkedInLogo = () => (
   />
 );
 
-const TwitterLogo = () => (
-  <svg aria-hidden="true" className="h-11 w-11" viewBox="0 0 44 44">
-    <rect width="44" height="44" rx="12" fill="#1DA1F2" />
-    <path
-      fill="#FFFFFF"
-      d="M33.9 16.1c0 .3 0 .5-.1.8.1 7.8-5.8 16.7-16.6 16.7-3.3 0-6.4-1-9-2.7.5.1.9.1 1.4.1 2.7 0 5.2-.9 7.2-2.5a5.8 5.8 0 0 1-5.4-4c.4.1.8.1 1.2.1.6 0 1.1-.1 1.6-.2a5.8 5.8 0 0 1-4.7-5.7v-.1c.8.5 1.7.8 2.7.8a5.8 5.8 0 0 1-1.8-7.8 16.5 16.5 0 0 0 12 6.1 5.8 5.8 0 0 1 9.9-5.3 11.2 11.2 0 0 0 3.7-1.4 5.8 5.8 0 0 1-2.6 3.2 11.8 11.8 0 0 0 3.3-.9 12.6 12.6 0 0 1-2.8 2.8Z"
-    />
-  </svg>
-);
-
 const InstagramLogo = () => (
   <Image
     src="/landing/insta.png"
@@ -104,23 +94,13 @@ const GitHubLogo = () => (
   </svg>
 );
 
-const FacebookLogo = () => (
+const WhatsAppLogo = () => (
   <Image
-    src="/landing/facebook.png"
+    src="/landing/image.png"
     alt=""
     width={44}
     height={44}
-    className="h-11 w-11 scale-150 object-contain"
-  />
-);
-
-const GmailLogo = () => (
-  <Image
-    src="/landing/gmail.png"
-    alt=""
-    width={44}
-    height={44}
-    className="h-11 w-11 scale-150 object-contain"
+    className="h-11 w-11 object-contain"
   />
 );
 
@@ -136,19 +116,6 @@ const clickedGitHub = () => {
   window.location.assign("/api/auth/github/connect");
 }
 
-const clickedFacebook = () => {
-  alert("Facebook clicked");
-}
-
-const clickedGmail = () => {
-  alert("Gmail clicked");
-}
-
-const clickedTwitter=()=>{
-  alert("Twitter clicked");
-}
-
-
 const handlePlatformClick = async (SocialMedia: string) => {
   switch (SocialMedia) {
     case "LinkedIn":
@@ -160,14 +127,8 @@ const handlePlatformClick = async (SocialMedia: string) => {
     case "GitHub":
       await clickedGitHub();
       break;
-    case "Facebook":
-      clickedFacebook();
-      break;
-    case "Gmail":
-      clickedGmail();
-      break;
-    case "Twitter":
-      clickedTwitter();
+    case "WhatsApp":
+      window.location.assign("/dashboard/socials/whatsapp");
       break;
     default:
       alert(`${SocialMedia} clicked`);
@@ -182,11 +143,6 @@ const onboardingPlatforms: OnboardingPlatform[] = [
     Logo: LinkedInLogo,
   },
   {
-    name: "Twitter",
-    status: "available",
-    Logo: TwitterLogo,
-  },
-  {
     name: "Instagram",
     status: "available",
     Logo: InstagramLogo,
@@ -197,14 +153,9 @@ const onboardingPlatforms: OnboardingPlatform[] = [
     Logo: GitHubLogo,
   },
   {
-    name: "Facebook",
+    name: "WhatsApp",
     status: "available",
-    Logo: FacebookLogo,
-  },
-  {
-    name: "Gmail",
-    status: "available",
-    Logo: GmailLogo,
+    Logo: WhatsAppLogo,
   },
 ];
 
@@ -234,41 +185,33 @@ const PlatformGrid = ({
   onPlatformClick: (name: string) => void;
 }) => {
   return (
-    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
       {platforms.map(({ name, status, Logo }) => {
         const isConnected = status === "connected";
-        const isComingSoon = name === "Twitter" || name === "Facebook" || name === "Gmail";
 
         return (
           <PressableButton
             key={name}
             type="button"
-            onClick={() => !isComingSoon && onPlatformClick(name)}
-            disabled={isConnected || isComingSoon}
+            onClick={() => onPlatformClick(name)}
+            disabled={isConnected}
             className={`relative flex min-h-28 flex-col items-center justify-center rounded-card border px-4 py-4 text-center transition disabled:cursor-default ${
               isConnected
                 ? "border-slate-200 bg-slate-50 opacity-60 shadow-card"
-                : isComingSoon
-                  ? "border-slate-200 bg-slate-50 opacity-70"
-                  : "border-slate-200 bg-white hover:cursor-pointer hover:border-primary hover:bg-primary-tint/40"
+                : "border-slate-200 bg-white hover:cursor-pointer hover:border-primary hover:bg-primary-tint/40"
             }`}
           >
-            {isComingSoon && (
-              <span className="absolute right-2 top-2 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-600">
-                Soon
-              </span>
-            )}
             <span className="grid h-14 w-14 place-items-center rounded-control bg-slate-50">
               <Logo />
             </span>
             <span className="mt-4 text-sm font-semibold text-slate-950">{name}</span>
             <span
               className={`mt-2 inline-flex items-center gap-1 text-xs font-bold ${
-                isConnected ? "text-emerald-600" : isComingSoon ? "text-slate-400" : "text-primary"
+                isConnected ? "text-emerald-600" : "text-primary"
               }`}
             >
               {isConnected && <CheckCircle2 className="h-3.5 w-3.5" />}
-              {isConnected ? "Connected" : isComingSoon ? "Coming Soon" : "Connect"}
+              {isConnected ? "Connected" : "Connect"}
             </span>
           </PressableButton>
         );

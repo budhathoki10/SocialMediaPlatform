@@ -32,7 +32,7 @@ export default async function WhatsAppSocialPage() {
               <div className="flex flex-wrap items-center justify-between gap-5">
                 <div className="flex min-w-0 items-center gap-4">
                   <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-slate-50 ring-1 ring-slate-100">
-                    <Image src="/landing/whatsapp.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+                    <Image src="/landing/whatsapps.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
                   </span>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

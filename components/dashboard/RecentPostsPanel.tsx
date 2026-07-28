@@ -61,9 +61,10 @@ function getPrimaryPlatform(post: DashboardPost) {
 
 function getPlatformLabel(platform: string) {
   const labels: Record<string, string> = {
-    facebook: "Facebook",
+    github: "GitHub",
     instagram: "Instagram",
     linkedin: "LinkedIn",
+    whatsapp: "WhatsApp",
   };
 
   return labels[platform] || platform;

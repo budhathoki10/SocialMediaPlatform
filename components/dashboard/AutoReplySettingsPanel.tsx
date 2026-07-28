@@ -16,7 +16,6 @@ export type AutoReplySettingsData = {
   spamFiltering: boolean;
   platformPermissions: {
     linkedin: boolean;
-    x: boolean;
     instagram: boolean;
     whatsapp: boolean;
   };
@@ -57,7 +56,7 @@ const DEFAULT_SETTINGS: AutoReplySettingsData = {
   aiSemanticAnalysis: true,
   followUpDelay: true,
   spamFiltering: true,
-  platformPermissions: { linkedin: false, x: false, instagram: false, whatsapp: false },
+  platformPermissions: { linkedin: false, instagram: false, whatsapp: false },
   contactFiltering: { mutualConnectionsOnly: false, verifiedProfiles: false },
   keywordExclusions: ["pricing", "refund", "legal"],
   humanFallbackThreshold: 65,
@@ -285,9 +284,8 @@ const TONE_OPTIONS: { value: AutoReplySettingsData["tone"]; label: string }[] = 
 
 const PLATFORM_ROWS = [
   { key: "linkedin" as const, label: "LinkedIn", image: "/landing/linkedin.png", subtitle: "Comments and message replies" },
-  { key: "x" as const, label: "X (Twitter)", image: null, subtitle: "Mentions and replies only" },
   { key: "instagram" as const, label: "Instagram", image: "/landing/insta.png", subtitle: "Direct messages and comments" },
-  { key: "whatsapp" as const, label: "WhatsApp", image: "/landing/whatsapp.png", subtitle: "Business account messages" },
+  { key: "whatsapp" as const, label: "WhatsApp", image: "/landing/whatsapps.png", subtitle: "Business account messages" },
 ];
 
 const EMOJI_OPTIONS: { value: AutoReplySettingsData["responseStyle"]["emojiUsage"]; label: string }[] = [
@@ -419,7 +417,7 @@ export default function AutoReplySettingsPanel({
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Configuration</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Auto-Reply</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-            Configure how AutoPilot drafts responses to messages and comments across LinkedIn, X, Instagram, and WhatsApp. Every draft below always applies. On Instagram, turning on the auto-post agent sends high-confidence drafts automatically — anything uncertain still waits for your review.
+            Configure how AutoPilot drafts responses across LinkedIn, Instagram, and WhatsApp. Every draft below always applies. On Instagram, turning on the auto-post agent sends high-confidence drafts automatically — anything uncertain still waits for your review.
           </p>
         </div>
 

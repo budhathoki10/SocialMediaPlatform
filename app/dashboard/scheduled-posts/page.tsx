@@ -31,7 +31,7 @@ type PostPlatformSummary = {
 };
 
 const statusOptions = ["all", "scheduled", "published", "draft"];
-const platformOptions = ["all", "linkedin", "facebook", "instagram"];
+const platformOptions = ["all", "linkedin", "instagram", "whatsapp", "github"];
 const PAGE_SIZE = 10;
 
 const statusLabels: Record<string, string> = {
@@ -43,9 +43,10 @@ const statusLabels: Record<string, string> = {
 
 const filterPlatformLabels: Record<string, string> = {
   all: "Platform",
-  facebook: "Facebook",
+  github: "GitHub",
   instagram: "Instagram",
   linkedin: "LinkedIn",
+  whatsapp: "WhatsApp",
 };
 
 function readParam(searchParams: SearchParams, key: string, fallback = "") {

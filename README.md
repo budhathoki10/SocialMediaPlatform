@@ -31,7 +31,7 @@ Real OAuth 2.0 connect/disconnect flows for:
 - **GitHub** — connect, disconnect, status check, and a webhook listener
 - **Instagram** — connect, disconnect, status check, DM/comment webhook, and a Graph API reply sender
 
-WhatsApp, Facebook, and Gmail have sidebar entries but are unimplemented stubs (marked "Soon" in the UI).
+The product is intentionally focused on LinkedIn, Instagram, WhatsApp, and GitHub.
 
 ### 2.2 Create Post / Scheduled Posts
 - Manual composer writes a post and either publishes immediately or schedules it for a future time.
@@ -123,7 +123,7 @@ Health checks:
 
 ## 6. Not Yet Implemented
 
-- Publishing to X/Twitter, Reddit, Dev.to, WhatsApp, Facebook, or Gmail — no integration exists for these yet (some have sidebar placeholders only).
+- Publishing surfaces outside LinkedIn, Instagram, WhatsApp, and GitHub are intentionally out of scope.
 - Billing / Free vs Pro plan enforcement — the "Upgrade to Pro" button is a placeholder.
 - Fully automatic (no-human-pick) daily tech news posting.
 - Analytics ingestion from the actual platform APIs (the `analytics` collection exists but nothing currently writes real engagement data into it).

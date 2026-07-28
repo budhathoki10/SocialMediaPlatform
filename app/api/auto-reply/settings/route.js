@@ -42,10 +42,8 @@ function formatSettings(doc) {
     spamFiltering: doc.spam_filtering,
     platformPermissions: {
       linkedin: doc.platform_permissions?.linkedin ?? false,
-      x: doc.platform_permissions?.x ?? false,
       instagram: doc.platform_permissions?.instagram ?? false,
       whatsapp: doc.platform_permissions?.whatsapp ?? false,
-      gmail: doc.platform_permissions?.gmail ?? false,
     },
     contactFiltering: {
       mutualConnectionsOnly: doc.contact_filtering?.mutual_connections_only ?? false,
@@ -108,7 +106,7 @@ export async function PUT(request) {
   if (typeof body.spamFiltering === "boolean") update.spam_filtering = body.spamFiltering;
 
   if (body.platformPermissions && typeof body.platformPermissions === "object") {
-    for (const key of ["linkedin", "x", "instagram", "whatsapp", "gmail"]) {
+    for (const key of ["linkedin", "instagram", "whatsapp"]) {
       if (typeof body.platformPermissions[key] === "boolean") {
         update[`platform_permissions.${key}`] = body.platformPermissions[key];
       }
