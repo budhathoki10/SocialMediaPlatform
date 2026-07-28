@@ -1,3 +1,5 @@
+
+// this file checks if the user account is connected to Instagram and returns the connection status along with the username and connected_at timestamp if connected.
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -40,12 +42,6 @@ async function getCurrentUser(session) {
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  const sessionInstagram = session?.connected_accounts?.instagram;
-
-  if (sessionInstagram?.connected) {
-    return connectedResponse("session", sessionInstagram);
-  }
-
   const currentUser = await getCurrentUser(session);
 
   if (!currentUser) {

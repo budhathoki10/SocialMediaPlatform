@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(git rev-list *)",
+      "PowerShell(Get-Command gh -ErrorAction SilentlyContinue)",
+      "Bash(claude --version)",
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp list 2>&1)",
+      "Bash(rtk next *)",
+      "Bash(rtk proxy *)",
+      "Bash(python3 -c ' *)",
+      "Bash(rtk npx *)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=1280,2400 --screenshot=\"C:/Users/KUSHAL~1/AppData/Local/Temp/claude/c--Users-kushal-budhathoki-OneDrive-Documents-stuffs-Social-Media/c6729343-901e-4474-80ee-c4b2e6aa8c71/scratchpad/screenshots/settings-preview.png\" http://localhost:3000/dev-preview-settings)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=900,700 --screenshot=\"C:/Users/KUSHAL~1/AppData/Local/Temp/claude/c--Users-kushal-budhathoki-OneDrive-Documents-stuffs-Social-Media/c6729343-901e-4474-80ee-c4b2e6aa8c71/scratchpad/screenshots/settings-tz-fix.png\" http://localhost:3000/dev-preview-settings)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=900,500 --screenshot=\"C:/Users/KUSHAL~1/AppData/Local/Temp/claude/c--Users-kushal-budhathoki-OneDrive-Documents-stuffs-Social-Media/c6729343-901e-4474-80ee-c4b2e6aa8c71/scratchpad/screenshots/settings-tz-readonly.png\" http://localhost:3000/dev-preview-settings)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=900,650 --screenshot=\"C:/Users/KUSHAL~1/AppData/Local/Temp/claude/c--Users-kushal-budhathoki-OneDrive-Documents-stuffs-Social-Media/c6729343-901e-4474-80ee-c4b2e6aa8c71/scratchpad/screenshots/settings-buttons.png\" http://localhost:3000/dev-preview-settings)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=1280,850 --screenshot=\"C:/Users/KUSHAL~1/AppData/Local/Temp/claude/c--Users-kushal-budhathoki-OneDrive-Documents-stuffs-Social-Media/c6729343-901e-4474-80ee-c4b2e6aa8c71/scratchpad/screenshots/whatsapp-static.png\" http://localhost:3000/dev-preview-whatsapp)",
+      "Bash(\"/c/Program Files \\(x86\\)/Microsoft/Edge/Application/msedge.exe\" --headless=new --disable-gpu --hide-scrollbars --window-size=1280,850 --screenshot=\"C:/Users/KUSHAL~1/AppData/Local/Temp/claude/c--Users-kushal-budhathoki-OneDrive-Documents-stuffs-Social-Media/c6729343-901e-4474-80ee-c4b2e6aa8c71/scratchpad/screenshots/whatsapp-inbox-shell.png\" http://localhost:3000/dev-preview-whatsapp)",
+      "Bash(npm i *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\kushal budhathoki",
+      "\\tmp"
+    ]
+  }
+}

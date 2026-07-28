@@ -5,37 +5,45 @@ import {
   ChevronDown,
   CircleHelp,
   CirclePlus,
-  Camera,
   LayoutDashboard,
   LogOut,
-  Mail,
   MessageCircle,
   MessageSquare,
   Newspaper,
-  Send,
   Settings,
   Share2,
+  X,
   Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
+import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
-import { useRef, useState } from "react";
+import { useState } from "react";
+
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
+import PressableButton from "@/components/motion/PressableButton";
+import { SPRING } from "@/lib/motion/tokens";
 
 const sidebarItems = [
   { label: "Dashboard", Icon: LayoutDashboard, href: "/dashboard" },
   { label: "Create Post", Icon: CirclePlus, href: "/dashboard/create-post" },
   { label: "Scheduled Posts", Icon: CalendarDays, href: "/dashboard/scheduled-posts" },
-  { label: "Auto Reply", Icon: MessageSquare, href: "#" },
+  { label: "Auto Reply", Icon: MessageSquare, href: "/dashboard/auto-reply" },
   { label: "News Feed", Icon: Newspaper, href: "/dashboard/tech-news" },
 ];
 
 const socialItems = [
-  { label: "WhatsApp", Icon: MessageCircle, message: "clicked in whatsapp" },
-  { label: "Facebook", Icon: Send, message: "clicked in facebook" },
-  { label: "Instagram", Icon: Camera, message: "clicked in instagram" },
-  { label: "Gmail", Icon: Mail, message: "clicked in gmail" },
+  { label: "WhatsApp", image: "/landing/whatsapps.png", href: "/dashboard/socials/whatsapp" },
+  { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
 ];
+
+const comingSoonPill = (
+  <span className="ml-auto rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-600">
+    Soon
+  </span>
+);
 
 function SidebarIconTooltip({ label, children }: { children: React.ReactNode; label: string }) {
   return (
@@ -48,34 +56,34 @@ function SidebarIconTooltip({ label, children }: { children: React.ReactNode; la
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const socialContentRef = useRef<HTMLDivElement>(null);
   const [socialOpen, setSocialOpen] = useState(false);
-  const [socialHeight, setSocialHeight] = useState(0);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const socialActive = pathname.startsWith("/dashboard/socials");
 
-  function toggleSocialMenu() {
-    setSocialOpen((open) => {
-      const nextOpen = !open;
-      setSocialHeight(nextOpen ? socialContentRef.current?.scrollHeight || 0 : 0);
-      return nextOpen;
-    });
+  async function confirmLogout() {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    await signOut({ callbackUrl: "/login" });
   }
 
   return (
-    <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
+    <>
+      <aside className="hidden h-screen w-[248px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white px-5 py-6 lg:flex">
       <div>
         <Link href="/dashboard" className="inline-flex items-center gap-2">
-          <span className="relative h-8 w-8 overflow-hidden rounded-lg">
+          <span className="relative h-8 w-8 overflow-hidden rounded-control">
             <Image
               src="/landing/final-center-logo.png"
               alt=""
-              width={1024}
-              height={1024}
-              className="absolute left-1/2 top-1/2 h-16 w-16 max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
+              width={267}
+              height={267}
+              className="h-full w-full object-contain"
               priority
             />
           </span>
-          <span className="text-sm font-extrabold text-[#4f46e5]">AutoPilot</span>
+          <span className="text-sm font-extrabold text-primary">AutoPilot</span>
         </Link>
         <p className="mt-3 pl-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">Automation Suite</p>
       </div>
@@ -98,7 +106,7 @@ export default function DashboardSidebar() {
           <button
             type="button"
             aria-expanded={socialOpen}
-            onClick={toggleSocialMenu}
+            onClick={() => setSocialOpen((open) => !open)}
             className={`sidebar-nav-item sidebar-nav-button ${socialOpen || socialActive ? "sidebar-nav-item-active" : ""}`}
           >
             <SidebarIconTooltip label="Socials">
@@ -108,21 +116,45 @@ export default function DashboardSidebar() {
             <ChevronDown className={`ml-auto h-3.5 w-3.5 transition-transform duration-300 ${socialOpen ? "rotate-180" : ""}`} />
           </button>
 
-          <div className={`sidebar-social-panel ${socialOpen ? "sidebar-social-panel-open" : ""}`} style={{ height: socialHeight }}>
-            <div ref={socialContentRef} className="space-y-1 py-1.5">
-              {socialItems.map(({ label, Icon, message }) => (
-                <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
-                  <span className="grid h-5 w-5 place-items-center">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span>{label}</span>
-                </button>
-              ))}
+          {/* Motion measures "auto" itself (no scrollHeight ref/state
+              juggling needed) — it animates to the real content height and
+              settles back to auto once open, so late-loading content still
+              fits. */}
+          <motion.div
+            initial={false}
+            animate={{ height: socialOpen ? "auto" : 0 }}
+            transition={SPRING.panel}
+            className="overflow-hidden"
+          >
+            <div className="space-y-1 py-1.5">
+              {socialItems.map(({ label, image, href }) => {
+                const iconEl = <Image src={image} alt="" width={20} height={20} className="h-4 w-4 rounded-sm object-contain" />;
+
+                return (
+                  <Link key={label} href={href} className={`sidebar-social-item ${pathname === href ? "text-primary" : ""}`}>
+                    <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        <Link href="#" className="sidebar-nav-item">
+        <Link
+          href="/dashboard/feedback"
+          className={`sidebar-nav-item ${pathname === "/dashboard/feedback" ? "sidebar-nav-item-active" : ""}`}
+        >
+          <SidebarIconTooltip label="Feedback">
+            <MessageCircle />
+          </SidebarIconTooltip>
+          <span className="sidebar-nav-label">Feedback</span>
+        </Link>
+
+        <Link
+          href="/dashboard/settings"
+          className={`sidebar-nav-item ${pathname === "/dashboard/settings" ? "sidebar-nav-item-active" : ""}`}
+        >
           <SidebarIconTooltip label="Settings">
             <Settings />
           </SidebarIconTooltip>
@@ -131,26 +163,100 @@ export default function DashboardSidebar() {
       </nav>
 
       <div className="mt-auto">
-        <div className="rounded-lg border border-indigo-100 bg-[#f4f6ff] px-4 py-5">
-          <p className="text-sm font-bold text-[#4338ca]">Upgrade to Pro</p>
+        <div className="rounded-card border border-primary/20 bg-primary-tint px-4 py-5">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-primary">Upgrade to Pro</p>
+            {comingSoonPill}
+          </div>
           <p className="mt-2 text-[11px] leading-5 text-slate-600">Unlock advanced automation tools and analytics.</p>
-          <button className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[#4338ca] text-sm font-bold text-white transition hover:bg-[#3730a3]">
+          <PressableButton
+            type="button"
+            onClick={() => alert("Billing is coming soon — we're still building this.")}
+            className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-control bg-primary text-sm font-bold text-white transition hover:bg-primary-hover"
+          >
             <Zap className="h-4 w-4" />
             Upgrade to Pro
-          </button>
+          </PressableButton>
         </div>
 
         <div className="mt-5 space-y-2">
-          <a href="#" className="flex h-9 items-center gap-3 rounded-lg px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
+          <a href="#" className="flex h-9 items-center gap-3 rounded-control px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
             <CircleHelp className="h-4 w-4" />
             Help Center
           </a>
-          <Link href="/logoutPage" className="flex h-9 items-center gap-3 rounded-lg px-4 text-sm font-medium text-red-500 hover:bg-red-50">
+          <button
+            type="button"
+            onClick={() => setLogoutOpen(true)}
+            className="flex h-9 w-full items-center gap-3 rounded-control px-4 text-sm font-medium text-red-500 hover:bg-red-50"
+          >
             <LogOut className="h-4 w-4" />
             Logout
-          </Link>
+          </button>
         </div>
       </div>
-    </aside>
+      </aside>
+
+      <AnimatePresence>
+        {logoutOpen && (
+          <ModalBackdrop
+            role="presentation"
+            onClick={() => !isLoggingOut && setLogoutOpen(false)}
+            className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/45 p-4 backdrop-blur-md"
+          >
+            <ModalPanel
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="logout-confirmation-title"
+              aria-describedby="logout-confirmation-description"
+              onClick={(event) => event.stopPropagation()}
+              className="relative w-full max-w-[410px] overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_28px_80px_-20px_rgba(15,23,42,0.45)]"
+            >
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-red-50/90 to-transparent" />
+              <PressableButton
+                type="button"
+                onClick={() => setLogoutOpen(false)}
+                disabled={isLoggingOut}
+                aria-label="Close logout confirmation"
+                className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-white hover:text-slate-700 hover:shadow-sm disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+              </PressableButton>
+
+              <div className="relative px-7 pb-7 pt-8">
+                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border-[6px] border-red-50 bg-red-100 text-red-600 shadow-sm">
+                  <LogOut className="h-6 w-6" strokeWidth={2.25} />
+                </div>
+                <h2 id="logout-confirmation-title" className="mt-5 text-center text-[22px] font-extrabold tracking-tight text-slate-950">
+                  Ready to log out?
+                </h2>
+                <p id="logout-confirmation-description" className="mx-auto mt-2 max-w-xs text-center text-sm leading-6 text-slate-500">
+                  Your work is safely saved. You’ll need to sign in again to return to your dashboard.
+                </p>
+
+                <div className="mt-7 grid grid-cols-2 gap-3">
+                  <PressableButton
+                    type="button"
+                    onClick={() => setLogoutOpen(false)}
+                    disabled={isLoggingOut}
+                    className="h-11 cursor-pointer rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Cancel
+                  </PressableButton>
+                  <PressableButton
+                    type="button"
+                    onClick={() => void confirmLogout()}
+                    disabled={isLoggingOut}
+                    className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-500 text-sm font-bold text-white shadow-[0_8px_20px_-8px_rgba(239,68,68,0.8)] hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {isLoggingOut ? "Logging out…" : "Log out"}
+                  </PressableButton>
+                </div>
+              </div>
+            </ModalPanel>
+          </ModalBackdrop>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

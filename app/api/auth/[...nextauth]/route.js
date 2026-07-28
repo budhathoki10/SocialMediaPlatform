@@ -8,6 +8,17 @@ const onboardingPath = "/onboarding";
 const sessionMaxAge = 60 * 60 * 24 * 90;
 const supportedPlatforms = ["github", "linkedin", "instagram"];
 
+function isUnsafeCallbackPath(path) {
+  return (
+    path === "/login" ||
+    path.startsWith("/login?") ||
+    path === "/error" ||
+    path.startsWith("/error?") ||
+    path === "/api/auth/error" ||
+    path.startsWith("/api/auth/error?")
+  );
+}
+
 function normalizeAuthUser(profile) {
   if (!profile?.email) {
     return null;
@@ -112,6 +123,7 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   callbacks: {
     async signIn({ user }) {
@@ -178,6 +190,10 @@ export const authOptions = {
       }
 
       if (url.startsWith("/")) {
+        if (isUnsafeCallbackPath(url)) {
+          return onboardingUrl;
+        }
+
         return `${baseUrl}${url}`;
       }
 
@@ -185,6 +201,12 @@ export const authOptions = {
         const targetUrl = new URL(url);
 
         if (targetUrl.origin === baseUrl) {
+          const targetPath = `${targetUrl.pathname}${targetUrl.search}`;
+
+          if (isUnsafeCallbackPath(targetPath)) {
+            return onboardingUrl;
+          }
+
           return url;
         }
       } catch {

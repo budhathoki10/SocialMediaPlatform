@@ -4,6 +4,8 @@ import { ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import PressableButton from "@/components/motion/PressableButton";
+
 type FilterOption = {
   label: string;
   value: string;
@@ -33,35 +35,35 @@ function FilterDropdown({ label, name, onChange, openName, options, setOpenName,
 
   return (
     <div className="relative">
-      <button
+      <PressableButton
         type="button"
         aria-expanded={isOpen}
         onClick={() => setOpenName(isOpen ? null : name)}
-        className="inline-flex h-9 min-w-40 items-center justify-between gap-3 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50 focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
+        className="inline-flex h-9 min-w-40 items-center justify-between gap-3 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50 focus:border-primary focus:ring-2 focus:ring-primary/15"
       >
         <span>{selected?.label || label}</span>
         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
-      </button>
+      </PressableButton>
 
       <div
-        className={`absolute left-0 top-11 z-30 w-44 origin-top overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-lg shadow-slate-200/80 transition-all duration-300 ease-out ${
+        className={`absolute left-0 top-11 z-30 w-44 origin-top overflow-hidden rounded-card border border-slate-200 bg-white p-1 shadow-panel transition-all duration-300 ease-out ${
           isOpen ? "max-h-64 translate-y-0 opacity-100" : "pointer-events-none max-h-0 -translate-y-1 opacity-0"
         }`}
       >
         {options.map((option) => (
-          <button
+          <PressableButton
             key={option.value}
             type="button"
             onClick={() => {
               onChange(option.value);
               setOpenName(null);
             }}
-            className={`flex h-9 w-full items-center rounded-md px-3 text-left text-sm font-semibold transition ${
-              value === option.value ? "bg-[#eef2ff] text-[#4338ca]" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+            className={`flex h-9 w-full items-center rounded-control px-3 text-left text-sm font-semibold transition ${
+              value === option.value ? "bg-primary-tint text-primary" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
             }`}
           >
             {option.label}
-          </button>
+          </PressableButton>
         ))}
       </div>
     </div>
@@ -115,9 +117,9 @@ export function ScheduledPostFilters({
         value={status}
       />
 
-      <button className="h-9 rounded-full bg-[#4338ca] px-4 text-xs font-bold text-white transition hover:bg-[#3730a3]">
+      <PressableButton className="h-9 rounded-full bg-primary px-4 text-xs font-bold text-white transition hover:bg-primary-hover">
         Search
-      </button>
+      </PressableButton>
     </form>
   );
 }

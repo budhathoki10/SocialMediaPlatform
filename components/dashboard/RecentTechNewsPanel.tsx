@@ -1,7 +1,14 @@
 "use client";
 
 import { ExternalLink, Newspaper, RefreshCw, X } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
+
+import EmptyState from "./EmptyState";
+import HoverCard from "@/components/motion/HoverCard";
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
+import PressableButton from "@/components/motion/PressableButton";
+import { PressableAnchor } from "@/components/motion/PressableLink";
 
 type NewsArticle = {
   article_id?: string;
@@ -113,20 +120,20 @@ export default function RecentTechNewsPanel() {
 
   return (
     <>
-      <section className="min-h-[278px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <section className="min-h-[278px] overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
           <div className="flex items-center gap-2">
-            <Newspaper className="h-4 w-4 text-[#4338ca]" />
+            <Newspaper className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-bold text-slate-950">Recent News Feed</h2>
           </div>
-          <button
+          <PressableButton
             type="button"
             onClick={() => void refreshNews()}
             aria-label="Refresh news"
-            className="grid h-7 w-7 place-items-center rounded-md text-slate-400 transition hover:bg-slate-50 hover:text-[#4338ca]"
+            className="grid h-7 w-7 place-items-center rounded-md text-slate-400 transition hover:bg-slate-50 hover:text-primary"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          </button>
+          </PressableButton>
         </div>
 
         {isLoading ? (
@@ -138,25 +145,22 @@ export default function RecentTechNewsPanel() {
             </div>
           </div>
         ) : newsItems.length === 0 ? (
-          <div className="grid min-h-36 place-items-center px-5 text-center">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">No recent news</p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">Try refreshing the feed.</p>
-            </div>
-          </div>
+          <EmptyState icon={Newspaper} title="No recent news" description="Try refreshing the feed." className="min-h-36" />
         ) : (
           <div className="space-y-2 px-4 py-4">
             {newsItems.map((news, index) => (
-              <article
+              <HoverCard
+                as="article"
                 key={news.article_id || news.link || `${news.title}-${index}`}
+                liftPx={2}
                 className="rounded-md border border-transparent transition hover:border-blue-100 hover:bg-blue-50"
               >
                 <button type="button" onClick={() => setSelectedNews(news)} className="flex w-full gap-3 px-3 py-3 text-left">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-indigo-50 text-[#4338ca]">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
                     <Newspaper className="h-5 w-5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="text-[10px] font-black uppercase tracking-[0.08em] text-[#4338ca]">
+                    <span className="text-[10px] font-black uppercase tracking-[0.08em] text-primary">
                       {categoryName(news)}
                     </span>
                     <span className="mt-1 block line-clamp-1 text-sm font-bold text-slate-800">{news.title || "Untitled news"}</span>
@@ -168,60 +172,62 @@ export default function RecentTechNewsPanel() {
                     </span>
                   </span>
                 </button>
-              </article>
+              </HoverCard>
             ))}
           </div>
         )}
       </section>
 
+      <AnimatePresence>
       {selectedNews && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm">
-          <section className="w-full max-w-lg rounded-lg border border-slate-200 bg-white shadow-xl">
+        <ModalBackdrop className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm">
+          <ModalPanel className="w-full max-w-lg rounded-panel border border-slate-200 bg-white shadow-panel">
             <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-[#4338ca]">{publisherName(selectedNews)}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.08em] text-primary">{publisherName(selectedNews)}</p>
                 <h2 className="mt-1 text-base font-bold text-slate-950">{selectedNews.title || "Untitled news"}</h2>
                 <p className="mt-2 text-xs font-semibold text-slate-500">
                   {formatDate(selectedNews.pubDate)} • {categoryName(selectedNews)}
                 </p>
               </div>
-              <button
+              <PressableButton
                 type="button"
                 onClick={() => setSelectedNews(null)}
                 aria-label="Close news preview"
                 className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </PressableButton>
             </div>
             <div className="px-5 py-5">
               <p className="text-sm leading-6 text-slate-600">{selectedNews.description || "No description available."}</p>
             </div>
             <div className="flex justify-between gap-3 border-t border-slate-100 px-5 py-4">
               {selectedNews.link ? (
-                <a
+                <PressableAnchor
                   href={selectedNews.link}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-bold text-slate-700 transition hover:border-[#4338ca] hover:bg-[#4338ca] hover:text-white"
+                  className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-bold text-slate-700 transition hover:border-primary hover:bg-primary hover:text-white"
                 >
                   Read original
                   <ExternalLink className="h-4 w-4" />
-                </a>
+                </PressableAnchor>
               ) : (
                 <span />
               )}
-              <button
+              <PressableButton
                 type="button"
                 onClick={() => setSelectedNews(null)}
-                className="h-9 rounded-md bg-[#4338ca] px-4 text-sm font-bold text-white transition hover:bg-[#3730a3]"
+                className="h-9 rounded-md bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover"
               >
                 Done
-              </button>
+              </PressableButton>
             </div>
-          </section>
-        </div>
+          </ModalPanel>
+        </ModalBackdrop>
       )}
+      </AnimatePresence>
     </>
   );
 }

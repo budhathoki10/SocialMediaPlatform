@@ -34,6 +34,7 @@ server.err.log
 
 # env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -41,3 +42,6 @@ server.err.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code (personal, machine-specific)
+.claude/settings.local.json

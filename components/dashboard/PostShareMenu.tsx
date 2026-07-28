@@ -2,12 +2,15 @@
 
 import { Check, Share2 } from "lucide-react";
 import Image from "next/image";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 
+import PressableButton from "@/components/motion/PressableButton";
+import { SPRING } from "@/lib/motion/tokens";
+
 const sharePlatforms = [
-  { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin" },
-  { name: "Instagram", image: "/landing/insta.png", action: "instagram" },
-  { name: "Facebook", image: "/landing/facebook.png", action: "facebook" },
+  { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin", available: true },
+  { name: "Instagram", image: "/landing/insta.png", action: "instagram", available: false },
 ] as const;
 
 type PostShareMenuProps = {
@@ -74,43 +77,55 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
 
   return (
     <div ref={menuRef} className="relative shrink-0">
-      <button
+      <PressableButton
         type="button"
         onClick={() => setIsOpen((open) => !open)}
-        className="grid h-9 w-9 place-items-center rounded-md text-slate-400 transition hover:bg-indigo-50 hover:text-[#4338ca]"
+        className="grid h-9 w-9 place-items-center rounded-control text-slate-400 transition hover:bg-primary-tint hover:text-primary"
         aria-label="Share post"
       >
         <Share2 className="h-4 w-4" />
-      </button>
+      </PressableButton>
 
-      {isOpen && (
-        <div className="absolute bottom-0 right-10 z-20 w-40 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg">
-          {sharePlatforms.map((platform) => (
-            (() => {
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 6 }}
+            transition={SPRING.gentle}
+            className="absolute bottom-0 right-10 z-20 w-40 rounded-card border border-slate-200 bg-white p-1.5 shadow-panel"
+          >
+            {sharePlatforms.map((platform) => {
               const hasBeenShared = sharedPlatforms.includes(platform.action);
               const isSharing = sharingPlatform === platform.action;
 
               return (
-                <button
+                <PressableButton
                   key={platform.name}
                   type="button"
-                  disabled={hasBeenShared || isSharing}
+                  disabled={!platform.available || hasBeenShared || isSharing}
                   onClick={() => void sharePost(platform.action)}
-                  title={hasBeenShared ? `Already posted on ${platform.name}` : undefined}
+                  title={
+                    !platform.available
+                      ? `${platform.name} posting is coming soon`
+                      : hasBeenShared
+                        ? `Already posted on ${platform.name}`
+                        : undefined
+                  }
                   className="flex h-9 w-full items-center gap-2 rounded-md px-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:opacity-70"
                 >
                   <Image src={platform.image} alt="" width={20} height={20} className="h-5 w-5 object-contain" />
                   <span className="flex-1">{platform.name}</span>
-                  {hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
-                  {isSharing && <span className="text-[10px] text-slate-500">Posting…</span>}
-                </button>
+                  {!platform.available && <span className="text-[10px] text-slate-400">Coming soon</span>}
+                  {platform.available && hasBeenShared && <Check className="h-3.5 w-3.5 text-emerald-600" aria-label="Posted" />}
+                  {platform.available && isSharing && <span className="text-[10px] text-slate-500">Posting…</span>}
+                </PressableButton>
               );
-            })()
-          ))}
-          {shareError && <p className="px-2 pb-1 pt-1 text-xs font-medium text-red-600">{shareError}</p>}
-        </div>
-      )}
-
+            })}
+            {shareError && <p className="px-2 pb-1 pt-1 text-xs font-medium text-red-600">{shareError}</p>}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
