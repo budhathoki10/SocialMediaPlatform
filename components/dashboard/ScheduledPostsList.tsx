@@ -45,17 +45,14 @@ const platformImages: Record<string, string> = {
   github: "/landing/githubs.png",
   linkedin: "/landing/linkedin.png",
   instagram: "/landing/insta.png",
-  facebook: "/landing/facebook.png",
-  gmail: "/landing/gmail.png",
+  whatsapp: "/landing/whatsapps.png",
 };
 
 const platformLabels: Record<string, string> = {
-  facebook: "Facebook",
   github: "GitHub",
   instagram: "Instagram",
   linkedin: "LinkedIn",
-  twitter: "Twitter (X)",
-  x: "Twitter (X)",
+  whatsapp: "WhatsApp",
 };
 
 function formatDateParts(value?: Date | null) {

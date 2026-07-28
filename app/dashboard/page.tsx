@@ -56,20 +56,14 @@ const platformImages: Record<string, string> = {
   github: "/landing/githubs.png",
   linkedin: "/landing/linkedin.png",
   instagram: "/landing/insta.png",
-  facebook: "/landing/facebook.png",
-  gmail: "/landing/gmail.png",
+  whatsapp: "/landing/whatsapps.png",
 };
 
 const platformNames: Record<string, string> = {
   github: "GitHub",
   linkedin: "LinkedIn",
   instagram: "Instagram",
-  facebook: "Facebook",
-  gmail: "Gmail",
-  twitter: "Twitter",
-  x: "X",
-  youtube: "YouTube",
-  tiktok: "TikTok",
+  whatsapp: "WhatsApp",
 };
 
 function getGreeting(timezone = "Asia/Kathmandu") {

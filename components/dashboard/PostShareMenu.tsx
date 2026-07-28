@@ -11,7 +11,6 @@ import { SPRING } from "@/lib/motion/tokens";
 const sharePlatforms = [
   { name: "LinkedIn", image: "/landing/linkedin.png", action: "linkedin", available: true },
   { name: "Instagram", image: "/landing/insta.png", action: "instagram", available: false },
-  { name: "Facebook", image: "/landing/facebook.png", action: "facebook", available: false },
 ] as const;
 
 type PostShareMenuProps = {

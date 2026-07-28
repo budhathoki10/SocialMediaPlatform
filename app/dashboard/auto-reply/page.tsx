@@ -37,8 +37,8 @@ async function getLogsFromRoute(): Promise<AutoReplyLogRow[]> {
   }
 }
 
-/** Only LinkedIn and Instagram have real OAuth integrations today — X and
- * WhatsApp have no connect flow yet, so they can never appear here. */
+/** LinkedIn and Instagram currently expose connection status endpoints.
+ * WhatsApp remains visible as an implemented inbox surface. */
 async function getConnectedPlatforms(): Promise<string[]> {
   const [instagramResponse, linkedinResponse] = await Promise.all([
     getInstagramRoute().catch(() => null),

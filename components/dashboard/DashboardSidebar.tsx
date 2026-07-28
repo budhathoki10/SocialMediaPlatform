@@ -35,10 +35,8 @@ const sidebarItems = [
 ];
 
 const socialItems = [
-  { label: "WhatsApp", image: "/landing/whatsapp.png", href: "/dashboard/socials/whatsapp" },
-  { label: "Facebook", image: "/landing/facebook.png", message: "clicked in facebook" },
+  { label: "WhatsApp", image: "/landing/whatsapps.png", href: "/dashboard/socials/whatsapp" },
   { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
-  { label: "Gmail", image: "/landing/gmail.png", message: "clicked in gmail" },
 ];
 
 const comingSoonPill = (
@@ -129,20 +127,14 @@ export default function DashboardSidebar() {
             className="overflow-hidden"
           >
             <div className="space-y-1 py-1.5">
-              {socialItems.map(({ label, image, message, href }) => {
+              {socialItems.map(({ label, image, href }) => {
                 const iconEl = <Image src={image} alt="" width={20} height={20} className="h-4 w-4 rounded-sm object-contain" />;
 
-                return href ? (
+                return (
                   <Link key={label} href={href} className={`sidebar-social-item ${pathname === href ? "text-primary" : ""}`}>
                     <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
                   </Link>
-                ) : (
-                  <button key={label} type="button" onClick={() => alert(message)} className="sidebar-social-item">
-                    <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
-                    <span>{label}</span>
-                    {comingSoonPill}
-                  </button>
                 );
               })}
             </div>
