@@ -296,9 +296,9 @@ const TONE_OPTIONS: { value: AutoReplySettingsData["tone"]; label: string }[] = 
 ];
 
 const PLATFORM_ROWS = [
-  { key: "linkedin" as const, label: "LinkedIn", image: "/landing/linkedin.png", subtitle: "Comments and message replies" },
-  { key: "instagram" as const, label: "Instagram", image: "/landing/insta.png", subtitle: "Direct messages and comments" },
-  { key: "whatsapp" as const, label: "WhatsApp", image: "/landing/whatsapps.png", subtitle: "Business account messages" },
+  { key: "linkedin" as const, label: "LinkedIn", image: "/landing/linkedin.svg", subtitle: "Comments and message replies" },
+  { key: "instagram" as const, label: "Instagram", image: "/landing/instagram.svg", subtitle: "Direct messages and comments" },
+  { key: "whatsapp" as const, label: "WhatsApp", image: "/landing/whatsapp.svg", subtitle: "Business account messages" },
 ];
 
 const EMOJI_OPTIONS: { value: AutoReplySettingsData["responseStyle"]["emojiUsage"]; label: string }[] = [

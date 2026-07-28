@@ -35,8 +35,8 @@ const sidebarItems = [
 ];
 
 const socialItems = [
-  { label: "WhatsApp", image: "/landing/whatsapps.png", href: "/dashboard/socials/whatsapp" },
-  { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
+  { label: "WhatsApp", image: "/landing/whatsapp.svg", href: "/dashboard/socials/whatsapp" },
+  { label: "Instagram", image: "/landing/instagram.svg", href: "/dashboard/socials/instagram" },
 ];
 
 const comingSoonPill = (
