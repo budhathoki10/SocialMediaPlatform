@@ -133,7 +133,7 @@ export default async function InstagramSocialPage() {
   const isInstagramConnected = Boolean(instagramProfile?.connected);
 
   return (
-    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+    <section className="h-full min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <h1 className="text-2xl font-bold tracking-tight text-slate-950">Instagram</h1>
 

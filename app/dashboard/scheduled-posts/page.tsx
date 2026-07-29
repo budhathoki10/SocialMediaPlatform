@@ -187,7 +187,7 @@ export default async function ScheduledPostsPage({
   const nextHref = buildPageHref({ page: Math.min(totalPages, safePage + 1), search, status, platform });
 
   return (
-    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-5">
             <form action="/dashboard/scheduled-posts" className="relative hidden min-w-0 flex-1 md:block">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

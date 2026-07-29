@@ -5,14 +5,9 @@ import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 // Shared shell for every /dashboard/* route. DashboardSidebar lives here,
 // outside the loading.tsx Suspense boundary, so it renders once and stays
 // mounted across navigations instead of unmounting/remounting (and visibly
-// flickering) on every page change.
+// flickering) on every page change. DashboardSidebar owns the outer <main>
+// (desktop persistent aside + mobile top bar/drawer) and renders {children}
+// inside it — see that component for the responsive shell.
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return (
-    <main className="h-screen overflow-hidden bg-[#f6f8fb] text-slate-950">
-      <div className="flex h-screen">
-        <DashboardSidebar />
-        {children}
-      </div>
-    </main>
-  );
+  return <DashboardSidebar>{children}</DashboardSidebar>;
 }

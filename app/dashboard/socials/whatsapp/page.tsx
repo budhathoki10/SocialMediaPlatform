@@ -24,7 +24,7 @@ export default async function WhatsAppSocialPage() {
   }
 
   return (
-    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+    <section className="h-full min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <h1 className="text-2xl font-bold tracking-tight text-slate-950">WhatsApp</h1>
 

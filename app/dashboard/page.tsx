@@ -209,7 +209,7 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-y-auto">
       <Toolbar user={user} />
 
           <StaggerGroup className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-7 sm:px-6 lg:px-8">

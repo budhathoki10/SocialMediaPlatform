@@ -55,7 +55,7 @@ export default async function CreatePostPage() {
   }
 
   return (
-    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
       <Toolbar user={session.user} />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
         <CreatePostComposer userName={session.user.name} />
