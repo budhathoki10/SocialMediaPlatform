@@ -188,7 +188,7 @@ export default async function InstagramSocialPage() {
               </div>
             </section>
 
-            <section className="mt-5 grid gap-4 md:grid-cols-4">
+            <section className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
               {statCards.map(({ label, key, Icon }) => (
                 <div key={label} className="flex items-center gap-3 rounded-card border border-slate-200 bg-white p-4 shadow-card">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">

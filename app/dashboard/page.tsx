@@ -306,21 +306,28 @@ export default async function DashboardPage() {
             <div className="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
               {/* Each column stacks independently (space-y, not a shared grid
                   row-track) so a tall Upcoming Posts list never forces empty
-                  space under the shorter Connected Accounts card next to it. */}
-              <div className="space-y-5">
-                <StaggerItem>
+                  space under the shorter Connected Accounts card next to it.
+                  Below xl, both wrapper divs collapse via `contents` so all
+                  four cards become flat siblings in the outer grid — that's
+                  what lets `order-*` below re-prioritize them by how often
+                  they're actually checked on mobile (connection health and
+                  posts first, the tech-news feed last), while `xl:contents`
+                  reversing to a real box at xl restores today's exact
+                  desktop grouping and masonry behavior. */}
+              <div className="contents xl:block xl:space-y-5">
+                <StaggerItem className="order-2 xl:order-none">
                   <RecentPostsPanel hasConnectedAccounts={activeAccounts.length > 0} />
                 </StaggerItem>
 
-                <StaggerItem>
+                <StaggerItem className="order-4 xl:order-none">
                   <RecentTechNewsPanel />
                 </StaggerItem>
               </div>
 
-              <div className="space-y-5">
+              <div className="contents xl:block xl:space-y-5">
                 <StaggerItem
                   as="section"
-                  className="min-h-[278px] overflow-hidden rounded-card border border-slate-200 bg-white shadow-card"
+                  className="order-1 min-h-[278px] overflow-hidden rounded-card border border-slate-200 bg-white shadow-card xl:order-none"
                 >
                   <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                     <div className="flex items-center gap-2">
@@ -362,7 +369,7 @@ export default async function DashboardPage() {
                   )}
                 </StaggerItem>
 
-                <StaggerItem>
+                <StaggerItem className="order-3 xl:order-none">
                   <ActivityFeed initialItems={activityFeedItems} />
                 </StaggerItem>
               </div>
