@@ -286,12 +286,13 @@ export default function RecentPostsPanel({ hasConnectedAccounts }: { hasConnecte
                     <Clock3 className="h-3.5 w-3.5 text-slate-400" />
                     {post.scheduled_time ? formatDate(post.scheduled_time) : "No schedule"}
                   </span>
+                  <PostShareMenu
+                    postId={post._id}
+                    initialSharedPlatforms={post.shared_platforms}
+                    onPostPublished={() => setPosts((currentPosts) => currentPosts.map((item) => item._id === post._id ? { ...item, status: "published" } : item))}
+                    className="ml-auto"
+                  />
                 </div>
-                <PostShareMenu
-                  postId={post._id}
-                  initialSharedPlatforms={post.shared_platforms}
-                  onPostPublished={() => setPosts((currentPosts) => currentPosts.map((item) => item._id === post._id ? { ...item, status: "published" } : item))}
-                />
               </HoverCard>
             ))}
             </AnimatePresence>

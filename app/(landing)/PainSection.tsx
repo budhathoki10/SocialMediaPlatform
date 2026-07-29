@@ -80,13 +80,16 @@ export default function PainSection() {
           );
         });
 
-        // Hold: without this, the last row's fade-in finishes at exactly
-        // 100% scroll progress through the pin — the same instant it
-        // unpins into Testimonial, giving zero time to actually read
-        // "Context-aware Automation" before the section releases. This
-        // empty tween pads the timeline so the final row sits fully visible
-        // for a real dwell period before handoff.
-        tl.to({}, { duration: 1 });
+        // Hold so the last row gets real dwell time fully visible (without
+        // this its fade-in would finish at exactly 100% scroll progress —
+        // the same instant the section unpins into Testimonial, giving zero
+        // time to actually read it) — then dim it to match rows 1 and 2,
+        // which already fade to 0.5 the moment the next row takes over. The
+        // last row has no "next" row to trigger that, so without this step
+        // it was the only card that never settled into the dimmed state.
+        tl.to({}, { duration: 0.6 });
+        tl.to(rows[rows.length - 1], { autoAlpha: 0.5, duration: 0.4 });
+        tl.to({}, { duration: 0.4 });
       });
     },
     { scope: sectionRef },

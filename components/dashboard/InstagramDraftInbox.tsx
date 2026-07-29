@@ -502,7 +502,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
     const isExpanded = expandedRows.has(row.id);
 
     return (
-      <td className="min-w-[22rem] px-3 py-3 align-top text-xs text-slate-500">
+      <td className="min-w-40 px-2 py-3 align-top text-xs text-slate-500 md:min-w-[22rem] md:px-3">
         <PressableButton
           type="button"
           onClick={() => toggleRowExpanded(row.id)}
@@ -521,7 +521,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
 
   function renderDraftCell(row: DraftRow) {
     return (
-      <td className={`max-w-52 px-3 py-3 text-xs ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
+      <td className={`max-w-52 px-2 py-3 text-xs md:px-3 ${!isRepliedTab && row.tone === "bad" ? "italic text-red-500" : "text-slate-500"}`}>
         {isRepliedTab ? (
           <PressableButton
             type="button"
@@ -578,7 +578,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
 
   function renderConfidenceCell(confidence: number | null) {
     return (
-      <td className="whitespace-nowrap px-3 py-3 text-xs text-slate-500">
+      <td className="whitespace-nowrap px-2 py-3 text-xs text-slate-500 md:px-3">
         {confidence !== null ? <ConfidenceBadge value={confidence} /> : <span className="text-slate-300">—</span>}
       </td>
     );
@@ -657,10 +657,10 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
             />
           </td>
         ) : null}
-        <td className="whitespace-nowrap px-3 py-2.5 pl-9 text-[11px] font-semibold text-slate-400">
+        <td className="whitespace-nowrap px-2 py-2.5 pl-5 text-[11px] font-semibold text-slate-400 md:px-3 md:pl-9">
           Message {index + 1}
         </td>
-        <td className="px-3 py-2.5" />
+        <td className="px-2 py-2.5 md:px-3" />
         {renderMessagePreview(row)}
         {renderDraftCell(row)}
         {renderConfidenceCell(row.confidence)}
@@ -772,11 +772,11 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                   />
                 </th>
               ) : null}
-              <th className="px-3 py-3">User</th>
-              <th className="px-3 py-3">Source</th>
-              <th className="px-3 py-3">Message Preview</th>
-              <th className="px-3 py-3">{isRepliedTab ? "Replied" : "AI Draft Preview"}</th>
-              <th className="px-3 py-3">Confidence</th>
+              <th className="px-2 py-3 md:px-3">User</th>
+              <th className="px-2 py-3 md:px-3">Source</th>
+              <th className="px-2 py-3 md:px-3">Message Preview</th>
+              <th className="px-2 py-3 md:px-3">{isRepliedTab ? "Replied" : "AI Draft Preview"}</th>
+              <th className="px-2 py-3 md:px-3">Confidence</th>
               {!isRepliedTab ? <th className="px-5 py-3 text-right">Actions</th> : null}
             </tr>
           </thead>
@@ -824,7 +824,7 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                           />
                         </td>
                       ) : null}
-                      <td className="whitespace-nowrap px-3 py-3">
+                      <td className="whitespace-nowrap px-2 py-3 md:px-3">
                         <div className="flex items-center gap-2">
                           <span className="relative inline-flex shrink-0">
                             {group.profilePictureUrl ? (
@@ -833,10 +833,10 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                               <img
                                 src={group.profilePictureUrl}
                                 alt=""
-                                className="h-12 w-12 rounded-full border border-white object-cover shadow-sm ring-1 ring-slate-200"
+                                className="h-9 w-9 rounded-full border border-white object-cover shadow-sm ring-1 ring-slate-200 md:h-12 md:w-12"
                               />
                             ) : (
-                              <span className="h-15 w-15 rounded-full border border-white bg-linear-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200" />
+                              <span className="h-9 w-9 rounded-full border border-white bg-linear-to-br from-indigo-100 via-sky-100 to-emerald-100 shadow-sm ring-1 ring-slate-200 md:h-15 md:w-15" />
                             )}
                             {hasMultipleMessages ? (
                               <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-white ring-2 ring-white">
@@ -850,12 +850,12 @@ export default function InstagramDraftInbox({ rows }: InstagramDraftInboxProps) 
                           </span>
                         </div>
                       </td>
-                      <td className="px-3 py-3">
+                      <td className="px-2 py-3 md:px-3">
                         <span className="rounded bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-500">{group.source}</span>
                       </td>
                       {renderMessagePreview(primaryRow, hasMultipleMessages ? group.messages.length - 1 : undefined)}
                       {hasMultipleMessages ? (
-                        <td className="max-w-52 px-3 py-3 text-xs text-slate-500">
+                        <td className="max-w-52 px-2 py-3 text-xs text-slate-500 md:px-3">
                           <PressableButton
                             type="button"
                             onClick={() => toggleGroupExpanded(group.key)}
