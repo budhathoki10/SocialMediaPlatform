@@ -14,15 +14,15 @@ type ToolbarUser = {
 /**
  * The one dashboard page header — every /dashboard/* route renders this so
  * the page title, notifications, settings, and the account avatar always
- * sit in the same place. `children` is an optional middle slot (currently
- * unused now that Scheduled Posts' search box moved into page content, but
- * kept for whatever page-specific control needs it next).
+ * sit in the same place on desktop. `children` is an optional middle slot
+ * (e.g. Scheduled Posts' search box).
  *
- * Notifications/settings/avatar are lg-only — DashboardSidebar already puts
- * that cluster in the mobile top bar next to the logo, so repeating it here
- * below lg would just duplicate the same controls one row down. The title
- * still shows on every size, though: the logo bar carries the app brand,
- * this carries which page you're on.
+ * Everything here — title included — is lg-only. DashboardSidebar's mobile
+ * top bar already carries the app brand plus notifications/avatar, so this
+ * whole row has nothing to add below lg. The bar itself collapses away
+ * entirely on mobile unless `children` is passed (real page content, not
+ * just a label), so pages with nothing to show there don't leave an empty
+ * white strip.
  */
 export default function DashboardToolbar({
   title,
@@ -34,8 +34,10 @@ export default function DashboardToolbar({
   children?: ReactNode;
 }) {
   return (
-    <header className="flex h-16 items-center gap-4 border-b border-slate-200 bg-white px-5 sm:px-6 lg:px-8">
-      <p className="min-w-0 shrink-0 truncate text-sm font-bold text-slate-800">{title}</p>
+    <header
+      className={`h-16 items-center gap-4 border-b border-slate-200 bg-white px-5 sm:px-6 lg:flex lg:px-8 ${children ? "flex" : "hidden"}`}
+    >
+      <p className="hidden min-w-0 shrink-0 truncate text-sm font-bold text-slate-800 lg:block">{title}</p>
 
       {children}
 
