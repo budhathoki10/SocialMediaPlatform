@@ -1,10 +1,9 @@
-import { CheckCircle2, Clock3, FileText, List, Settings } from "lucide-react";
-import Image from "next/image";
+import { CheckCircle2, Clock3, FileText, List } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import NotificationsButton from "@/components/dashboard/NotificationsButton";
+import DashboardToolbar from "@/components/dashboard/DashboardToolbar";
 import { ScheduledPostFilters } from "@/components/dashboard/ScheduledPostFilters";
 import ScheduledPostSearchInput from "@/components/dashboard/ScheduledPostSearchInput";
 import ScheduledPostsList, { type ScheduledPost } from "@/components/dashboard/ScheduledPostsList";
@@ -69,18 +68,6 @@ function buildPageHref({ page, search, status, platform }: { page: number; searc
 
 function getPlatformForPost(post: ScheduledPost, platformMap: Map<string, string>) {
   return platformMap.get(post._id.toString()) || "linkedin";
-}
-
-function UserAvatar({ user }: { user: DashboardUser }) {
-  return (
-    <Image
-      src={user.avatar_url || "/landing/testimonial-avatar.png"}
-      alt={user.name ? `${user.name} avatar` : "User avatar"}
-      width={36}
-      height={36}
-      className="h-9 w-9 rounded-full object-cover ring-2 ring-white"
-    />
-  );
 }
 
 async function getCurrentUser() {
@@ -188,22 +175,7 @@ export default async function ScheduledPostsPage({
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-5">
-            <ScheduledPostSearchInput initialValue={search} status={status} platform={platform} />
-
-            <div className="ml-auto flex items-center gap-2">
-              <NotificationsButton />
-              <PressableLink href="/dashboard/settings" aria-label="Settings" className="hidden h-9 w-9 place-items-center rounded-control text-slate-500 hover:bg-slate-50 hover:text-slate-900 sm:grid">
-                <Settings className="h-4 w-4" />
-              </PressableLink>
-              <div className="ml-2 hidden h-8 w-px bg-slate-200 sm:block" />
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-bold leading-4 text-slate-800">{user.name || "User"}</p>
-                <p className="mt-1 text-xs capitalize text-slate-500">{user.plan || "free"} Member</p>
-              </div>
-              <UserAvatar user={user} />
-            </div>
-          </header>
+      <DashboardToolbar title="Scheduled Posts" user={{ name: user.name, image: user.avatar_url, plan: user.plan }} />
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
             <div className="mx-auto w-full max-w-6xl">
@@ -241,7 +213,11 @@ export default async function ScheduledPostsPage({
                 })}
               </div>
 
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-6">
+                <ScheduledPostSearchInput initialValue={search} status={status} platform={platform} />
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <ScheduledPostFilters
                   currentPlatform={platform}
                   currentSearch={search}

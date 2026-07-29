@@ -23,6 +23,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
+import NotificationsButton from "@/components/dashboard/NotificationsButton";
 import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
 import PressableButton from "@/components/motion/PressableButton";
 import { SPRING } from "@/lib/motion/tokens";
@@ -216,7 +217,18 @@ function SidebarNavContent({
   );
 }
 
-export default function DashboardSidebar({ children }: { children: ReactNode }) {
+type SidebarUser = {
+  name?: string | null;
+  image?: string | null;
+};
+
+export default function DashboardSidebar({
+  children,
+  user,
+}: {
+  children: ReactNode;
+  user?: SidebarUser;
+}) {
   const pathname = usePathname();
   const [socialOpen, setSocialOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -272,6 +284,17 @@ export default function DashboardSidebar({ children }: { children: ReactNode }) 
           </span>
           <span className="truncate text-sm font-extrabold text-primary">AutoPilot</span>
         </Link>
+
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <NotificationsButton />
+          <Image
+            src={user?.image || "/landing/testimonial-avatar.png"}
+            alt={user?.name ? `${user.name} avatar` : "User avatar"}
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-full object-cover ring-2 ring-white"
+          />
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 lg:h-screen">

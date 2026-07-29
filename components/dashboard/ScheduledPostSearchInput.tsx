@@ -51,7 +51,7 @@ export default function ScheduledPostSearchInput({
 
   return (
     <div className="relative min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
       <input
         value={value}
         onChange={(event) => setValue(event.target.value)}
@@ -62,7 +62,7 @@ export default function ScheduledPostSearchInput({
         }}
         placeholder="Search scheduled content..."
         aria-label="Search scheduled content"
-        className="h-9 w-full rounded-control border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
+        className="h-12 w-full rounded-control border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
       />
     </div>
   );
