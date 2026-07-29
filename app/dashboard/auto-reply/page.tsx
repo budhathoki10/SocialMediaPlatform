@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { GET as getLinkedinStatusRoute } from "@/app/api/auth/linkedin/status/route";
 import { GET as getAutoReplyLogsRoute } from "@/app/api/auto-reply/logs/route";
 import { GET as getAutoReplyRulesRoute } from "@/app/api/auto-reply/rules/route";
 import { GET as getAutoReplySettingsRoute } from "@/app/api/auto-reply/settings/route";
@@ -52,23 +51,17 @@ async function getRulesFromRoute(): Promise<AutoReplyKeywordRule[]> {
   }
 }
 
-/** LinkedIn and Instagram currently expose connection status endpoints.
- * WhatsApp remains visible as an implemented inbox surface. */
+/** Platform access only lists platforms with a working auto-reply surface.
+ * LinkedIn is intentionally excluded here. WhatsApp has no integration yet —
+ * it's always listed so the toggle can be saved ahead of that work, but
+ * nothing reads platform_permissions.whatsapp to gate real sending. */
 async function getConnectedPlatforms(): Promise<string[]> {
-  const [instagramResponse, linkedinResponse] = await Promise.all([
-    getInstagramRoute().catch(() => null),
-    getLinkedinStatusRoute().catch(() => null),
-  ]);
-  const connected: string[] = [];
+  const instagramResponse = await getInstagramRoute().catch(() => null);
+  const connected: string[] = ["whatsapp"];
 
   if (instagramResponse?.ok) {
     const data = (await instagramResponse.json().catch(() => ({}))) as { connected?: boolean };
     if (data.connected) connected.push("instagram");
-  }
-
-  if (linkedinResponse?.ok) {
-    const data = (await linkedinResponse.json().catch(() => ({}))) as { connected?: boolean };
-    if (data.connected) connected.push("linkedin");
   }
 
   return connected;

@@ -52,11 +52,15 @@ export type AutoReplyLogRow = {
 
 /** A saved comment keyword -> exact reply pairing. When an incoming comment
  * matches `keyword` (case-insensitive), `replyTemplate` is sent immediately
- * with no AI call — see buildRuleBasedDraft in lib/auto-reply-rules.js. */
+ * with no AI call — see buildRuleBasedDraft in lib/auto-reply-rules.js.
+ * `dmTemplate` is optional: when set, that message is also sent as an
+ * Instagram private reply (a DM tied to the comment) once the public reply
+ * goes out — see sendInstagramPrivateReply in lib/instagram-drafts.js. */
 export type AutoReplyKeywordRule = {
   id: string;
   keyword: string;
   replyTemplate: string;
+  dmTemplate: string;
   createdAt: string | null;
 };
 
@@ -296,9 +300,8 @@ const TONE_OPTIONS: { value: AutoReplySettingsData["tone"]; label: string }[] = 
 ];
 
 const PLATFORM_ROWS = [
-  { key: "linkedin" as const, label: "LinkedIn", image: "/landing/linkedin.svg", subtitle: "Comments and message replies" },
-  { key: "instagram" as const, label: "Instagram", image: "/landing/instagram.svg", subtitle: "Direct messages and comments" },
-  { key: "whatsapp" as const, label: "WhatsApp", image: "/landing/whatsapp.svg", subtitle: "Business account messages" },
+  { key: "instagram" as const, label: "Instagram", image: "/landing/insta.png", subtitle: "Direct messages and comments" },
+  { key: "whatsapp" as const, label: "WhatsApp", image: "/landing/whatsapps.png", subtitle: "Business account messages" },
 ];
 
 const EMOJI_OPTIONS: { value: AutoReplySettingsData["responseStyle"]["emojiUsage"]; label: string }[] = [
@@ -347,11 +350,13 @@ export default function AutoReplySettingsPanel({
   const [rules, setRules] = useState<AutoReplyKeywordRule[]>(initialRules);
   const [newRuleKeyword, setNewRuleKeyword] = useState("");
   const [newRuleReply, setNewRuleReply] = useState("");
+  const [newRuleDm, setNewRuleDm] = useState("");
   const [addingRule, setAddingRule] = useState(false);
   const [ruleError, setRuleError] = useState("");
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [editRuleKeyword, setEditRuleKeyword] = useState("");
   const [editRuleReply, setEditRuleReply] = useState("");
+  const [editRuleDm, setEditRuleDm] = useState("");
   const [editRuleSaving, setEditRuleSaving] = useState(false);
   const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null);
 
@@ -441,6 +446,7 @@ export default function AutoReplySettingsPanel({
 
     const keyword = newRuleKeyword.trim();
     const replyTemplate = newRuleReply.trim();
+    const dmTemplate = newRuleDm.trim();
 
     if (!keyword || !replyTemplate) return;
 
@@ -451,7 +457,7 @@ export default function AutoReplySettingsPanel({
       const response = await fetch("/api/auto-reply/rules", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, replyTemplate }),
+        body: JSON.stringify({ keyword, replyTemplate, dmTemplate }),
       });
       const data = await response.json().catch(() => ({}));
 
@@ -462,6 +468,7 @@ export default function AutoReplySettingsPanel({
       setRules((prev) => [...prev, data.rule]);
       setNewRuleKeyword("");
       setNewRuleReply("");
+      setNewRuleDm("");
     } catch (error) {
       setRuleError(error instanceof Error ? error.message : "Unable to add keyword reply.");
     } finally {
@@ -474,6 +481,7 @@ export default function AutoReplySettingsPanel({
     setEditingRuleId(rule.id);
     setEditRuleKeyword(rule.keyword);
     setEditRuleReply(rule.replyTemplate);
+    setEditRuleDm(rule.dmTemplate);
   }
 
   function cancelEditRule() {
@@ -483,6 +491,7 @@ export default function AutoReplySettingsPanel({
   async function saveEditRule(id: string) {
     const keyword = editRuleKeyword.trim();
     const replyTemplate = editRuleReply.trim();
+    const dmTemplate = editRuleDm.trim();
 
     if (!keyword || !replyTemplate) return;
 
@@ -493,7 +502,7 @@ export default function AutoReplySettingsPanel({
       const response = await fetch(`/api/auto-reply/rules/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword, replyTemplate }),
+        body: JSON.stringify({ keyword, replyTemplate, dmTemplate }),
       });
       const data = await response.json().catch(() => ({}));
 
@@ -543,18 +552,20 @@ export default function AutoReplySettingsPanel({
         </div>
 
         <div className="inline-flex items-center gap-3 rounded-control border border-slate-200 bg-white px-4 py-2.5 shadow-card">
-          <span className="relative flex h-2.5 w-2.5 shrink-0 items-center justify-center">
+          <span className="relative flex h-3 w-3 shrink-0 items-center justify-center">
             {settings.enabled && (
               <motion.span
                 aria-hidden="true"
                 className="absolute inline-flex h-full w-full rounded-full bg-emerald-400"
-                animate={{ scale: [1, 2.4], opacity: [0.6, 0] }}
+                animate={{ scale: [1, 2.8], opacity: [0.55, 0] }}
                 transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
               />
             )}
             <span
-              className={`relative h-2.5 w-2.5 rounded-full transition-colors duration-300 ${
-                settings.enabled ? "bg-emerald-500 shadow-[0_0_8px_2px_rgba(16,185,129,0.6)]" : "bg-red-500"
+              className={`relative h-3 w-3 rounded-full ring-2 ring-white transition-colors duration-300 ${
+                settings.enabled
+                  ? "bg-[radial-gradient(circle_at_30%_30%,#6ee7b7,#10b981_55%,#059669)] shadow-[0_0_0_3px_rgba(16,185,129,0.16),0_0_12px_3px_rgba(16,185,129,0.65)]"
+                  : "bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.14)]"
               }`}
             />
           </span>
@@ -676,9 +687,9 @@ export default function AutoReplySettingsPanel({
                 {connectedPlatformRows.map(({ key, label, image, subtitle }) => (
                   <div key={key} className="flex items-center justify-between gap-4 py-3.5">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-slate-50 ring-1 ring-slate-200">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-control bg-slate-50 ring-1 ring-slate-200">
                         {image ? (
-                          <Image src={image} alt="" width={20} height={20} className="h-4 w-4 object-contain" />
+                          <Image src={image} alt="" width={28} height={28} className="h-7 w-7 object-cover" />
                         ) : (
                           <XIcon className="h-4 w-4 text-slate-500" />
                         )}
@@ -702,7 +713,7 @@ export default function AutoReplySettingsPanel({
           <Card>
             <SectionHeader
               title="Comment keyword replies"
-              description="When an Instagram comment matches a keyword below — matching ignores casing — that exact message is sent right away, with no AI call. Comments that don't match still go through your AI draft settings above."
+              description="When an Instagram comment matches a keyword below  — that exact message is sent right away in commen, with no AI call. Comments that don't match still go through your AI draft settings above."
             />
             <div className="space-y-3 pt-4">
               {rules.length === 0 ? (
@@ -735,6 +746,19 @@ export default function AutoReplySettingsPanel({
                             rows={2}
                             className={textareaClassName}
                           />
+                          <div>
+                            <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400">
+                              Also DM this (optional)
+                            </p>
+                            <textarea
+                              value={editRuleDm}
+                              onChange={(event) => setEditRuleDm(event.target.value)}
+                              placeholder="Sent as a private reply — links, pricing, etc. can go here"
+                              aria-label="Edit DM message"
+                              rows={2}
+                              className={textareaClassName}
+                            />
+                          </div>
                           <div className="flex justify-end gap-2">
                             <PressableButton
                               type="button"
@@ -768,6 +792,12 @@ export default function AutoReplySettingsPanel({
                               {rule.keyword}
                             </span>
                             <p className="mt-1.5 text-sm leading-5 text-slate-600">{rule.replyTemplate}</p>
+                            {rule.dmTemplate ? (
+                              <p className="mt-1.5 flex items-start gap-1 text-xs leading-5 text-slate-500">
+                                <span className="mt-0.5 shrink-0 font-bold text-primary">Also DMs:</span>
+                                <span>{rule.dmTemplate}</span>
+                              </p>
+                            ) : null}
                           </div>
                           <div className="flex shrink-0 items-center gap-1">
                             <button
@@ -811,6 +841,19 @@ export default function AutoReplySettingsPanel({
                   rows={2}
                   className={textareaClassName}
                 />
+                <div>
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400">
+                    Also DM this (optional)
+                  </p>
+                  <textarea
+                    value={newRuleDm}
+                    onChange={(event) => setNewRuleDm(event.target.value)}
+                    placeholder="Sent as a private reply — links, pricing, etc. can go here"
+                    aria-label="New DM message"
+                    rows={2}
+                    className={textareaClassName}
+                  />
+                </div>
                 {ruleError ? <p className="text-xs font-semibold text-red-500">{ruleError}</p> : null}
                 <div className="flex justify-end">
                   <PressableButton
