@@ -28,15 +28,15 @@ const GitHubLogo = () => (
 );
 
 const LinkedInLogo = () => (
-  <Image src="/landing/linkedin.svg" alt="" width={44} height={44} className="h-full w-full object-contain" />
+  <Image src="/landing/linkedin.png" alt="" width={44} height={44} className="h-full w-full object-contain" />
 );
 
 const InstagramLogo = () => (
-  <Image src="/landing/instagram.svg" alt="" width={44} height={44} className="h-full w-full object-contain" />
+  <Image src="/landing/insta.png" alt="" width={44} height={44} className="h-full w-full object-contain" />
 );
 
 const WhatsAppLogo = () => (
-  <Image src="/landing/whatsapp.svg" alt="" width={44} height={44} className="h-full w-full object-contain" />
+  <Image src="/landing/whatsapps.png" alt="" width={44} height={44} className="h-full w-full object-contain" />
 );
 
 const socialPlatforms: SocialPlatform[] = [

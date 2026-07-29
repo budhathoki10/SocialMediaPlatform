@@ -66,7 +66,7 @@ const onboardingSteps: OnboardingStep[] = [
 
 const LinkedInLogo = () => (
   <Image
-    src="/landing/linkedin.svg"
+    src="/landing/linkedin.png"
     alt=""
     width={44}
     height={44}
@@ -76,7 +76,7 @@ const LinkedInLogo = () => (
 
 const InstagramLogo = () => (
   <Image
-    src="/landing/instagram.svg"
+    src="/landing/insta.png"
     alt=""
     width={44}
     height={44}
@@ -90,7 +90,7 @@ const GitHubLogo = () => (
 
 const WhatsAppLogo = () => (
   <Image
-    src="/landing/whatsapp.svg"
+    src="/landing/whatsapps.png"
     alt=""
     width={44}
     height={44}

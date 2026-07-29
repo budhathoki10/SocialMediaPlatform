@@ -8,6 +8,7 @@ import { AutoReplyRule, User } from "@/lib/models";
 
 const MAX_KEYWORD_LENGTH = 200;
 const MAX_REPLY_LENGTH = 1000;
+const MAX_DM_LENGTH = 1000;
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -35,6 +36,7 @@ function formatRule(rule) {
     id: rule._id.toString(),
     keyword: rule.keyword,
     replyTemplate: rule.reply_template,
+    dmTemplate: rule.dm_template || "",
     createdAt: rule.created_at?.toISOString?.() || rule.created_at || null,
   };
 }
@@ -86,6 +88,21 @@ export async function PUT(request, { params }) {
     }
 
     update.reply_template = replyTemplate;
+  }
+
+  if (typeof body.dmTemplate === "string") {
+    const dmTemplate = body.dmTemplate.trim();
+
+    if (dmTemplate.length > MAX_DM_LENGTH) {
+      return NextResponse.json(
+        { error: `DM message must be ${MAX_DM_LENGTH} characters or fewer.` },
+        { status: 400 },
+      );
+    }
+
+    // Empty string clears it — a rule can go from "also DMs" back to
+    // comment-reply-only without deleting and recreating it.
+    update.dm_template = dmTemplate || null;
   }
 
   if (Object.keys(update).length === 0) {

@@ -43,9 +43,9 @@ type PostPatchResponse = {
 
 const platformImages: Record<string, string> = {
   github: "/landing/github.svg",
-  linkedin: "/landing/linkedin.svg",
-  instagram: "/landing/instagram.svg",
-  whatsapp: "/landing/whatsapp.svg",
+  linkedin: "/landing/linkedin.png",
+  instagram: "/landing/insta.png",
+  whatsapp: "/landing/whatsapps.png",
 };
 
 const platformLabels: Record<string, string> = {

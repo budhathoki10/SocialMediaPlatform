@@ -65,11 +65,15 @@ html.lenis body {
   height: auto;
 }
 
-.lenis.lenis-smooth {
+/* .lenis-smooth is only present mid-animated scrollTo(), not during normal
+   wheel/trackpad scrolling — gating on it left native smooth-scroll active
+   during regular scrolling, fighting Lenis's own positioning and desyncing
+   GSAP ScrollTrigger's pinned/scrubbed timelines from the visible scroll. */
+html.lenis {
   scroll-behavior: auto !important;
 }
 
-.lenis.lenis-smooth [data-lenis-prevent] {
+.lenis [data-lenis-prevent] {
   overscroll-behavior: contain;
 }
 

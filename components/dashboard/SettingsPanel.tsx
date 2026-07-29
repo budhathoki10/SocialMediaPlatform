@@ -44,8 +44,8 @@ const DEFAULT_SETTINGS: SettingsData = {
 
 const platformImages: Record<string, string> = {
   github: "/landing/github.svg",
-  linkedin: "/landing/linkedin.svg",
-  instagram: "/landing/instagram.svg",
+  linkedin: "/landing/linkedin.png",
+  instagram: "/landing/insta.png",
 };
 
 const platformNames: Record<string, string> = {

@@ -10,6 +10,7 @@ import { AutoReplyRule, User } from "@/lib/models";
 
 const MAX_KEYWORD_LENGTH = 200;
 const MAX_REPLY_LENGTH = 1000;
+const MAX_DM_LENGTH = 1000;
 const MAX_RULES_PER_USER = 50;
 
 function escapeRegExp(value) {
@@ -42,6 +43,7 @@ function formatRule(rule) {
     id: rule._id.toString(),
     keyword: rule.keyword,
     replyTemplate: rule.reply_template,
+    dmTemplate: rule.dm_template || "",
     createdAt: rule.created_at?.toISOString?.() || rule.created_at || null,
   };
 }
@@ -75,6 +77,7 @@ export async function POST(request) {
 
   const keyword = typeof body.keyword === "string" ? body.keyword.trim() : "";
   const replyTemplate = typeof body.replyTemplate === "string" ? body.replyTemplate.trim() : "";
+  const dmTemplate = typeof body.dmTemplate === "string" ? body.dmTemplate.trim() : "";
 
   if (!keyword || keyword.length > MAX_KEYWORD_LENGTH) {
     return NextResponse.json(
@@ -86,6 +89,13 @@ export async function POST(request) {
   if (!replyTemplate || replyTemplate.length > MAX_REPLY_LENGTH) {
     return NextResponse.json(
       { error: `Reply message is required and must be ${MAX_REPLY_LENGTH} characters or fewer.` },
+      { status: 400 },
+    );
+  }
+
+  if (dmTemplate.length > MAX_DM_LENGTH) {
+    return NextResponse.json(
+      { error: `DM message must be ${MAX_DM_LENGTH} characters or fewer.` },
       { status: 400 },
     );
   }
@@ -113,6 +123,7 @@ export async function POST(request) {
       user_id: currentUser._id,
       keyword,
       reply_template: replyTemplate,
+      dm_template: dmTemplate || null,
     });
 
     return NextResponse.json({ rule: formatRule(rule) }, { status: 201 });
