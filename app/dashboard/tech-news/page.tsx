@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import DashboardToolbar from "@/components/dashboard/DashboardToolbar";
 import TechNewsFeed from "@/components/dashboard/TechNewsFeed";
 
 export default async function TechNewsPage() {
@@ -12,8 +13,11 @@ export default async function TechNewsPage() {
   }
 
   return (
-    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-      <TechNewsFeed />
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+      <DashboardToolbar title="News Feed" user={session.user} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <TechNewsFeed />
+      </div>
     </section>
   );
 }

@@ -179,7 +179,7 @@ const PlatformGrid = ({
   onPlatformClick: (name: string) => void;
 }) => {
   return (
-    <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
       {platforms.map(({ name, status, Logo }) => {
         const isConnected = status === "connected";
 
@@ -189,13 +189,13 @@ const PlatformGrid = ({
             type="button"
             onClick={() => onPlatformClick(name)}
             disabled={isConnected}
-            className={`relative flex min-h-28 flex-col items-center justify-center rounded-card border px-4 py-4 text-center transition disabled:cursor-default ${
+            className={`relative flex min-h-28 flex-col items-center justify-center rounded-card border px-3 py-3 text-center transition disabled:cursor-default sm:px-4 sm:py-4 ${
               isConnected
                 ? "border-slate-200 bg-slate-50 opacity-60 shadow-card"
                 : "border-slate-200 bg-white hover:cursor-pointer hover:border-primary hover:bg-primary-tint/40"
             }`}
           >
-            <span className="grid h-14 w-14 place-items-center rounded-control bg-slate-50">
+            <span className="grid h-12 w-12 place-items-center rounded-control bg-slate-50 sm:h-14 sm:w-14">
               <Logo />
             </span>
             <span className="mt-4 text-sm font-semibold text-slate-950">{name}</span>

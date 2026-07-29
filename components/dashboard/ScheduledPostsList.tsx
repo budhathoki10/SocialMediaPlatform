@@ -279,25 +279,29 @@ export default function ScheduledPostsList({ rows }: { rows: ScheduledPostRow[] 
                   transition: { delay: index * STAGGER.tight, duration: DURATION.slow, ease: MOTION_EASE.outExpo },
                 }}
                 exit={{ opacity: 0, x: 24 }}
-                className="grid gap-4 rounded-card border border-slate-200 bg-white px-5 py-4 shadow-card transition-colors hover:bg-slate-50 md:grid-cols-[minmax(0,1fr)_150px_150px_126px] md:items-center"
+                className="flex flex-col gap-3 rounded-card border border-slate-200 bg-white px-4 py-3.5 shadow-card transition-colors hover:bg-slate-50 md:grid md:grid-cols-[minmax(0,1fr)_150px_150px_126px] md:items-center md:gap-4 md:px-5 md:py-4"
               >
                 <ContentPreview post={post} onClick={() => openEditor(post)} />
-                <div>
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400 md:hidden">Platform</p>
+
+                {/* Below md, this row collapses to a flat, compact meta
+                    line (icon-led platform + date + status pill, no
+                    uppercase labels — the icons/pill already say what each
+                    value is) instead of each field stacking as its own
+                    full-width block. `md:contents` dissolves the wrapper at
+                    md so Platform/Date/Status go back to being direct grid
+                    items, matching today's desktop table exactly. */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 md:contents">
                   <PlatformBadge platform={platform} />
-                </div>
-                <div>
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400 md:hidden">Scheduled Date</p>
-                  <div className="inline-flex items-start gap-2 text-sm font-semibold text-slate-700">
-                    <Clock3 className="mt-0.5 h-4 w-4 text-slate-400" />
-                    <span>
-                      <span className="block">{scheduled.date}</span>
-                      <span className="mt-0.5 block text-xs font-medium text-slate-500">{scheduled.time}</span>
+
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 md:items-start md:gap-2 md:text-sm md:text-slate-700">
+                    <Clock3 className="h-3.5 w-3.5 text-slate-400 md:mt-0.5 md:h-4 md:w-4" />
+                    <span className="md:block">
+                      <span className="md:block">{scheduled.date}</span>
+                      <span className="text-slate-400 md:hidden"> · </span>
+                      <span className="md:mt-0.5 md:block md:text-xs md:font-medium md:text-slate-500">{scheduled.time}</span>
                     </span>
                   </div>
-                </div>
-                <div>
-                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-slate-400 md:hidden">Status</p>
+
                   <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold capitalize ${statusClasses(post.status)}`}>
                     <StatusIcon status={post.status} />
                     {post.status === "published" ? "Published" : post.status}

@@ -5,7 +5,6 @@ import {
   Link2,
   Plus,
   Send,
-  Settings,
 } from "lucide-react";
 import Image from "next/image";
 import { getServerSession } from "next-auth";
@@ -15,8 +14,8 @@ import { authOptions } from "../api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, GithubEvent, Post, User } from "@/lib/models";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
+import DashboardToolbar from "@/components/dashboard/DashboardToolbar";
 import EmptyState from "@/components/dashboard/EmptyState";
-import NotificationsButton from "@/components/dashboard/NotificationsButton";
 import RecentPostsPanel from "@/components/dashboard/RecentPostsPanel";
 import RecentTechNewsPanel from "@/components/dashboard/RecentTechNewsPanel";
 import CountUp from "@/components/motion/CountUp";
@@ -113,43 +112,6 @@ function AccountLogo({ platform }: { platform: string }) {
   );
 }
 
-const UserAvatar = ({ imageSrc, name }: { imageSrc?: string | null; name?: string | null }) => (
-  <Image
-    src={imageSrc || "/landing/testimonial-avatar.png"}
-    alt={name ? `${name} avatar` : "User avatar"}
-    width={40}
-    height={40}
-    className="h-10 w-10 rounded-full object-cover ring-2 ring-white"
-  />
-);
-
-const Toolbar = ({ user }: { user: DashboardUser }) => (
-  <header className="flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 sm:px-6 lg:px-8">
-    <div className="min-w-0">
-      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Workspace</p>
-      <div className="mt-0.5 flex min-w-0 items-center gap-2">
-        <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-        <p className="truncate text-sm font-bold text-slate-800">AutoPilot Dashboard</p>
-      </div>
-    </div>
-
-    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-      <NotificationsButton />
-      <PressableLink href="/dashboard/settings" aria-label="Settings" className="hidden h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid">
-        <Settings className="h-5 w-5" />
-      </PressableLink>
-      <div className="hidden h-8 w-px bg-slate-200 sm:block" />
-      <div className="flex min-w-0 items-center gap-3 rounded-control border border-slate-200 bg-slate-50 px-2.5 py-1.5">
-        <div className="hidden text-right sm:block">
-          <p className="max-w-40 truncate text-sm font-bold leading-4 text-slate-700">{user.name || "User"}</p>
-          <p className="mt-1 text-xs capitalize text-slate-500">{user.plan || "free"} Member</p>
-        </div>
-        <UserAvatar imageSrc={user.avatar_url} name={user.name} />
-      </div>
-    </div>
-  </header>
-);
-
 function getRelativeTime(value: Date) {
   const diffMs = Date.now() - new Date(value).getTime();
   const minutes = Math.max(1, Math.round(diffMs / 60_000));
@@ -209,9 +171,10 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
-      <Toolbar user={user} />
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+      <DashboardToolbar title="AutoPilot Dashboard" user={{ name: user.name, image: user.avatar_url, plan: user.plan }} />
 
+      <div className="min-h-0 flex-1 overflow-y-auto">
           <StaggerGroup className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-7 sm:px-6 lg:px-8">
             <StaggerItem className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -306,21 +269,28 @@ export default async function DashboardPage() {
             <div className="mt-6 grid items-start gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
               {/* Each column stacks independently (space-y, not a shared grid
                   row-track) so a tall Upcoming Posts list never forces empty
-                  space under the shorter Connected Accounts card next to it. */}
-              <div className="space-y-5">
-                <StaggerItem>
+                  space under the shorter Connected Accounts card next to it.
+                  Below xl, both wrapper divs collapse via `contents` so all
+                  four cards become flat siblings in the outer grid — that's
+                  what lets `order-*` below re-prioritize them by how often
+                  they're actually checked on mobile (connection health and
+                  posts first, the tech-news feed last), while `xl:contents`
+                  reversing to a real box at xl restores today's exact
+                  desktop grouping and masonry behavior. */}
+              <div className="contents xl:block xl:space-y-5">
+                <StaggerItem className="order-2 xl:order-none">
                   <RecentPostsPanel hasConnectedAccounts={activeAccounts.length > 0} />
                 </StaggerItem>
 
-                <StaggerItem>
+                <StaggerItem className="order-4 xl:order-none">
                   <RecentTechNewsPanel />
                 </StaggerItem>
               </div>
 
-              <div className="space-y-5">
+              <div className="contents xl:block xl:space-y-5">
                 <StaggerItem
                   as="section"
-                  className="min-h-[278px] overflow-hidden rounded-card border border-slate-200 bg-white shadow-card"
+                  className="order-1 min-h-[278px] overflow-hidden rounded-card border border-slate-200 bg-white shadow-card xl:order-none"
                 >
                   <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
                     <div className="flex items-center gap-2">
@@ -362,12 +332,13 @@ export default async function DashboardPage() {
                   )}
                 </StaggerItem>
 
-                <StaggerItem>
+                <StaggerItem className="order-3 xl:order-none">
                   <ActivityFeed initialItems={activityFeedItems} />
                 </StaggerItem>
               </div>
             </div>
       </StaggerGroup>
+      </div>
     </section>
   );
 }

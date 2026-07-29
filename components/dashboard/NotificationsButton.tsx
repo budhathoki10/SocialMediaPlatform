@@ -9,7 +9,11 @@ import { SPRING } from "@/lib/motion/tokens";
 
 type NotificationsButtonProps = {
   className?: string;
+  buttonClassName?: string;
 };
+
+const DEFAULT_BUTTON_CLASSNAME =
+  "grid h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950";
 
 /**
  * Shared across every dashboard toolbar. Previously each page had its own
@@ -18,7 +22,7 @@ type NotificationsButtonProps = {
  * no backing notification feed, but it's honest about it: click it and it
  * tells you that, instead of pretending.
  */
-export default function NotificationsButton({ className = "" }: NotificationsButtonProps) {
+export default function NotificationsButton({ className = "", buttonClassName = DEFAULT_BUTTON_CLASSNAME }: NotificationsButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +52,7 @@ export default function NotificationsButton({ className = "" }: NotificationsBut
         aria-label="Notifications"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((open) => !open)}
-        className="grid h-9 w-9 place-items-center rounded-control border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 hover:text-slate-950"
+        className={buttonClassName}
       >
         <Bell className="h-5 w-5" />
       </PressableButton>

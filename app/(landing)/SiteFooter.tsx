@@ -74,7 +74,7 @@ export default function SiteFooter() {
             <GitBranch size={18} />
           </div>
         </div>
-        <div className="grid gap-8 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-4 sm:gap-8">
           {footerColumns.map(([title, ...items]) => (
             <div key={title} data-footer="column">
               <h3 className="text-sm font-semibold text-slate-950">{title}</h3>

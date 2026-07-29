@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { Bot, CalendarClock, WandSparkles, type LucideIcon } from "lucide-react";
 
-import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
+import { gsap } from "@/lib/motion/gsap";
 import { DURATION, EASE, MOTION_OK_QUERY, STAGGER } from "@/lib/motion/tokens";
 
 type PainCardData = {
@@ -52,79 +52,60 @@ export default function PainSection() {
         const railDots = gsap.utils.toArray<HTMLElement>("[data-pain='rail-dot']");
 
         // The one pinned "storytelling" moment on the page (GSAP guidance:
-        // pin at most 1-2 sections — more fights native scroll feel and
-        // hurts mobile UX), and only where the two-column layout exists.
-        // Below lg, rows batch-reveal instead of pinning.
-        mm.add({ isDesktop: "(min-width: 1024px)" }, (context) => {
-          const { isDesktop } = context.conditions as { isDesktop: boolean };
+        // pin at most 1-2 sections — more fights native scroll feel than it
+        // adds). Runs at every breakpoint so mobile gets the identical
+        // one-card-at-a-time scrub as desktop — rail dots simply have no
+        // visible effect below lg, where their container is CSS-hidden.
+        gsap.set(rows, { autoAlpha: 0, x: 40 });
 
-          if (isDesktop) {
-            gsap.set(rows, { autoAlpha: 0, x: 40 });
-
-            const tl = gsap.timeline({
-              scrollTrigger: {
-                trigger: sectionRef.current,
-                start: "top top",
-                end: "+=110%",
-                scrub: 0.6,
-                pin: true,
-                anticipatePin: 1,
-              },
-            });
-
-            rows.forEach((row, index) => {
-              if (index > 0) {
-                tl.to(rows[index - 1], { autoAlpha: 0.5, duration: 0.4 }, index);
-              }
-              tl.to(row, { autoAlpha: 1, x: 0, duration: 0.5, ease: EASE.out }, index).to(
-                railDots[index],
-                { backgroundColor: "#4f46e5", duration: 0.3 },
-                index,
-              );
-            });
-
-            // Hold: without this, the last row's fade-in finishes at
-            // exactly 100% scroll progress through the pin — the same
-            // instant it unpins into Testimonial, giving zero time to
-            // actually read "Context-aware Automation" before the section
-            // releases. This empty tween pads the timeline so the final
-            // row sits fully visible for a real dwell period before
-            // handoff.
-            tl.to({}, { duration: 1 });
-
-            return;
-          }
-
-          gsap.set(rows, { autoAlpha: 0, y: 20 });
-
-          ScrollTrigger.batch(rows, {
-            start: "top 88%",
-            onEnter: (batch) =>
-              gsap.to(batch, {
-                autoAlpha: 1,
-                y: 0,
-                duration: DURATION.slow,
-                ease: EASE.out,
-                stagger: STAGGER.base,
-              }),
-          });
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "+=110%",
+            scrub: 0.6,
+            pin: true,
+            anticipatePin: 1,
+          },
         });
+
+        rows.forEach((row, index) => {
+          if (index > 0) {
+            tl.to(rows[index - 1], { autoAlpha: 0.5, duration: 0.4 }, index);
+          }
+          tl.to(row, { autoAlpha: 1, x: 0, duration: 0.5, ease: EASE.out }, index).to(
+            railDots[index],
+            { backgroundColor: "#4f46e5", duration: 0.3 },
+            index,
+          );
+        });
+
+        // Hold so the last row gets real dwell time fully visible (without
+        // this its fade-in would finish at exactly 100% scroll progress —
+        // the same instant the section unpins into Testimonial, giving zero
+        // time to actually read it) — then dim it to match rows 1 and 2,
+        // which already fade to 0.5 the moment the next row takes over. The
+        // last row has no "next" row to trigger that, so without this step
+        // it was the only card that never settled into the dimmed state.
+        tl.to({}, { duration: 0.6 });
+        tl.to(rows[rows.length - 1], { autoAlpha: 0.5, duration: 0.4 });
+        tl.to({}, { duration: 0.4 });
       });
     },
     { scope: sectionRef },
   );
 
   return (
-    // lg:min-h-screen + flex-col/justify-center: while pinned (desktop
-    // only — matches the isDesktop matchMedia gate above), the section's
-    // own content is shorter than a full viewport, which left empty space
-    // at the bottom of the screen for the next section (Testimonial) to
-    // scroll up through and fully reveal — while Pain was still actively
+    // min-h-screen + flex-col/justify-center: while pinned, the section's
+    // own content can be shorter than a full viewport, which left empty
+    // space at the bottom of the screen for the next section (Testimonial)
+    // to scroll up through and fully reveal — while Pain was still actively
     // pinned above it. Filling the viewport removes that gap so nothing
-    // downstream can appear until the pin actually releases.
+    // downstream can appear until the pin actually releases. Unconditional
+    // (not lg:-gated) since the pin now runs at every breakpoint.
     <section
       ref={sectionRef}
-      className="bg-[#f4f6fa] px-5 py-24 sm:px-8 lg:flex lg:min-h-screen lg:flex-col lg:justify-center lg:px-10"
+      className="flex min-h-screen flex-col justify-center bg-[#f4f6fa] px-5 py-24 sm:px-8 lg:px-10"
     >
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
         <div data-pain="headline">

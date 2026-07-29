@@ -17,9 +17,10 @@ type PostShareMenuProps = {
   postId: string;
   initialSharedPlatforms: string[];
   onPostPublished: () => void;
+  className?: string;
 };
 
-export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPublished }: PostShareMenuProps) {
+export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPublished, className = "" }: PostShareMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [sharedPlatforms, setSharedPlatforms] = useState(initialSharedPlatforms);
   const [sharingPlatform, setSharingPlatform] = useState<string | null>(null);
@@ -76,7 +77,7 @@ export default function PostShareMenu({ postId, initialSharedPlatforms, onPostPu
   }
 
   return (
-    <div ref={menuRef} className="relative shrink-0">
+    <div ref={menuRef} className={`relative shrink-0 ${className}`}>
       <PressableButton
         type="button"
         onClick={() => setIsOpen((open) => !open)}

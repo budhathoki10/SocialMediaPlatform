@@ -8,7 +8,7 @@ export default function DashboardError({ error, reset }: { error: Error & { dige
   }, [error]);
 
   return (
-    <main className="flex h-screen items-center justify-center bg-[#f6f8fb] px-6 text-center text-slate-950">
+    <main className="flex h-full items-center justify-center bg-[#f6f8fb] px-6 text-center text-slate-950">
       <div className="max-w-sm">
         <p className="text-sm font-semibold text-slate-800">Something went wrong loading this page.</p>
         <p className="mt-1 text-sm text-slate-500">

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { GET as getInstagramDraftsRoute } from "@/app/api/socials/instagram/drafts/route";
 import { GET as getInstagramRoute } from "@/app/api/socials/instagram/route";
+import DashboardToolbar from "@/components/dashboard/DashboardToolbar";
 import InstagramDraftInbox from "@/components/dashboard/InstagramDraftInbox";
 
 type InstagramProfile = {
@@ -23,6 +24,8 @@ type InstagramSession = {
   user?: {
     id?: string;
     email?: string | null;
+    name?: string | null;
+    image?: string | null;
   };
 } | null;
 
@@ -133,8 +136,10 @@ export default async function InstagramSocialPage() {
   const isInstagramConnected = Boolean(instagramProfile?.connected);
 
   return (
-    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+      <DashboardToolbar title="Instagram" user={session?.user} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
         <h1 className="text-2xl font-bold tracking-tight text-slate-950">Instagram</h1>
 
             <section className="mt-5 rounded-card border border-slate-200 bg-white px-5 py-4 shadow-card">
@@ -188,7 +193,7 @@ export default async function InstagramSocialPage() {
               </div>
             </section>
 
-            <section className="mt-5 grid gap-4 md:grid-cols-4">
+            <section className="mt-5 grid grid-cols-2 gap-4 md:grid-cols-4">
               {statCards.map(({ label, key, Icon }) => (
                 <div key={label} className="flex items-center gap-3 rounded-card border border-slate-200 bg-white p-4 shadow-card">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
@@ -205,6 +210,7 @@ export default async function InstagramSocialPage() {
             </section>
 
         <InstagramDraftInbox rows={draftRows} />
+        </div>
       </div>
     </section>
   );

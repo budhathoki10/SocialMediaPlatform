@@ -34,12 +34,12 @@ function FilterDropdown({ label, name, onChange, openName, options, setOpenName,
   const selected = options.find((option) => option.value === value);
 
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <PressableButton
         type="button"
         aria-expanded={isOpen}
         onClick={() => setOpenName(isOpen ? null : name)}
-        className="inline-flex h-9 min-w-40 items-center justify-between gap-3 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition hover:bg-slate-50 focus:border-primary focus:ring-2 focus:ring-primary/15"
+        className="inline-flex h-9 min-w-0 items-center justify-between gap-1.5 rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none transition hover:bg-slate-50 focus:border-primary focus:ring-2 focus:ring-primary/15 sm:min-w-40 sm:gap-3 sm:px-4 sm:text-sm"
       >
         <span>{selected?.label || label}</span>
         <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
@@ -96,7 +96,7 @@ export function ScheduledPostFilters({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
+    <form onSubmit={handleSubmit} className="flex flex-nowrap items-center gap-1.5 sm:flex-wrap sm:gap-2">
       <FilterDropdown
         label="Platform"
         name="platform"
@@ -117,7 +117,7 @@ export function ScheduledPostFilters({
         value={status}
       />
 
-      <PressableButton className="h-9 rounded-full bg-primary px-4 text-xs font-bold text-white transition hover:bg-primary-hover">
+      <PressableButton className="h-9 shrink-0 rounded-full bg-primary px-3 text-xs font-bold text-white transition hover:bg-primary-hover sm:px-4">
         Search
       </PressableButton>
     </form>

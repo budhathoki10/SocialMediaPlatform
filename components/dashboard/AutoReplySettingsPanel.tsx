@@ -577,9 +577,16 @@ export default function AutoReplySettingsPanel({
         </div>
       </motion.div>
 
+      {/* Below lg, both column wrappers collapse via `contents` so all six
+          cards become flat siblings in this grid — that's what lets
+          `order-*` re-prioritize them for a phone (which platforms can
+          reply, and the keyword rules that drive it, come first; "set once"
+          tone/filtering settings and the read-only activity log come last).
+          `lg:contents` reversing to a real box at lg restores today's exact
+          360px-sidebar desktop layout, including the sticky column. */}
       <div className="mt-6 grid gap-5 lg:grid-cols-[360px_1fr] lg:items-start">
-        <div className="space-y-5 lg:sticky lg:top-6">
-          <Card>
+        <div className="contents lg:sticky lg:top-6 lg:block lg:space-y-5">
+          <Card className="order-3 lg:order-none">
             <SectionHeader title="Reply behavior" description="The personality and judgment auto-replies use." />
             <RowList>
               <FullRow label="Voice &amp; tone">
@@ -621,7 +628,7 @@ export default function AutoReplySettingsPanel({
             </RowList>
           </Card>
 
-          <Card>
+          <Card className="order-6 lg:order-none">
             <SectionHeader title="Recent activity" description="The last 2 replies AutoPilot sent on your behalf." />
             {logs.length === 0 ? (
               <p className="pt-4 text-sm text-slate-400">No auto-replies sent yet.</p>
@@ -675,8 +682,8 @@ export default function AutoReplySettingsPanel({
           </Card>
         </div>
 
-        <div className="space-y-5">
-          <Card>
+        <div className="contents lg:block lg:space-y-5">
+          <Card className="order-1 lg:order-none">
             <SectionHeader title="Platform access" description="Choose which connected accounts auto-reply may act on." />
             {connectedPlatformRows.length === 0 ? (
               <p className="pt-4 text-sm text-slate-400">
@@ -710,7 +717,7 @@ export default function AutoReplySettingsPanel({
             )}
           </Card>
 
-          <Card>
+          <Card className="order-2 lg:order-none">
             <SectionHeader
               title="Comment keyword replies"
               description="When an Instagram comment matches a keyword below  — that exact message is sent right away in commen, with no AI call. Comments that don't match still go through your AI draft settings above."
@@ -869,7 +876,7 @@ export default function AutoReplySettingsPanel({
             </div>
           </Card>
 
-          <Card>
+          <Card className="order-4 lg:order-none">
             <SectionHeader title="Filtering &amp; safety" description="Guardrails that decide who gets a reply, and when to step back." />
             <RowList>
               <Row
@@ -924,14 +931,14 @@ export default function AutoReplySettingsPanel({
                       event.preventDefault();
                       addKeyword();
                     }}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white py-1 pl-3.5 pr-1 shadow-sm transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10"
+                    className="inline-flex w-full items-center gap-1 rounded-full border border-slate-200 bg-white py-1 pl-3.5 pr-1 shadow-sm transition focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 sm:w-auto"
                   >
                     <input
                       value={keywordDraft}
                       onChange={(event) => setKeywordDraft(event.target.value)}
                       placeholder="Add a word, press Enter"
                       aria-label="Add excluded keyword"
-                      className="h-6 w-32 bg-transparent text-xs font-semibold text-slate-700 outline-none placeholder:font-medium placeholder:text-slate-400 sm:w-44"
+                      className="h-6 w-full min-w-0 flex-1 bg-transparent text-xs font-semibold text-slate-700 outline-none placeholder:font-medium placeholder:text-slate-400 sm:w-44 sm:flex-none"
                     />
                     <PressableButton
                       type="submit"
@@ -969,7 +976,7 @@ export default function AutoReplySettingsPanel({
             </RowList>
           </Card>
 
-          <Card>
+          <Card className="order-5 lg:order-none">
             <SectionHeader title="Response style" description="How each reply reads once it's written." />
             <RowList>
               <FullRow label="Emoji usage">

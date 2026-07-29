@@ -1,13 +1,12 @@
-import { CalendarRange, CheckCircle2, Clock3, FileText, List, Search, Settings } from "lucide-react";
-import Image from "next/image";
+import { CheckCircle2, Clock3, FileText, List } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import NotificationsButton from "@/components/dashboard/NotificationsButton";
+import DashboardToolbar from "@/components/dashboard/DashboardToolbar";
 import { ScheduledPostFilters } from "@/components/dashboard/ScheduledPostFilters";
+import ScheduledPostSearchInput from "@/components/dashboard/ScheduledPostSearchInput";
 import ScheduledPostsList, { type ScheduledPost } from "@/components/dashboard/ScheduledPostsList";
-import PressableButton from "@/components/motion/PressableButton";
 import PressableLink from "@/components/motion/PressableLink";
 import { connectDB } from "@/lib/db";
 import { Post, PostPlatform, User } from "@/lib/models";
@@ -69,18 +68,6 @@ function buildPageHref({ page, search, status, platform }: { page: number; searc
 
 function getPlatformForPost(post: ScheduledPost, platformMap: Map<string, string>) {
   return platformMap.get(post._id.toString()) || "linkedin";
-}
-
-function UserAvatar({ user }: { user: DashboardUser }) {
-  return (
-    <Image
-      src={user.avatar_url || "/landing/testimonial-avatar.png"}
-      alt={user.name ? `${user.name} avatar` : "User avatar"}
-      width={36}
-      height={36}
-      className="h-9 w-9 rounded-full object-cover ring-2 ring-white"
-    />
-  );
 }
 
 async function getCurrentUser() {
@@ -187,56 +174,14 @@ export default async function ScheduledPostsPage({
   const nextHref = buildPageHref({ page: Math.min(totalPages, safePage + 1), search, status, platform });
 
   return (
-    <section className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-slate-200 bg-white px-5">
-            <form action="/dashboard/scheduled-posts" className="relative hidden min-w-0 flex-1 md:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                name="q"
-                defaultValue={search}
-                placeholder="Search scheduled content..."
-                className="h-9 w-full rounded-control border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
-              />
-              <input type="hidden" name="status" value={status} />
-              <input type="hidden" name="platform" value={platform} />
-            </form>
-
-            <div className="ml-auto flex items-center gap-2">
-              <NotificationsButton />
-              <PressableLink href="/dashboard/settings" aria-label="Settings" className="grid h-9 w-9 place-items-center rounded-control text-slate-500 hover:bg-slate-50 hover:text-slate-900">
-                <Settings className="h-4 w-4" />
-              </PressableLink>
-              <div className="ml-2 hidden h-8 w-px bg-slate-200 sm:block" />
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-bold leading-4 text-slate-800">{user.name || "User"}</p>
-                <p className="mt-1 text-xs capitalize text-slate-500">{user.plan || "free"} Member</p>
-              </div>
-              <UserAvatar user={user} />
-            </div>
-          </header>
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+      <DashboardToolbar title="Scheduled Posts" user={{ name: user.name, image: user.avatar_url, plan: user.plan }} />
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
             <div className="mx-auto w-full max-w-6xl">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Scheduled Posts</h1>
-                  <p className="mt-1 text-sm text-slate-500">Manage and monitor your upcoming social automation queue.</p>
-                </div>
-
-                <div className="flex rounded-control bg-slate-100 p-1">
-                  <PressableButton
-                    disabled
-                    title="Calendar view — coming soon"
-                    className="inline-flex h-9 cursor-not-allowed items-center gap-2 rounded-control px-3 text-sm font-bold text-slate-400"
-                  >
-                    <CalendarRange className="h-4 w-4" />
-                    Calendar
-                  </PressableButton>
-                  <PressableButton className="inline-flex h-9 items-center gap-2 rounded-control bg-white px-3 text-sm font-bold text-primary shadow-sm">
-                    <List className="h-4 w-4" />
-                    List View
-                  </PressableButton>
-                </div>
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">Scheduled Posts</h1>
+                <p className="mt-1 text-sm text-slate-500">Manage and monitor your upcoming social automation queue.</p>
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -268,7 +213,11 @@ export default async function ScheduledPostsPage({
                 })}
               </div>
 
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="mt-6">
+                <ScheduledPostSearchInput initialValue={search} status={status} platform={platform} />
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <ScheduledPostFilters
                   currentPlatform={platform}
                   currentSearch={search}

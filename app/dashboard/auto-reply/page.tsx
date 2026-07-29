@@ -6,6 +6,7 @@ import { GET as getAutoReplyLogsRoute } from "@/app/api/auto-reply/logs/route";
 import { GET as getAutoReplyRulesRoute } from "@/app/api/auto-reply/rules/route";
 import { GET as getAutoReplySettingsRoute } from "@/app/api/auto-reply/settings/route";
 import { GET as getInstagramRoute } from "@/app/api/socials/instagram/route";
+import DashboardToolbar from "@/components/dashboard/DashboardToolbar";
 import AutoReplySettingsPanel, {
   type AutoReplyKeywordRule,
   type AutoReplyLogRow,
@@ -82,14 +83,17 @@ export default async function AutoReplyPage() {
   ]);
 
   return (
-    <section className="h-screen min-w-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <AutoReplySettingsPanel
-          initialSettings={settings}
-          initialLogs={logs}
-          initialRules={rules}
-          connectedPlatforms={connectedPlatforms}
-        />
+    <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+      <DashboardToolbar title="Auto-Reply" user={session.user} />
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <AutoReplySettingsPanel
+            initialSettings={settings}
+            initialLogs={logs}
+            initialRules={rules}
+            connectedPlatforms={connectedPlatforms}
+          />
+        </div>
       </div>
     </section>
   );
