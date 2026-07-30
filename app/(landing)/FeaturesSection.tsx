@@ -1,66 +1,62 @@
 "use client";
 
-import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState, type ComponentType, type KeyboardEvent } from "react";
 import { useGSAP } from "@gsap/react";
+import { AnimatePresence, motion } from "motion/react";
 import { BarChart3, CalendarClock, GitBranch, MessageSquareText, type LucideIcon } from "lucide-react";
 
-import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
-import { DURATION, EASE, MOTION_OK_QUERY, STAGGER } from "@/lib/motion/tokens";
+import { gsap } from "@/lib/motion/gsap";
+import { DURATION, EASE, MOTION_EASE, MOTION_OK_QUERY, SPRING, STAGGER } from "@/lib/motion/tokens";
+import AiCaptionsIllustration from "@/components/illustrations/AiCaptionsIllustration";
+import SmartSchedulingIllustration from "@/components/illustrations/SmartSchedulingIllustration";
+import AnalyticsIllustration from "@/components/illustrations/AnalyticsIllustration";
+import GithubAutomationIllustration from "@/components/illustrations/GithubAutomationIllustration";
 
-type FeatureCardData = {
+type FeatureId = "ai-captions" | "smart-scheduling" | "analytics" | "github";
+
+type Feature = {
+  id: FeatureId;
   icon: LucideIcon;
   title: string;
   copy: string;
-  previewSrc: string;
-  /**
-   * Resting zoom applied before scroll parallax. Real-time Analytics and
-   * GitHub Automation were pre-cropped in the source screenshots (2.08x /
-   * 1.22x) to fill the wide preview frame; AI Captions and Smart Scheduling
-   * get a lighter 1.16x so the parallax has somewhere to move without
-   * exposing the image edge.
-   */
-  previewScale: number;
+  Illustration: ComponentType;
 };
 
-// AI Captions carries the richest copy of the four and leads with the
-// clearest "wow" screenshot — it's the bento hero (full-width row, image
-// beside the text instead of stacked below it). The other three stay
-// standard, single-column cards in a supporting row underneath.
-const heroCard: FeatureCardData = {
-  icon: MessageSquareText,
-  title: "AI Captions",
-  copy: "Generate platform-aware captions for any image or link. AutoPilot adapts your brand voice and formats for each channel.",
-  previewSrc: "/landing/AICaption.png",
-  previewScale: 1.16,
-};
-
-const supportingCards: FeatureCardData[] = [
+const FEATURES: Feature[] = [
   {
+    id: "ai-captions",
+    icon: MessageSquareText,
+    title: "AI Captions",
+    copy: "Generate platform-aware captions for any image or link. AutoPilot adapts your brand voice and formats for each channel.",
+    Illustration: AiCaptionsIllustration,
+  },
+  {
+    id: "smart-scheduling",
     icon: CalendarClock,
     title: "Smart Scheduling",
     copy: "Post when your audience is most active.",
-    previewSrc: "/landing/smartSchedule.png",
-    previewScale: 1.16,
+    Illustration: SmartSchedulingIllustration,
   },
   {
-    icon: BarChart3,
-    title: "Real-time Analytics",
-    copy: "Track growth across every platform with a single source of truth.",
-    previewSrc: "/landing/realtimeanalytics.png",
-    previewScale: 2.08,
-  },
-  {
+    id: "github",
     icon: GitBranch,
     title: "GitHub Automation",
     copy: "Automatically turn releases, issues, and commits into posts, bridging code and community.",
-    previewSrc: "/landing/github.png",
-    previewScale: 1.22,
+    Illustration: GithubAutomationIllustration,
+  },
+  {
+    id: "analytics",
+    icon: BarChart3,
+    title: "Real-time Analytics",
+    copy: "Track growth across every platform with a single source of truth.",
+    Illustration: AnalyticsIllustration,
   },
 ];
 
 export default function FeaturesSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const active = FEATURES[activeIndex];
 
   useGSAP(
     () => {
@@ -76,57 +72,13 @@ export default function FeaturesSection() {
           scrollTrigger: { trigger: sectionRef.current, start: "top 78%" },
         });
 
-        const cards = gsap.utils.toArray<HTMLElement>("[data-features='card']");
-        gsap.set(cards, { y: 44, scale: 0.94, autoAlpha: 0 });
-
-        // Sequential DOM-order stagger, not the old grid: [2, 2] wave. That
-        // option assumes a rectangular N-row-by-M-col grid where every cell
-        // is the same size — true for the old uniform 2x2, but the bento
-        // hero card now spans the full row by itself, so there's no
-        // rectangular grid to compute distances against. DOM order (hero,
-        // then the three supporting cards left-to-right) already matches
-        // the visual reading order, so a plain sequential stagger is both
-        // simpler and correct here.
-        ScrollTrigger.batch(cards, {
-          start: "top 85%",
-          onEnter: (batch) =>
-            gsap.to(batch, {
-              y: 0,
-              scale: 1,
-              autoAlpha: 1,
-              duration: DURATION.slow,
-              ease: EASE.back,
-              stagger: STAGGER.base,
-              overwrite: true,
-            }),
+        gsap.from("[data-features='showcase']", {
+          y: 32,
+          autoAlpha: 0,
+          duration: DURATION.slow,
+          ease: EASE.outExpo,
+          scrollTrigger: { trigger: sectionRef.current, start: "top 70%" },
         });
-
-        // Screenshot parallax: each preview image gets a resting zoom (room
-        // to move) and drifts vertically inside its clipped frame as the
-        // card crosses the viewport, scrubbed to scroll position.
-        sectionRef.current
-          ?.querySelectorAll<HTMLElement>("[data-features='preview-image']")
-          .forEach((image) => {
-            const baseScale = Number(image.dataset.previewScale) || 1.1;
-            gsap.set(image, { scale: baseScale, transformOrigin: "center center" });
-
-            gsap.to(image, {
-              yPercent: 6,
-              ease: EASE.none,
-              scrollTrigger: {
-                trigger: image.closest("[data-features='preview-frame']"),
-                start: "top bottom",
-                end: "bottom top",
-                scrub: true,
-                // will-change just-in-time: the image only needs the
-                // compositor hint while it's actually in the scrubbed
-                // range, not for the entire time it happens to be mounted.
-                onToggle: (self) => {
-                  image.style.willChange = self.isActive ? "transform" : "auto";
-                },
-              },
-            });
-          });
       });
     },
     { scope: sectionRef },
@@ -142,51 +94,105 @@ export default function FeaturesSection() {
             A unified automation stack designed to help you maintain a constant, high-quality presence powered by GitHub activity without the manual labor.
           </p>
         </div>
-        <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          <FeatureCard {...heroCard} variant="hero" />
-          {supportingCards.map((feature) => (
-            <FeatureCard key={feature.title} {...feature} variant="standard" />
-          ))}
+
+        <div data-features="showcase" className="mt-12">
+          <FeatureTabs features={FEATURES} activeIndex={activeIndex} onChange={setActiveIndex} />
+
+          <div className="mt-8 grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
+            <div id={`feature-panel-${active.id}`} role="tabpanel" aria-labelledby={`feature-tab-${active.id}`}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={active.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.16, ease: MOTION_EASE.outExpo }}
+                >
+                  <h3 className="text-2xl font-bold text-slate-950">{active.title}</h3>
+                  <p className="mt-3 max-w-md text-base leading-7 text-slate-600">{active.copy}</p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="relative w-full min-h-[420px] sm:min-h-[460px] lg:aspect-[3/2] lg:min-h-0">
+              <active.Illustration />
+            </div>
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-function FeatureCard({
-  icon: Icon,
-  title,
-  copy,
-  previewSrc,
-  previewScale,
-  variant,
-}: FeatureCardData & { variant: "hero" | "standard" }) {
-  const isHero = variant === "hero";
+function FeatureTabs({
+  features,
+  activeIndex,
+  onChange,
+}: {
+  features: Feature[];
+  activeIndex: number;
+  onChange: (index: number) => void;
+}) {
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const lastIndex = features.length - 1;
+    let nextIndex: number | null = null;
+
+    if (event.key === "ArrowRight") nextIndex = activeIndex === lastIndex ? 0 : activeIndex + 1;
+    else if (event.key === "ArrowLeft") nextIndex = activeIndex === 0 ? lastIndex : activeIndex - 1;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = lastIndex;
+
+    if (nextIndex !== null) {
+      event.preventDefault();
+      onChange(nextIndex);
+      tabRefs.current[nextIndex]?.focus();
+    }
+  };
 
   return (
-    <article
-      data-features="card"
-      className={`feature-card feature-card--visual feature-card--media ${isHero ? "feature-card--hero lg:col-span-3" : ""}`}
+    <div
+      role="tablist"
+      aria-label="Features"
+      onKeyDown={handleKeyDown}
+      className="grid grid-cols-2 gap-1 rounded-control bg-slate-100 p-1 lg:grid-cols-4"
     >
-      <div className="feature-card-header">
-        <div className="icon-box">
-          <Icon size={17} />
-        </div>
-        <h3>{title}</h3>
-        <p>{copy}</p>
-      </div>
-      <div data-features="preview-frame" className="feature-preview-frame">
-        <Image
-          src={previewSrc}
-          alt=""
-          fill
-          sizes={isHero ? "(min-width: 1024px) 55vw, 100vw" : "(min-width: 768px) 50vw, 100vw"}
-          className="feature-preview-image"
-          data-features="preview-image"
-          data-preview-scale={previewScale}
-          aria-hidden="true"
-        />
-      </div>
-    </article>
+      {features.map((feature, index) => {
+        const isActive = index === activeIndex;
+        const Icon = feature.icon;
+
+        return (
+          <button
+            key={feature.id}
+            ref={(el) => {
+              tabRefs.current[index] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`feature-tab-${feature.id}`}
+            aria-selected={isActive}
+            aria-controls={`feature-panel-${feature.id}`}
+            tabIndex={isActive ? 0 : -1}
+            onClick={() => onChange(index)}
+            className={`relative flex min-w-0 items-center gap-1.5 rounded-[7px] px-2.5 py-2.5 text-left text-xs font-semibold transition sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm ${
+              isActive ? "text-primary" : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {isActive && (
+              <motion.span
+                layoutId="feature-tab-indicator"
+                transition={SPRING.gentle}
+                className="absolute inset-0 rounded-[7px] bg-white shadow-sm ring-1 ring-slate-200/70"
+              />
+            )}
+            <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary sm:h-8 sm:w-8">
+              <Icon size={15} />
+            </span>
+            <span className="relative min-w-0 leading-tight">{feature.title}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
