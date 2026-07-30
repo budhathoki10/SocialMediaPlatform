@@ -47,7 +47,7 @@ export default function GithubAutomationIllustration() {
 
         <div className="absolute inset-0 flex items-center justify-between">
           <Node label="your-repo">
-            <GitHubMark className="h-11 w-11 rounded-lg" />
+            <GitHubMark className="h-9 w-9 rounded-lg sm:h-11 sm:w-11" />
           </Node>
 
           <Node label="New commit" visible={showCommit}>
@@ -86,12 +86,14 @@ export default function GithubAutomationIllustration() {
 function Node({ children, label, visible = true }: { children: ReactNode; label: string; visible?: boolean }) {
   return (
     <motion.div
-      className="flex flex-col items-center gap-2"
+      className="flex flex-col items-center gap-1.5 sm:gap-2"
       animate={{ opacity: visible ? 1 : 0, scale: visible ? 1 : 0.7 }}
       transition={STEP_TRANSITION}
     >
       {children}
-      <span className="whitespace-nowrap text-xs font-medium text-slate-400">{label}</span>
+      <span className="w-14 text-center text-[9px] font-medium leading-tight text-slate-400 sm:w-auto sm:whitespace-nowrap sm:text-xs">
+        {label}
+      </span>
     </motion.div>
   );
 }
@@ -106,7 +108,7 @@ function IconBadge({ tone, children, pulsing }: { tone: keyof typeof TONE_CLASSE
           transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
-      <div className={`flex h-11 w-11 items-center justify-center rounded-full ${TONE_CLASSES[tone]}`}>{children}</div>
+      <div className={`flex h-9 w-9 items-center justify-center rounded-full sm:h-11 sm:w-11 ${TONE_CLASSES[tone]}`}>{children}</div>
     </div>
   );
 }

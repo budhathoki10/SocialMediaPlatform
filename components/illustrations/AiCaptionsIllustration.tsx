@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "motion/react";
-import { CheckCircle2, ImageIcon, Send, Sparkles } from "lucide-react";
+import { CheckCircle2, Send, Sparkles } from "lucide-react";
 
 import {
   BADGE_SURFACE,
@@ -35,7 +36,7 @@ export default function AiCaptionsIllustration() {
 
   return (
     <div ref={ref} className="flex h-full w-full items-center justify-center bg-white p-6 sm:p-10">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-lg">
         <div className="relative">
           <motion.div
             className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/25 via-violet-300/20 to-cyan-200/25 blur-2xl"
@@ -44,14 +45,9 @@ export default function AiCaptionsIllustration() {
           />
 
           <div className={`${CARD_SURFACE} p-5`}>
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
-                <ImageIcon size={18} strokeWidth={ICON_STROKE} />
-              </div>
-              <div className="flex-1 space-y-2">
-                <div className="h-2.5 w-28 rounded-full bg-slate-200" />
-                <div className="h-2.5 w-20 rounded-full bg-slate-100" />
-              </div>
+            <div className="flex items-center gap-2.5">
+              <Image src="/landing/autopilot-logo.png" alt="AutoPilot" width={161} height={60} className="h-6 w-auto" />
+              <span className="text-xs font-medium text-slate-400">Β· Just now</span>
             </div>
 
             <div className="relative mt-4 h-24 w-full overflow-hidden rounded-lg border border-slate-100 bg-slate-50 p-3">
@@ -59,7 +55,7 @@ export default function AiCaptionsIllustration() {
                 <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-white">
                   <Send size={11} strokeWidth={ICON_STROKE} />
                 </div>
-                <div className="h-2 w-16 rounded-full bg-slate-200" />
+                <span className="text-xs font-semibold text-slate-500">Draft</span>
               </div>
 
               <motion.div

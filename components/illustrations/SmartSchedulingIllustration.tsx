@@ -21,7 +21,7 @@ export default function SmartSchedulingIllustration() {
 
   return (
     <div ref={ref} className="flex h-full w-full flex-col items-center justify-center gap-5 bg-white p-6 sm:p-10">
-      <div className="flex w-full max-w-md items-center justify-between">
+      <div className="flex w-full max-w-lg items-center justify-between">
         <div className="flex flex-col items-center gap-2">
           <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-dashed border-slate-300">
             {!placed && (
@@ -43,7 +43,7 @@ export default function SmartSchedulingIllustration() {
         </motion.div>
       </div>
 
-      <div className={`${CARD_SURFACE} w-full max-w-md p-5`}>
+      <div className={`${CARD_SURFACE} w-full max-w-lg p-5`}>
         <div className="grid grid-cols-7 gap-2">
           {DAYS.map((day) => {
             const isTarget = day === TARGET_DAY;
@@ -91,7 +91,7 @@ export default function SmartSchedulingIllustration() {
         </div>
       </div>
 
-      <div className="flex w-full max-w-md items-center justify-between">
+      <div className="flex w-full max-w-lg items-center justify-between">
         <motion.span
           className="inline-flex items-center gap-1.5 rounded-full bg-primary-tint px-3 py-1.5 text-xs font-semibold text-primary"
           animate={{ opacity: step >= 4 ? 1 : 0, y: step >= 4 ? 0 : 6 }}

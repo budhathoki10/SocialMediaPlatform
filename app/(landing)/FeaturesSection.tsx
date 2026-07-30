@@ -114,7 +114,7 @@ export default function FeaturesSection() {
               </AnimatePresence>
             </div>
 
-            <div className="relative aspect-[4/3] w-full sm:aspect-[3/2]">
+            <div className="relative w-full min-h-[420px] sm:min-h-[460px] lg:aspect-[3/2] lg:min-h-0">
               <active.Illustration />
             </div>
           </div>
@@ -175,7 +175,7 @@ function FeatureTabs({
             aria-controls={`feature-panel-${feature.id}`}
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(index)}
-            className={`relative flex min-w-0 items-center gap-2.5 rounded-[7px] px-4 py-3 text-left text-sm font-semibold transition ${
+            className={`relative flex min-w-0 items-center gap-1.5 rounded-[7px] px-2.5 py-2.5 text-left text-xs font-semibold transition sm:gap-2.5 sm:px-4 sm:py-3 sm:text-sm ${
               isActive ? "text-primary" : "text-slate-500 hover:text-slate-700"
             }`}
           >
@@ -186,10 +186,10 @@ function FeatureTabs({
                 className="absolute inset-0 rounded-[7px] bg-white shadow-sm ring-1 ring-slate-200/70"
               />
             )}
-            <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary">
-              <Icon size={16} />
+            <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-tint text-primary sm:h-8 sm:w-8">
+              <Icon size={15} />
             </span>
-            <span className="relative truncate">{feature.title}</span>
+            <span className="relative min-w-0 leading-tight">{feature.title}</span>
           </button>
         );
       })}
