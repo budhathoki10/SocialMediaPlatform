@@ -45,9 +45,8 @@ export default function AiCaptionsIllustration() {
           />
 
           <div className={`${CARD_SURFACE} p-5`}>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center">
               <Image src="/landing/autopilot-logo.png" alt="AutoPilot" width={161} height={60} className="h-6 w-auto" />
-              <span className="text-xs font-medium text-slate-400">Β· Just now</span>
             </div>
 
             <div className="relative mt-4 h-24 w-full overflow-hidden rounded-lg border border-slate-100 bg-slate-50 p-3">
