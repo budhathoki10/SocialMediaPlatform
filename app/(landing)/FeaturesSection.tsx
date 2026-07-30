@@ -38,18 +38,18 @@ const FEATURES: Feature[] = [
     Illustration: SmartSchedulingIllustration,
   },
   {
-    id: "analytics",
-    icon: BarChart3,
-    title: "Real-time Analytics",
-    copy: "Track growth across every platform with a single source of truth.",
-    Illustration: AnalyticsIllustration,
-  },
-  {
     id: "github",
     icon: GitBranch,
     title: "GitHub Automation",
     copy: "Automatically turn releases, issues, and commits into posts, bridging code and community.",
     Illustration: GithubAutomationIllustration,
+  },
+  {
+    id: "analytics",
+    icon: BarChart3,
+    title: "Real-time Analytics",
+    copy: "Track growth across every platform with a single source of truth.",
+    Illustration: AnalyticsIllustration,
   },
 ];
 
