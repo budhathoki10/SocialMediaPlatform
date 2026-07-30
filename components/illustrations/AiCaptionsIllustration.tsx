@@ -52,12 +52,21 @@ export default function AiCaptionsIllustration() {
                 <div className="h-2.5 w-20 rounded-full bg-slate-100" />
               </div>
             </div>
-            <div className="relative mt-4 h-24 w-full overflow-hidden rounded-lg bg-slate-100">
+            <div className="relative mt-4 h-24 w-full overflow-hidden rounded-lg bg-slate-50">
+              <div className="absolute -left-4 -top-8 h-24 w-24 rounded-full bg-primary/25 blur-xl" />
+              <div className="absolute -right-2 -top-4 h-20 w-20 rounded-full bg-cyan-300/35 blur-xl" />
+              <div className="absolute -bottom-8 left-8 h-20 w-28 rounded-full bg-violet-300/35 blur-xl" />
+
               <motion.div
-                className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent"
+                className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent"
                 animate={{ x: analyzing ? ["-120%", "220%"] : "-120%" }}
                 transition={{ duration: 1.4, repeat: analyzing ? Infinity : 0, ease: "easeInOut", repeatDelay: 0.3 }}
               />
+
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500 backdrop-blur-sm">
+                <ImageIcon size={10} strokeWidth={ICON_STROKE} />
+                Photo
+              </div>
             </div>
           </div>
 
