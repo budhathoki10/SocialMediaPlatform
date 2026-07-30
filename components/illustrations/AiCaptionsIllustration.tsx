@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { CheckCircle2, ImageIcon, Sparkles } from "lucide-react";
+import { CheckCircle2, ImageIcon, Send, Sparkles } from "lucide-react";
 
 import {
   BADGE_SURFACE,
@@ -10,27 +10,28 @@ import {
   InstagramMark,
   LinkedInMark,
   STEP_TRANSITION,
-  TypingDots,
   TypingText,
   WhatsAppMark,
   useStepCycle,
 } from "./shared";
 
+const DRAFT = "New AI feature just dropped \u{1F680}";
 const CAPTION = "Just shipped our AI content engine. Try it free today!";
 const PLATFORMS = [LinkedInMark, InstagramMark, WhatsAppMark];
 
-// Steps: 0 rest Β· 1 AI scans the post Β· 2-3 "drafting…" (bouncing dots) Β·
-// 4-6 caption types out Β· 6 platform-specific versions appear Β·
-// 7 ready-to-publish Β· 8 hold, then loop.
+// Steps: 0 rest Β· 1 AI scans the post Β· 2-3 a draft types out ON the photo
+// itself Β· 4-6 the polished caption types out below, outside the card Β·
+// 7 platform-specific versions appear Β· 8 ready-to-publish Β· 9 hold, then loop.
 export default function AiCaptionsIllustration() {
-  const { step, ref } = useStepCycle(9, 1300);
+  const { step, ref } = useStepCycle(10, 1300);
 
   const analyzing = step >= 1;
-  const drafting = step === 2 || step === 3;
+  const draftingInCard = step === 2 || step === 3;
+  const draftStarted = step >= 2;
   const showCaption = step >= 4;
-  const typing = step >= 4 && step < 8;
-  const showPlatforms = step >= 6;
-  const showReady = step >= 7;
+  const typingCaption = step >= 4 && step < 7;
+  const showPlatforms = step >= 7;
+  const showReady = step >= 8;
 
   return (
     <div ref={ref} className="flex h-full w-full items-center justify-center bg-white p-6 sm:p-10">
@@ -52,21 +53,24 @@ export default function AiCaptionsIllustration() {
                 <div className="h-2.5 w-20 rounded-full bg-slate-100" />
               </div>
             </div>
-            <div className="relative mt-4 h-24 w-full overflow-hidden rounded-lg bg-slate-50">
-              <div className="absolute -left-4 -top-8 h-24 w-24 rounded-full bg-primary/25 blur-xl" />
-              <div className="absolute -right-2 -top-4 h-20 w-20 rounded-full bg-cyan-300/35 blur-xl" />
-              <div className="absolute -bottom-8 left-8 h-20 w-28 rounded-full bg-violet-300/35 blur-xl" />
+
+            <div className="relative mt-4 h-24 w-full overflow-hidden rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1877F2] text-white">
+                  <Send size={11} strokeWidth={ICON_STROKE} />
+                </div>
+                <div className="h-2 w-16 rounded-full bg-slate-200" />
+              </div>
 
               <motion.div
-                className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/60 to-transparent"
-                animate={{ x: analyzing ? ["-120%", "220%"] : "-120%" }}
-                transition={{ duration: 1.4, repeat: analyzing ? Infinity : 0, ease: "easeInOut", repeatDelay: 0.3 }}
+                className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent"
+                animate={{ x: analyzing && !draftStarted ? ["-120%", "220%"] : "-120%" }}
+                transition={{ duration: 1.4, repeat: analyzing && !draftStarted ? Infinity : 0, ease: "easeInOut", repeatDelay: 0.3 }}
               />
 
-              <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500 backdrop-blur-sm">
-                <ImageIcon size={10} strokeWidth={ICON_STROKE} />
-                Photo
-              </div>
+              <p className="relative mt-2.5 text-[13px] leading-snug text-slate-700">
+                <TypingText text={DRAFT} active={draftingInCard} />
+              </p>
             </div>
           </div>
 
@@ -91,24 +95,13 @@ export default function AiCaptionsIllustration() {
           </motion.div>
         </div>
 
-        <div className="relative mt-5 min-h-[2.6em]">
-          <motion.div
-            className="absolute inset-0 flex items-center gap-2 text-sm font-semibold text-primary"
-            animate={{ opacity: drafting ? 1 : 0 }}
-            transition={STEP_TRANSITION}
-          >
-            <TypingDots />
-            AI is drafting your caption…
-          </motion.div>
-
-          <motion.p
-            className="absolute inset-0 text-base leading-relaxed text-slate-700"
-            animate={{ opacity: showCaption ? 1 : 0, y: showCaption ? 0 : 8 }}
-            transition={STEP_TRANSITION}
-          >
-            <TypingText text={CAPTION} active={typing} />
-          </motion.p>
-        </div>
+        <motion.p
+          className="relative mt-5 min-h-[2.6em] text-base leading-relaxed text-slate-700"
+          animate={{ opacity: showCaption ? 1 : 0, y: showCaption ? 0 : 8 }}
+          transition={STEP_TRANSITION}
+        >
+          <TypingText text={CAPTION} active={typingCaption} />
+        </motion.p>
 
         <motion.div
           className="mt-5 flex items-center gap-2.5"

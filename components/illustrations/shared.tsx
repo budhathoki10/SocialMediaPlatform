@@ -53,9 +53,15 @@ export const STEP_TRANSITION = { duration: 0.45, ease: MOTION_EASE.outExpo };
 
 export function TypingText({ text, active, className }: { text: string; active: boolean; className?: string }) {
   const [count, setCount] = useState(0);
+  const wasActive = useRef(false);
 
   useEffect(() => {
-    setCount(0);
+    // Reset only on the rising edge (a fresh run starting) — going inactive
+    // just pauses/freezes at the current count instead of blanking the text,
+    // so a finished caption stays visible through the rest of the sequence.
+    if (active && !wasActive.current) setCount(0);
+    wasActive.current = active;
+
     if (!active) return;
     const id = setInterval(() => {
       setCount((c) => (c < text.length ? c + 1 : c));
