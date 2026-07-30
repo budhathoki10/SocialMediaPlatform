@@ -10,6 +10,7 @@ import {
   InstagramMark,
   LinkedInMark,
   STEP_TRANSITION,
+  TypingDots,
   TypingText,
   WhatsAppMark,
   useStepCycle,
@@ -18,16 +19,29 @@ import {
 const CAPTION = "Just shipped our AI content engine. Try it free today!";
 const PLATFORMS = [LinkedInMark, InstagramMark, WhatsAppMark];
 
-// Steps: 0 rest (card only) Β· 1 AI reads the post Β· 2-3 caption types out Β·
-// 4 platform-specific versions appear Β· 5 ready-to-publish Β· 6 hold, then loop.
+// Steps: 0 rest Β· 1 AI scans the post Β· 2-3 "drafting…" (bouncing dots) Β·
+// 4-6 caption types out Β· 6 platform-specific versions appear Β·
+// 7 ready-to-publish Β· 8 hold, then loop.
 export default function AiCaptionsIllustration() {
-  const { step, ref } = useStepCycle(7, 1300);
-  const typing = step >= 2 && step < 6;
+  const { step, ref } = useStepCycle(9, 1300);
+
+  const analyzing = step >= 1;
+  const drafting = step === 2 || step === 3;
+  const showCaption = step >= 4;
+  const typing = step >= 4 && step < 8;
+  const showPlatforms = step >= 6;
+  const showReady = step >= 7;
 
   return (
     <div ref={ref} className="flex h-full w-full items-center justify-center bg-white p-6 sm:p-10">
       <div className="w-full max-w-md">
         <div className="relative">
+          <motion.div
+            className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-gradient-to-br from-primary/25 via-violet-300/20 to-cyan-200/25 blur-2xl"
+            animate={{ opacity: analyzing ? 1 : 0 }}
+            transition={STEP_TRANSITION}
+          />
+
           <div className={`${CARD_SURFACE} p-5`}>
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
@@ -38,7 +52,13 @@ export default function AiCaptionsIllustration() {
                 <div className="h-2.5 w-20 rounded-full bg-slate-100" />
               </div>
             </div>
-            <div className="mt-4 h-24 w-full rounded-lg bg-slate-100" />
+            <div className="relative mt-4 h-24 w-full overflow-hidden rounded-lg bg-slate-100">
+              <motion.div
+                className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/70 to-transparent"
+                animate={{ x: analyzing ? ["-120%", "220%"] : "-120%" }}
+                transition={{ duration: 1.4, repeat: analyzing ? Infinity : 0, ease: "easeInOut", repeatDelay: 0.3 }}
+              />
+            </div>
           </div>
 
           <motion.div
@@ -49,29 +69,45 @@ export default function AiCaptionsIllustration() {
 
           <motion.div
             className={`absolute -right-3 -top-3 flex items-center gap-1 ${BADGE_SURFACE} px-2.5 py-1.5 text-primary`}
-            animate={{ opacity: step >= 1 ? 1 : 0, scale: step >= 1 ? 1 : 0.75 }}
+            animate={{ opacity: analyzing ? 1 : 0, scale: analyzing ? 1 : 0.75 }}
             transition={STEP_TRANSITION}
           >
-            <Sparkles size={13} strokeWidth={ICON_STROKE} />
+            <motion.span
+              animate={{ rotate: analyzing ? [0, -12, 12, 0] : 0 }}
+              transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 1.2, ease: "easeInOut" }}
+            >
+              <Sparkles size={13} strokeWidth={ICON_STROKE} />
+            </motion.span>
             <span className="text-[11px] font-semibold">AI</span>
           </motion.div>
         </div>
 
-        <motion.p
-          className="mt-5 min-h-[2.6em] text-base leading-relaxed text-slate-700"
-          animate={{ opacity: step >= 2 ? 1 : 0, y: step >= 2 ? 0 : 8 }}
-          transition={STEP_TRANSITION}
-        >
-          <TypingText text={CAPTION} active={typing} />
-        </motion.p>
+        <div className="relative mt-5 min-h-[2.6em]">
+          <motion.div
+            className="absolute inset-0 flex items-center gap-2 text-sm font-semibold text-primary"
+            animate={{ opacity: drafting ? 1 : 0 }}
+            transition={STEP_TRANSITION}
+          >
+            <TypingDots />
+            AI is drafting your caption…
+          </motion.div>
+
+          <motion.p
+            className="absolute inset-0 text-base leading-relaxed text-slate-700"
+            animate={{ opacity: showCaption ? 1 : 0, y: showCaption ? 0 : 8 }}
+            transition={STEP_TRANSITION}
+          >
+            <TypingText text={CAPTION} active={typing} />
+          </motion.p>
+        </div>
 
         <motion.div
           className="mt-5 flex items-center gap-2.5"
-          animate={{ opacity: step >= 4 ? 1 : 0, y: step >= 4 ? 0 : 8 }}
+          animate={{ opacity: showPlatforms ? 1 : 0, y: showPlatforms ? 0 : 8 }}
           transition={STEP_TRANSITION}
         >
           {PLATFORMS.map((Mark, i) => {
-            const highlighted = step >= 4 && step % PLATFORMS.length === i;
+            const highlighted = showPlatforms && step % PLATFORMS.length === i;
             return (
               <motion.span
                 key={i}
@@ -87,7 +123,7 @@ export default function AiCaptionsIllustration() {
 
         <motion.div
           className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700"
-          animate={{ opacity: step >= 5 ? 1 : 0, y: step >= 5 ? 0 : 8 }}
+          animate={{ opacity: showReady ? 1 : 0, y: showReady ? 0 : 8 }}
           transition={STEP_TRANSITION}
         >
           <CheckCircle2 size={15} strokeWidth={ICON_STROKE} />

@@ -73,6 +73,22 @@ export function TypingText({ text, active, className }: { text: string; active: 
   );
 }
 
+/** "Someone is composing" indicator — three bouncing dots, chat-app style. */
+export function TypingDots({ className }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 ${className ?? ""}`}>
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="h-1.5 w-1.5 rounded-full bg-current"
+          animate={{ y: [0, -4, 0] }}
+          transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
+        />
+      ))}
+    </span>
+  );
+}
+
 export function ConnectorLine({ d, draw, className }: { d: string; draw: boolean; className?: string }) {
   return (
     <motion.path
