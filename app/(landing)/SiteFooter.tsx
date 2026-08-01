@@ -9,11 +9,15 @@ import { gsap } from "@/lib/motion/gsap";
 import { DURATION, EASE, MOTION_OK_QUERY, STAGGER } from "@/lib/motion/tokens";
 
 const footerColumns = [
-  ["Product", "Features", "Integrations", "Changelog"],
+  ["Product", "Features", "Pricing", "Integrations", "Changelog"],
   ["Company", "About Us", "Careers", "Blog"],
   ["Resources", "Docs", "Community", "API"],
   ["Legal", "Privacy", "Terms"],
 ];
+
+const footerLinkHrefs: Record<string, string> = {
+  Pricing: "/billing",
+};
 
 export default function SiteFooter() {
   const footerRef = useRef<HTMLElement | null>(null);
@@ -81,7 +85,7 @@ export default function SiteFooter() {
               <ul className="mt-4 space-y-3 text-sm text-slate-500">
                 {items.map((item) => (
                   <li key={item}>
-                    <a href="#" className="footer-link transition hover:text-slate-950">
+                    <a href={footerLinkHrefs[item] ?? "#"} className="footer-link transition hover:text-slate-950">
                       {item}
                     </a>
                   </li>

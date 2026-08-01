@@ -1,9 +1,8 @@
-import { Settings } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
-import PressableLink from "@/components/motion/PressableLink";
+import SettingsMenu from "@/components/dashboard/SettingsMenu";
 
 type ToolbarUser = {
   name?: string | null;
@@ -43,13 +42,7 @@ export default function DashboardToolbar({
 
       <div className="ml-auto hidden shrink-0 items-center gap-2 sm:gap-3 lg:flex">
         <NotificationsButton buttonClassName="grid h-9 w-9 place-items-center rounded-control text-slate-500 transition hover:bg-slate-50 hover:text-slate-950" />
-        <PressableLink
-          href="/dashboard/settings"
-          aria-label="Settings"
-          className="hidden h-9 w-9 place-items-center rounded-control text-slate-500 transition hover:bg-slate-50 hover:text-slate-950 sm:grid"
-        >
-          <Settings className="h-5 w-5" />
-        </PressableLink>
+        <SettingsMenu />
         <div className="hidden h-8 w-px bg-slate-200 sm:block" />
         <div className="hidden text-right sm:block">
           <p className="max-w-40 truncate text-sm font-bold leading-4 text-slate-700">{user?.name || "User"}</p>
