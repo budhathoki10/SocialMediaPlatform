@@ -4,6 +4,7 @@ import FeaturesSection from "./FeaturesSection";
 import GrowthSection from "./GrowthSection";
 import HeroSection from "./HeroSection";
 import PainSection from "./PainSection";
+import PricingSection from "./PricingSection";
 import SiteFooter from "./SiteFooter";
 import TestimonialSection from "./TestimonialSection";
 
@@ -16,6 +17,7 @@ export default function LandingPage() {
       <TestimonialSection />
       <GrowthSection />
       <DemoSection />
+      <PricingSection />
       <CtaSection />
       <SiteFooter />
     </main>

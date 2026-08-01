@@ -13,19 +13,19 @@ import {
   Newspaper,
   Settings,
   Share2,
+  User,
   X,
   Zap,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
 import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
+import LogoutButton from "@/components/dashboard/LogoutButton";
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
-import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
-import PressableButton from "@/components/motion/PressableButton";
+import { ModalBackdrop } from "@/components/motion/Modal";
 import { SPRING } from "@/lib/motion/tokens";
 
 const sidebarItems = [
@@ -41,11 +41,10 @@ const socialItems = [
   { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
 ];
 
-const comingSoonPill = (
-  <span className="ml-auto rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-600">
-    Soon
-  </span>
-);
+const settingsItems = [
+  { label: "Profile", Icon: User, href: "/dashboard/settings" },
+  { label: "Upgrade Plan", Icon: Zap, href: "/dashboard/settings/billing" },
+];
 
 function SidebarIconTooltip({ label, children }: { children: React.ReactNode; label: string }) {
   return (
@@ -66,14 +65,18 @@ function SidebarNavContent({
   socialOpen,
   setSocialOpen,
   socialActive,
-  onLogoutClick,
+  settingsOpen,
+  setSettingsOpen,
+  settingsActive,
   onNavigate,
 }: {
   pathname: string;
   socialOpen: boolean;
   setSocialOpen: (updater: (open: boolean) => boolean) => void;
   socialActive: boolean;
-  onLogoutClick: () => void;
+  settingsOpen: boolean;
+  setSettingsOpen: (updater: (open: boolean) => boolean) => void;
+  settingsActive: boolean;
   onNavigate?: () => void;
 }) {
   return (
@@ -169,48 +172,55 @@ function SidebarNavContent({
           <span className="sidebar-nav-label">Feedback</span>
         </Link>
 
-        <Link
-          href="/dashboard/settings"
-          onClick={onNavigate}
-          className={`sidebar-nav-item ${pathname === "/dashboard/settings" ? "sidebar-nav-item-active" : ""}`}
-        >
-          <SidebarIconTooltip label="Settings">
-            <Settings />
-          </SidebarIconTooltip>
-          <span className="sidebar-nav-label">Settings</span>
-        </Link>
+        <div>
+          <button
+            type="button"
+            aria-expanded={settingsOpen}
+            onClick={() => setSettingsOpen((open) => !open)}
+            className={`sidebar-nav-item sidebar-nav-button ${settingsOpen || settingsActive ? "sidebar-nav-item-active" : ""}`}
+          >
+            <SidebarIconTooltip label="Settings">
+              <Settings />
+            </SidebarIconTooltip>
+            <span className="sidebar-nav-label">Settings</span>
+            <ChevronDown className={`ml-auto h-3.5 w-3.5 transition-transform duration-300 ${settingsOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          <motion.div
+            initial={false}
+            animate={{ height: settingsOpen ? "auto" : 0 }}
+            transition={SPRING.panel}
+            className="overflow-hidden"
+          >
+            <div className="space-y-1 py-1.5">
+              {settingsItems.map(({ label, Icon, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={onNavigate}
+                  className={`sidebar-social-item ${pathname === href ? "text-primary" : ""}`}
+                >
+                  <span className="grid h-5 w-5 place-items-center">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span>{label}</span>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        </div>
       </nav>
 
       <div className="mt-auto">
-        <div className="rounded-card border border-primary/20 bg-primary-tint px-4 py-5">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-primary">Upgrade to Pro</p>
-            {comingSoonPill}
-          </div>
-          <p className="mt-2 text-[11px] leading-5 text-slate-600">Unlock advanced automation tools and analytics.</p>
-          <PressableButton
-            type="button"
-            onClick={() => alert("Billing is coming soon — we're still building this.")}
-            className="mt-4 inline-flex h-9 w-full items-center justify-center gap-2 rounded-control bg-primary text-sm font-bold text-white transition hover:bg-primary-hover"
-          >
-            <Zap className="h-4 w-4" />
-            Upgrade to Pro
-          </PressableButton>
-        </div>
-
-        <div className="mt-5 space-y-2">
+        <div className="space-y-2">
           <a href="#" className="flex h-9 items-center gap-3 rounded-control px-4 text-sm font-medium text-slate-600 hover:bg-slate-50">
             <CircleHelp className="h-4 w-4" />
             Help Center
           </a>
-          <button
-            type="button"
-            onClick={onLogoutClick}
-            className="flex h-9 w-full items-center gap-3 rounded-control px-4 text-sm font-medium text-red-500 hover:bg-red-50"
-          >
+          <LogoutButton className="flex h-9 w-full items-center gap-3 rounded-control px-4 text-sm font-medium text-red-500 hover:bg-red-50">
             <LogOut className="h-4 w-4" />
             Logout
-          </button>
+          </LogoutButton>
         </div>
       </div>
     </>
@@ -231,10 +241,10 @@ export default function DashboardSidebar({
 }) {
   const pathname = usePathname();
   const [socialOpen, setSocialOpen] = useState(false);
-  const [logoutOpen, setLogoutOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const socialActive = pathname.startsWith("/dashboard/socials");
+  const settingsActive = pathname.startsWith("/dashboard/settings");
 
   // Close the mobile drawer on route change so it never stays open behind
   // the page you just navigated to.
@@ -252,13 +262,6 @@ export default function DashboardSidebar({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [mobileNavOpen]);
-
-  async function confirmLogout() {
-    if (isLoggingOut) return;
-
-    setIsLoggingOut(true);
-    await signOut({ callbackUrl: "/login" });
-  }
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-[#f6f8fb] text-slate-950 lg:block lg:h-screen">
@@ -304,7 +307,9 @@ export default function DashboardSidebar({
             socialOpen={socialOpen}
             setSocialOpen={setSocialOpen}
             socialActive={socialActive}
-            onLogoutClick={() => setLogoutOpen(true)}
+            settingsOpen={settingsOpen}
+            setSettingsOpen={setSettingsOpen}
+            settingsActive={settingsActive}
           />
         </aside>
 
@@ -342,73 +347,13 @@ export default function DashboardSidebar({
                 socialOpen={socialOpen}
                 setSocialOpen={setSocialOpen}
                 socialActive={socialActive}
-                onLogoutClick={() => setLogoutOpen(true)}
+                settingsOpen={settingsOpen}
+                setSettingsOpen={setSettingsOpen}
+                settingsActive={settingsActive}
                 onNavigate={() => setMobileNavOpen(false)}
               />
             </motion.aside>
           </>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {logoutOpen && (
-          <ModalBackdrop
-            role="presentation"
-            onClick={() => !isLoggingOut && setLogoutOpen(false)}
-            className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/45 p-4 backdrop-blur-md"
-          >
-            <ModalPanel
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="logout-confirmation-title"
-              aria-describedby="logout-confirmation-description"
-              onClick={(event) => event.stopPropagation()}
-              className="relative w-full max-w-[410px] overflow-hidden rounded-[24px] border border-white/80 bg-white/95 shadow-[0_28px_80px_-20px_rgba(15,23,42,0.45)]"
-            >
-              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-red-50/90 to-transparent" />
-              <PressableButton
-                type="button"
-                onClick={() => setLogoutOpen(false)}
-                disabled={isLoggingOut}
-                aria-label="Close logout confirmation"
-                className="absolute right-4 top-4 z-10 grid h-8 w-8 place-items-center rounded-full text-slate-400 hover:bg-white hover:text-slate-700 hover:shadow-sm disabled:opacity-50"
-              >
-                <X className="h-4 w-4" />
-              </PressableButton>
-
-              <div className="relative px-7 pb-7 pt-8">
-                <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border-[6px] border-red-50 bg-red-100 text-red-600 shadow-sm">
-                  <LogOut className="h-6 w-6" strokeWidth={2.25} />
-                </div>
-                <h2 id="logout-confirmation-title" className="mt-5 text-center text-[22px] font-extrabold tracking-tight text-slate-950">
-                  Ready to log out?
-                </h2>
-                <p id="logout-confirmation-description" className="mx-auto mt-2 max-w-xs text-center text-sm leading-6 text-slate-500">
-                  Your work is safely saved. You’ll need to sign in again to return to your dashboard.
-                </p>
-
-                <div className="mt-7 grid grid-cols-2 gap-3">
-                  <PressableButton
-                    type="button"
-                    onClick={() => setLogoutOpen(false)}
-                    disabled={isLoggingOut}
-                    className="h-11 cursor-pointer rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Cancel
-                  </PressableButton>
-                  <PressableButton
-                    type="button"
-                    onClick={() => void confirmLogout()}
-                    disabled={isLoggingOut}
-                    className="inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-500 text-sm font-bold text-white shadow-[0_8px_20px_-8px_rgba(239,68,68,0.8)] hover:bg-red-600 disabled:cursor-wait disabled:opacity-60"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {isLoggingOut ? "Logging out…" : "Log out"}
-                  </PressableButton>
-                </div>
-              </div>
-            </ModalPanel>
-          </ModalBackdrop>
         )}
       </AnimatePresence>
     </main>

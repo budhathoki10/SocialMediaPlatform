@@ -48,7 +48,7 @@ export default function CtaSection() {
   );
 
   return (
-    <section id="pricing" ref={sectionRef} className="bg-[#eef1f8] px-5 py-14 sm:px-8 sm:py-16 lg:px-10">
+    <section id="cta" ref={sectionRef} className="bg-[#eef1f8] px-5 py-14 sm:px-8 sm:py-16 lg:px-10">
       <div ref={panelRef} className="cta-panel mx-auto max-w-4xl px-6 py-10 text-center text-white sm:px-10">
         <div ref={sweepRef} className="cta-sweep" aria-hidden="true" />
         <div className="relative">

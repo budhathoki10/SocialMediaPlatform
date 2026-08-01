@@ -9,9 +9,15 @@ const sessionMaxAge = 60 * 60 * 24 * 90;
 const supportedPlatforms = ["github", "linkedin", "instagram"];
 
 function isUnsafeCallbackPath(path) {
+  // "/login" is deliberately NOT treated as unsafe here: it's the exact,
+  // correct destination for sign-out (signOut({ callbackUrl: "/login" })
+  // in DashboardSidebar's logout confirmation), and this callback runs for
+  // both sign-in and sign-out redirects. Sign-in never actually requests
+  // "/login" as a callback in the first place — the login page's own
+  // client-side getCallbackUrl() already swaps it for the onboarding
+  // fallback before calling signIn() — so guarding it here only had the
+  // effect of hijacking sign-out back to onboarding.
   return (
-    path === "/login" ||
-    path.startsWith("/login?") ||
     path === "/error" ||
     path.startsWith("/error?") ||
     path === "/api/auth/error" ||

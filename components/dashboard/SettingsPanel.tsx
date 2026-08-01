@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertTriangle, Camera, Link2, Receipt, Unlink, X, Zap } from "lucide-react";
+import { AlertTriangle, Camera, Link2, LogOut, Receipt, Unlink, X, Zap } from "lucide-react";
 import Image from "next/image";
 import { AnimatePresence } from "motion/react";
 import { useMemo, useState } from "react";
 
 import EmptyState from "@/components/dashboard/EmptyState";
+import LogoutButton from "@/components/dashboard/LogoutButton";
 import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
 import PressableButton from "@/components/motion/PressableButton";
 import PressableLink from "@/components/motion/PressableLink";
@@ -304,6 +305,17 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
           <p className="text-xs font-bold uppercase tracking-[0.08em] text-slate-400">Timezone</p>
           <p className="mt-1 text-xs text-slate-500">Used for greetings and scheduling times across AutoPilot.</p>
           <p className="mt-3 text-sm font-semibold text-slate-800">{baseline.profile.timezone}</p>
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-800">Log out</p>
+            <p className="mt-0.5 text-xs text-slate-500">Sign out of AutoPilot on this device.</p>
+          </div>
+          <LogoutButton className="inline-flex h-9 shrink-0 items-center gap-2 rounded-control border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+            <LogOut className="h-4 w-4" />
+            Log out
+          </LogoutButton>
         </div>
       </Card>
 
