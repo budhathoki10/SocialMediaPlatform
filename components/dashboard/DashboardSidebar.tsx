@@ -6,7 +6,6 @@ import {
   CircleHelp,
   CirclePlus,
   LayoutDashboard,
-  LogOut,
   Menu,
   MessageCircle,
   MessageSquare,
@@ -23,7 +22,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
-import LogoutButton from "@/components/dashboard/LogoutButton";
 import NotificationsButton from "@/components/dashboard/NotificationsButton";
 import { ModalBackdrop } from "@/components/motion/Modal";
 import { SPRING } from "@/lib/motion/tokens";
@@ -217,10 +215,6 @@ function SidebarNavContent({
             <CircleHelp className="h-4 w-4" />
             Help Center
           </a>
-          <LogoutButton className="flex h-9 w-full items-center gap-3 rounded-control px-4 text-sm font-medium text-red-500 hover:bg-red-50">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </LogoutButton>
         </div>
       </div>
     </>
