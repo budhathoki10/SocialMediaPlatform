@@ -471,62 +471,12 @@ a {
   box-shadow: 0 22px 48px rgba(79, 70, 229, 0.34);
 }
 
-.hero-dashboard-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 10px;
-  filter: drop-shadow(0 34px 48px rgba(18, 39, 17, 0.16));
-}
-
-.hero-automation-visual {
-  display: grid;
-  max-width: 430px;
-  place-items: center;
-}
-
-.hero-automation-stage {
-  position: relative;
-  width: min(100%, 430px);
-  height: min(100%, 430px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.hero-automation-spin {
-  transform-origin: 50% 50%;
-  animation: clockwiseSpin 18s linear infinite;
-  will-change: transform;
-}
-
-.hero-automation-image {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 350px;
-  height: 350px;
-  border-radius: 10px;
-  filter: drop-shadow(0 8px 16px rgba(79, 70, 229, 0.2));
-  z-index: 10;
-}
-
 @keyframes shaderSlide {
   0% {
     transform: translate3d(12%, 0, 0);
   }
   100% {
     transform: translate3d(-22%, 0, 0);
-  }
-}
-
-@keyframes clockwiseSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
   }
 }
 
@@ -942,7 +892,6 @@ a {
   .shader-field::before,
   .shader-field::after,
   .shader-marquee,
-  .hero-automation-spin,
   .bars span,
   .cta-sweep,
   .pricing-badge-pulse {
