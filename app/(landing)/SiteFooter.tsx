@@ -17,6 +17,7 @@ const footerColumns = [
 
 const footerLinkHrefs: Record<string, string> = {
   Pricing: "/billing",
+  Privacy: "/privacy-policy",
 };
 
 export default function SiteFooter() {
