@@ -81,31 +81,23 @@ export async function GET(req) {
     return NextResponse.redirect(appUrl("/onboarding?error=github_user_failed"));
   }
 
-const existing = await ConnectedAccount.findOne({
-  user_id: currentUser._id,
-  platform: "github",
-});
-
-if (!existing) {
-  await ConnectedAccount.create({
-    user_id: currentUser._id,
-    platform: "github",
-    access_token: tokenData.access_token,
-    refresh_token: tokenData.refresh_token || null,
-    platform_username: githubUser.login,
-    connected_at: getKathmanduDate(),
-    status: "active",
-  });
-}
-await ConnectedAccount.updateOne(
-  { user_id: currentUser._id, platform: "github" },
-  {
-    $set: {
-      access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token || null,
+  // Single upsert so reconnecting after a disconnect actually reactivates the account.
+  // The previous create-if-missing-else-update-tokens-only logic left `status` and
+  // `connected_at` untouched on reconnect, so a disconnected account (status: "revoked")
+  // stayed revoked forever even after a fully successful OAuth round-trip.
+  await ConnectedAccount.findOneAndUpdate(
+    { user_id: currentUser._id, platform: "github" },
+    {
+      $set: {
+        access_token: tokenData.access_token,
+        refresh_token: tokenData.refresh_token || null,
+        platform_username: githubUser.login,
+        connected_at: getKathmanduDate(),
+        status: "active",
+      },
     },
-  }
-);
+    { upsert: true, runValidators: true }
+  );
 
   return NextResponse.redirect(appUrl("/onboarding?github=connected"));
 }
