@@ -35,7 +35,7 @@ const sidebarItems = [
 ];
 
 const socialItems = [
-  { label: "WhatsApp", image: "/landing/whatsapps.png", href: "/dashboard/socials/whatsapp" },
+  { label: "WhatsApp", image: "/landing/whatsapps.png", href: "/dashboard/socials/whatsapp", comingSoon: true },
   { label: "Instagram", image: "/landing/insta.png", href: "/dashboard/socials/instagram" },
 ];
 
@@ -140,7 +140,7 @@ function SidebarNavContent({
             className="overflow-hidden"
           >
             <div className="space-y-1 py-1.5">
-              {socialItems.map(({ label, image, href }) => {
+              {socialItems.map(({ label, image, href, comingSoon }) => {
                 const iconEl = <Image src={image} alt="" width={20} height={20} className="h-4 w-4 rounded-sm object-contain" />;
 
                 return (
@@ -152,6 +152,11 @@ function SidebarNavContent({
                   >
                     <span className="grid h-5 w-5 place-items-center">{iconEl}</span>
                     <span>{label}</span>
+                    {comingSoon && (
+                      <span className="ml-auto inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-600">
+                        Soon
+                      </span>
+                    )}
                   </Link>
                 );
               })}

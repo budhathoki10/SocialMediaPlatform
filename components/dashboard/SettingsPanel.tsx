@@ -25,7 +25,6 @@ export type SettingsData = {
     connected: boolean;
     username: string | null;
     connectedAt: string | null;
-    facebookPageLinked?: boolean;
   }[];
   billing: {
     postsThisMonth: number;
@@ -38,7 +37,7 @@ const DEFAULT_SETTINGS: SettingsData = {
   connectedAccounts: [
     { platform: "github", connected: false, username: null, connectedAt: null },
     { platform: "linkedin", connected: false, username: null, connectedAt: null },
-    { platform: "instagram", connected: false, username: null, connectedAt: null, facebookPageLinked: false },
+    { platform: "instagram", connected: false, username: null, connectedAt: null },
   ],
   billing: { postsThisMonth: 0, postCap: 5 },
 };
@@ -236,7 +235,7 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
     setConnectedAccounts((prev) =>
       prev.map((account) =>
         account.platform === platform
-          ? { ...account, connected: false, username: null, facebookPageLinked: false }
+          ? { ...account, connected: false, username: null }
           : account,
       ),
     );
@@ -348,26 +347,6 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
                     <p className="truncate text-xs text-slate-500">
                       {account.connected ? account.username || "Connected" : "Not connected"}
                     </p>
-                    {account.platform === "instagram" && account.connected ? (
-                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                        {account.facebookPageLinked ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                            Linked to Facebook Page
-                          </span>
-                        ) : (
-                          <>
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-600">
-                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                              Not linked to a Facebook Page
-                            </span>
-                            <PressableLink href="/onboarding" className="text-[10px] font-bold text-primary hover:text-primary-hover">
-                              Fix connection
-                            </PressableLink>
-                          </>
-                        )}
-                      </div>
-                    ) : null}
                   </div>
                 </div>
 
