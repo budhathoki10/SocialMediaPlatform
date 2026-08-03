@@ -78,13 +78,11 @@ export async function GET(req) {
     return NextResponse.redirect(appUrl("/onboarding?error=instagram_token_failed"));
   }
 
-  // The `/me` Graph call below returns its own `id` field (an IGSID used for profile/media
-  // calls), but that is NOT the ID Meta puts in messaging webhook payloads (entry.id,
-  // sender.id, recipient.id). The token exchange's `user_id` is the one that matches
-  // webhooks, so it's what gets stored as platform_user_id — do not swap this for
-  // igAccount.id or webhook matching in app/api/auth/instagram/webhook/route.js will
-  // silently stop finding this account.
-  const webhookScopedUserId = shortTokenData.user_id;
+  // NOTE: api.instagram.com's token response also includes a `user_id` field, but do NOT
+  // use it — it comes back as a bare JSON number, and Instagram's numeric IDs (17+ digits)
+  // exceed Number.MAX_SAFE_INTEGER, so response.json() silently rounds it to the wrong
+  // value. graph.instagram.com correctly returns IDs as strings, so `/me`'s own `user_id`
+  // field (fetched in step 3 below) is the precision-safe source for that same ID.
 
   // Step 2: immediately exchange the short-lived token for a long-lived (60 day) token.
   // This is a graph.instagram.com call — separate host from the short-lived exchange above.
@@ -105,10 +103,14 @@ export async function GET(req) {
   // Step 3: fetch the Instagram Business account's own profile directly via
   // graph.instagram.com/me. No Facebook Page lookup: native login authenticates the
   // IG Business account itself, so there's no Page -> instagram_business_account hop.
+  // `user_id` here is the same account, but under the ID format Meta actually puts in
+  // messaging webhook payloads (entry.id, sender.id, recipient.id) — `id` is a different
+  // ID used for Graph API calls. Do not swap platform_user_id below back to `igAccount.id`
+  // or webhook matching in app/api/auth/instagram/webhook/route.js will silently break.
   const igRes = await fetch(
     `https://graph.instagram.com/v21.0/me?` +
       new URLSearchParams({
-        fields: "id,username,name,biography,profile_picture_url,followers_count,follows_count,media_count",
+        fields: "id,user_id,username,name,biography,profile_picture_url,followers_count,follows_count,media_count",
         access_token: longTokenData.access_token,
       })
   );
@@ -126,7 +128,7 @@ export async function GET(req) {
     {
       $set: {
         access_token: longTokenData.access_token,
-        platform_user_id: webhookScopedUserId || igAccount.id,
+        platform_user_id: igAccount.user_id || igAccount.id,
         platform_username: igAccount.username || igAccount.name || igAccount.id,
         name: igAccount.name || igAccount.username || "",
         biography: igAccount.biography || "",

@@ -154,7 +154,7 @@ const instagramPrerequisites = [
   {
     title: "Creator or Business account",
     description:
-      "Instagram requires a Creator or Business account to allow third-party apps like AutoPilot to publish posts. Personal accounts are not supported by Instagram's API.",
+      "Instagram requires a Creator or Business account to with AutoPilot to publish posts. Personal accounts are not supported by this application.",
   },
   {
     title: "Meta account setup",
@@ -217,113 +217,92 @@ const InstagramPrerequisiteDialog = ({
   onAgreeChange: (checked: boolean) => void;
   onClose: () => void;
   onConnect: () => void;
-}) => (
-  <ModalBackdrop className="fixed inset-0 z-50 grid place-items-center bg-slate-900/10 p-4 backdrop-blur-[2px]">
-    <ModalPanel className="relative flex max-h-[90vh] w-full max-w-[520px] flex-col overflow-hidden rounded-panel border border-slate-200 bg-white shadow-panel">
-      <div className="px-7 pb-5 pt-7 text-center">
-        <PressableButton
-          type="button"
-          onClick={onClose}
-          aria-label="Close Instagram prerequisites"
-          className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-        >
-          <X className="h-4 w-4" />
-        </PressableButton>
+}) => {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
 
-        <div className="mx-auto grid h-12 w-12 place-items-center rounded-control bg-primary-tint text-primary">
-          <FileText className="h-6 w-6" />
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  return (
+    <ModalBackdrop className="fixed inset-0 z-50 bg-slate-900/10 backdrop-blur-[2px] sm:grid sm:place-items-center sm:p-4">
+      <ModalPanel
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="instagram-agreement-title"
+        className="relative flex h-full w-full flex-col overflow-hidden bg-white sm:h-auto sm:max-h-[85vh] sm:max-w-[560px] sm:rounded-panel sm:border sm:border-slate-200 sm:shadow-panel"
+      >
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-6 py-5 sm:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
+              <FileText className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+             
+              <h2 id="instagram-agreement-title" className="text-base font-bold leading-snug text-slate-950">
+                Instagram Connection Agreement
+              </h2>
+            </div>
+          </div>
+          <PressableButton
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X className="h-4 w-4" />
+          </PressableButton>
         </div>
 
-        <div className="mt-5">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">
-            AutoPilot Platform Terms
+        <article className="min-h-0 flex-1 overflow-y-auto border-y border-slate-200/80 bg-[#fbfaf6] px-6 py-6 sm:px-8">
+          <p className="text-sm leading-7 text-slate-700 text-justify">
+            To publish content through AutoPilot, Instagram requires confirmation that your account meets
+            Meta&apos;s publishing requirements.
           </p>
-          <h2 className="mt-2 font-serif text-lg font-bold tracking-tight text-slate-900">
-            Instagram Connection Agreement
-          </h2>
-          <div className="mx-auto mt-3 h-px w-16 bg-slate-300" />
-        </div>
 
-        <p className="mx-auto mt-4 max-w-sm text-xs leading-5 text-slate-500">
-          Review these requirements before allowing AutoPilot to connect and publish with Instagram.
-        </p>
-      </div>
+          <div className="mt-6 space-y-6 text-sm leading-7 text-slate-700">
+            {instagramPrerequisites.map((item, index) => (
+              <section key={item.title} className={index > 0 ? "border-t border-dashed border-slate-300 pt-6" : ""}>
+                <h3 className="text-sm font-bold text-slate-950">
+                  {index + 1}. {item.title}
+                </h3>
+                <p className="mt-2 text-justify">{item.description}</p>
+              </section>
+            ))}
+          </div>
+        </article>
 
-      <article className="min-h-0 flex-1 overflow-y-auto border-y border-slate-200/80 bg-[#fbfaf6] px-7 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-        <div className="text-center">
-          <p className="font-serif text-xs font-bold uppercase tracking-wide text-primary">Required by Meta</p>
-          <h3 className="mt-2 font-serif text-base font-bold text-slate-900">
-            Instagram Publishing Prerequisites
-          </h3>
-        </div>
-
-        <div className="mt-5 space-y-5 font-serif text-[13px] leading-8 text-slate-700">
-          <p className="text-justify">
-            To connect an Instagram account to AutoPilot, the account owner must confirm that the Instagram account
-            satisfies Meta platform requirements for third-party publishing access.
-          </p>
-
-          {instagramPrerequisites.map((item, index) => (
-            <section key={item.title} className="border-t border-dashed border-slate-300 pt-4">
-              <h4 className="text-sm font-bold text-slate-950">
-                {index + 1}. {item.title}
-              </h4>
-              <p className="mt-2 text-justify">{item.description}</p>
-            </section>
-          ))}
-
-          <section className="border-t border-dashed border-slate-300 pt-4">
-            <h4 className="text-sm font-bold text-slate-950">
-              {instagramPrerequisites.length + 1}. Acknowledgement
-            </h4>
-            <p className="mt-2 text-justify">
-              By continuing, you acknowledge that your Instagram account is eligible for Meta API access and that
-              AutoPilot can only connect accounts that meet these requirements.
-            </p>
-          </section>
-        </div>
-
-        <div className="mt-6 border-t-2 border-dashed border-slate-300 pt-5">
-          <p className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-            Signature
-          </p>
-          <label className="mt-3 flex cursor-pointer items-start gap-3">
+        <div className="shrink-0 border-t border-slate-100 px-6 py-5 sm:px-8">
+          <label className="flex cursor-pointer items-start gap-2.5">
             <input
               type="checkbox"
               checked={agreed}
               onChange={(event) => onAgreeChange(event.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-400 accent-primary"
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 accent-primary"
             />
-            <span className="font-serif text-[13px] leading-6 text-slate-800">
-              I have read and agree. My Instagram account is a Creator or Business account.
+            <span className="text-sm font-medium leading-5 text-slate-700">
+              I have read and agree to the Instagram Connection Agreement and Meta publishing requirements.
             </span>
           </label>
-          <p className="mt-3 font-serif text-[10px] italic text-slate-400">
-            Checking this box constitutes your electronic signature and acceptance of these terms.
-          </p>
-        </div>
-      </article>
 
-      <div className="flex items-center justify-center gap-4 px-7 py-5">
-        <PressableButton
-          type="button"
-          onClick={onClose}
-          className="inline-flex h-10 min-w-32 items-center justify-center rounded-control border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-        >
-          Decline
-        </PressableButton>
-        <PressableButton
-          type="button"
-          disabled={!agreed}
-          onClick={onConnect}
-          className="inline-flex h-10 min-w-32 items-center justify-center gap-2 rounded-control bg-slate-800 px-5 text-sm font-bold text-white shadow-card transition hover:bg-slate-950 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
-        >
-          Accept
-        </PressableButton>
-      </div>
-    </ModalPanel>
-  </ModalBackdrop>
-);
+          <div className="mt-4 flex justify-end">
+            <PressableButton
+              type="button"
+              disabled={!agreed}
+              onClick={onConnect}
+              className="inline-flex h-10 items-center justify-center rounded-control bg-primary px-6 text-sm font-bold text-white shadow-card transition-all duration-200 hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+            >
+              Accept & Continue
+            </PressableButton>
+          </div>
+        </div>
+      </ModalPanel>
+    </ModalBackdrop>
+  );
+};
 
 const OnboardingContent = () => {
   const { data: session, update } = useSession();
