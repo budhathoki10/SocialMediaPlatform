@@ -13,7 +13,7 @@ import PressableLink from "@/components/motion/PressableLink";
 
 type OnboardingPlatform = {
   name: string;
-  status: "connected" | "available";
+  status: "connected" | "available" | "coming-soon";
   Logo: () => ReactNode;
 };
 
@@ -121,9 +121,6 @@ const handlePlatformClick = async (SocialMedia: string) => {
     case "GitHub":
       await clickedGitHub();
       break;
-    case "WhatsApp":
-      window.location.assign("/dashboard/socials/whatsapp");
-      break;
     default:
       alert(`${SocialMedia} clicked`);
   }
@@ -148,7 +145,7 @@ const onboardingPlatforms: OnboardingPlatform[] = [
   },
   {
     name: "WhatsApp",
-    status: "available",
+    status: "coming-soon",
     Logo: WhatsAppLogo,
   },
 ];
@@ -160,14 +157,9 @@ const instagramPrerequisites = [
       "Instagram requires a Creator or Business account to allow third-party apps like AutoPilot to publish posts. Personal accounts are not supported by Instagram's API.",
   },
   {
-    title: "Linked Facebook Page",
-    description:
-      "You need a Facebook Page linked to your Instagram account. The page can be empty; it just needs to exist and be connected to Instagram.",
-  },
-  {
     title: "Meta account setup",
     description:
-      "Switch your Instagram account in Settings > Account type and tools, then link a Facebook Page from Instagram Settings > Linked Accounts > Facebook.",
+      'Switch your Instagram account to a Professional account in Settings > Account type and tools, then select "Business."',
   },
 ];
 
@@ -182,15 +174,16 @@ const PlatformGrid = ({
     <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4">
       {platforms.map(({ name, status, Logo }) => {
         const isConnected = status === "connected";
+        const isComingSoon = status === "coming-soon";
 
         return (
           <PressableButton
             key={name}
             type="button"
             onClick={() => onPlatformClick(name)}
-            disabled={isConnected}
+            disabled={isConnected || isComingSoon}
             className={`relative flex min-h-28 flex-col items-center justify-center rounded-card border px-3 py-3 text-center transition disabled:cursor-default sm:px-4 sm:py-4 ${
-              isConnected
+              isConnected || isComingSoon
                 ? "border-slate-200 bg-slate-50 opacity-60 shadow-card"
                 : "border-slate-200 bg-white hover:cursor-pointer hover:border-primary hover:bg-primary-tint/40"
             }`}
@@ -201,11 +194,11 @@ const PlatformGrid = ({
             <span className="mt-4 text-sm font-semibold text-slate-950">{name}</span>
             <span
               className={`mt-2 inline-flex items-center gap-1 text-xs font-bold ${
-                isConnected ? "text-emerald-600" : "text-primary"
+                isConnected ? "text-emerald-600" : isComingSoon ? "text-amber-600" : "text-primary"
               }`}
             >
               {isConnected && <CheckCircle2 className="h-3.5 w-3.5" />}
-              {isConnected ? "Connected" : "Connect"}
+              {isConnected ? "Connected" : isComingSoon ? "Coming Soon" : "Connect"}
             </span>
           </PressableButton>
         );
@@ -241,64 +234,77 @@ const InstagramPrerequisiteDialog = ({
           <FileText className="h-6 w-6" />
         </div>
 
-        <div className="mt-5 flex items-center gap-4">
-          <span className="h-px flex-1 bg-slate-200" />
-          <p className="text-xs font-bold text-slate-800">Instagram Terms</p>
-          <span className="h-px flex-1 bg-slate-200" />
+        <div className="mt-5">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-400">
+            AutoPilot Platform Terms
+          </p>
+          <h2 className="mt-2 font-serif text-lg font-bold tracking-tight text-slate-900">
+            Instagram Connection Agreement
+          </h2>
+          <div className="mx-auto mt-3 h-px w-16 bg-slate-300" />
         </div>
 
-        <p className="mx-auto mt-3 max-w-sm text-xs leading-5 text-slate-500">
+        <p className="mx-auto mt-4 max-w-sm text-xs leading-5 text-slate-500">
           Review these requirements before allowing AutoPilot to connect and publish with Instagram.
         </p>
       </div>
 
-      <div className="min-h-0 flex-1 px-7 pb-5">
-        <article className="max-h-[44vh] overflow-y-auto px-1 py-2">
-          <div className="text-center">
-            <p className="text-xs font-bold text-primary">Required by Meta</p>
-            <h2 className="mt-2 text-base font-bold text-slate-900">
-              Instagram Publishing Prerequisites
-            </h2>
-          </div>
+      <article className="min-h-0 flex-1 overflow-y-auto border-y border-slate-200/80 bg-[#fbfaf6] px-7 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
+        <div className="text-center">
+          <p className="font-serif text-xs font-bold uppercase tracking-wide text-primary">Required by Meta</p>
+          <h3 className="mt-2 font-serif text-base font-bold text-slate-900">
+            Instagram Publishing Prerequisites
+          </h3>
+        </div>
 
-          <div className="mt-5 space-y-5 text-xs leading-6 text-slate-600">
-            <p>
-              To connect an Instagram account to AutoPilot, the account owner must confirm that the Instagram account
-              satisfies Meta platform requirements for third-party publishing access.
-            </p>
+        <div className="mt-5 space-y-5 font-serif text-[13px] leading-8 text-slate-700">
+          <p className="text-justify">
+            To connect an Instagram account to AutoPilot, the account owner must confirm that the Instagram account
+            satisfies Meta platform requirements for third-party publishing access.
+          </p>
 
-            {instagramPrerequisites.map((item, index) => (
-              <section key={item.title} className="border-t border-slate-200/80 pt-4">
-                <p className="text-xs font-semibold text-slate-400">Section {index + 1}</p>
-                <h3 className="mt-1 text-sm font-bold text-slate-950">{item.title}</h3>
-                <p className="mt-2">{item.description}</p>
-              </section>
-            ))}
-
-            <section className="border-t border-slate-200/80 pt-4">
-              <p className="text-xs font-semibold text-slate-400">Acknowledgement</p>
-              <p className="mt-2">
-                By continuing, you acknowledge that your Instagram account is eligible for Meta API access and that
-                AutoPilot can only connect accounts that meet these requirements.
-              </p>
+          {instagramPrerequisites.map((item, index) => (
+            <section key={item.title} className="border-t border-dashed border-slate-300 pt-4">
+              <h4 className="text-sm font-bold text-slate-950">
+                {index + 1}. {item.title}
+              </h4>
+              <p className="mt-2 text-justify">{item.description}</p>
             </section>
-          </div>
-        </article>
+          ))}
 
-        <label className="mt-4 flex cursor-pointer items-start gap-3 border-t border-slate-100 pt-4">
-          <input
-            type="checkbox"
-            checked={agreed}
-            onChange={(event) => onAgreeChange(event.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-primary"
-          />
-          <span className="text-xs font-semibold leading-5 text-slate-700">
-            I have read and agree. My Instagram account is Creator or Business, and it is linked to a Facebook Page.
-          </span>
-        </label>
-      </div>
+          <section className="border-t border-dashed border-slate-300 pt-4">
+            <h4 className="text-sm font-bold text-slate-950">
+              {instagramPrerequisites.length + 1}. Acknowledgement
+            </h4>
+            <p className="mt-2 text-justify">
+              By continuing, you acknowledge that your Instagram account is eligible for Meta API access and that
+              AutoPilot can only connect accounts that meet these requirements.
+            </p>
+          </section>
+        </div>
 
-      <div className="flex items-center justify-center gap-4 border-t border-slate-100 px-7 py-5">
+        <div className="mt-6 border-t-2 border-dashed border-slate-300 pt-5">
+          <p className="font-serif text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            Signature
+          </p>
+          <label className="mt-3 flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(event) => onAgreeChange(event.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-400 accent-primary"
+            />
+            <span className="font-serif text-[13px] leading-6 text-slate-800">
+              I have read and agree. My Instagram account is a Creator or Business account.
+            </span>
+          </label>
+          <p className="mt-3 font-serif text-[10px] italic text-slate-400">
+            Checking this box constitutes your electronic signature and acceptance of these terms.
+          </p>
+        </div>
+      </article>
+
+      <div className="flex items-center justify-center gap-4 px-7 py-5">
         <PressableButton
           type="button"
           onClick={onClose}

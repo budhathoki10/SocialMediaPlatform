@@ -46,7 +46,7 @@ export async function GET() {
 
   const [accounts, postsThisMonth] = await Promise.all([
     ConnectedAccount.find({ user_id: user._id, platform: { $in: CONNECTED_PLATFORMS } })
-      .select("platform platform_username status connected_at page_id")
+      .select("platform platform_username status connected_at")
       .lean(),
     Post.countDocuments({ user_id: user._id, created_at: { $gte: startOfMonth } }),
   ]);
@@ -69,11 +69,6 @@ export async function GET() {
         connected,
         username: account?.platform_username || null,
         connectedAt: account?.connected_at?.toISOString?.() || account?.connected_at || null,
-        // Instagram only: a saved ConnectedAccount only ever gets a page_id
-        // once the OAuth callback confirmed a linked Facebook Page + IG
-        // business account (see app/api/auth/instagram/callback/route.js) —
-        // not re-verified afterward, so this can go stale if unlinked later.
-        ...(platform === "instagram" ? { facebookPageLinked: connected && Boolean(account?.page_id) } : {}),
       };
     }),
     billing: {
