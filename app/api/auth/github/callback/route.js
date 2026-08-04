@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, User, getKathmanduDate } from "@/lib/models";
 
@@ -98,6 +99,14 @@ export async function GET(req) {
     },
     { upsert: true, runValidators: true }
   );
+
+  await logActivity({
+    userId: currentUser._id,
+    type: "account_connected",
+    platform: "github",
+    title: "Account connected",
+    description: `GitHub account @${githubUser.login} connected to AutoPilot.`,
+  });
 
   return NextResponse.redirect(appUrl("/onboarding?github=connected"));
 }

@@ -11,6 +11,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, User, getKathmanduDate } from "@/lib/models";
 
@@ -146,6 +147,14 @@ export async function GET(req) {
     },
     { returnDocument: "after", upsert: true, runValidators: true }
   );
+
+  await logActivity({
+    userId: currentUser._id,
+    type: "account_connected",
+    platform: "instagram",
+    title: "Account connected",
+    description: `Instagram account @${igAccount.username || igAccount.name || igAccount.id} connected to AutoPilot.`,
+  });
 
   return NextResponse.redirect(appUrl("/onboarding?instagram=connected"));
 }

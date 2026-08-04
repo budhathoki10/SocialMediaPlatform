@@ -3,7 +3,15 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { GithubEvent, User } from "@/lib/models";
+import { ActivityLog, User } from "@/lib/models";
+
+const TYPE_TO_UI = {
+  draft_generated: "ai",
+  post_published: "success",
+  post_scheduled: "scheduled",
+  account_connected: "connection",
+  account_disconnected: "disconnection",
+};
 
 function getRelativeTime(value) {
   const diffMs = Date.now() - new Date(value).getTime();
@@ -17,16 +25,13 @@ function getRelativeTime(value) {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-function mapActivityItem(activity, index) {
+function mapActivityItem(activity) {
   return {
     id: activity._id.toString(),
-    title: index === 0 ? "AI Agent generated a draft post" : `${activity.event_type.replaceAll("_", " ")} received`,
-    description:
-      index === 0
-        ? `New draft created from ${activity.repo_name}.`
-        : `${activity.repo_name} was processed by AutoPilot automation.`,
+    title: activity.title,
+    description: activity.description,
     time: getRelativeTime(activity.created_at),
-    type: index === 0 ? "ai" : "success",
+    type: TYPE_TO_UI[activity.type] || "success",
   };
 }
 
@@ -47,8 +52,8 @@ export async function GET() {
     return NextResponse.json({ error: "User not found." }, { status: 404 });
   }
 
-  const activities = await GithubEvent.find({ user_id: user._id })
-    .select("repo_name event_type created_at")
+  const activities = await ActivityLog.find({ user_id: user._id })
+    .select("type platform title description created_at")
     .sort({ created_at: -1 })
     .limit(3)
     .lean();

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import { prepareLinkedInCommentary } from "@/lib/linkedin-post";
 import { ConnectedAccount, Post, PostPlatform, User, getKathmanduDate } from "@/lib/models";
@@ -126,6 +127,15 @@ export async function publishLinkedInPost({ postId, userId, content }) {
         { upsert: true, new: true },
       ),
     ]);
+
+    await logActivity({
+      userId,
+      type: "post_published",
+      platform: "linkedin",
+      title: "Post published on LinkedIn",
+      description: "Your post went live on LinkedIn.",
+      postId: post._id,
+    });
   }
 
   return {

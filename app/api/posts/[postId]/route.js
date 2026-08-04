@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import { Post, User, parseKathmanduDatetimeLocal } from "@/lib/models";
 import { getPostExpirationDate } from "@/lib/post-retention-config";
@@ -66,6 +67,7 @@ export async function PATCH(request, context) {
     return NextResponse.json({ error: "Post not found." }, { status: 404 });
   }
 
+  const previousStatus = post.status;
   const expiresAt = post.expires_at || getPostExpirationDate(post.created_at);
   let scheduledTime = null;
 
@@ -98,6 +100,17 @@ export async function PATCH(request, context) {
   }
 
   await post.save();
+
+  if (previousStatus !== "scheduled" && post.status === "scheduled") {
+    await logActivity({
+      userId: currentUser._id,
+      type: "post_scheduled",
+      platform: "linkedin",
+      title: "Post scheduled",
+      description: "Your post was scheduled for LinkedIn.",
+      postId: post._id,
+    });
+  }
 
   return NextResponse.json({
     post: {

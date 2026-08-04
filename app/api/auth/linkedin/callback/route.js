@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, User, getKathmanduDate } from "@/lib/models";
 
@@ -90,6 +91,14 @@ export async function GET(req) {
     },
     { new: true, upsert: true, runValidators: true },
   );
+
+  await logActivity({
+    userId: currentUser._id,
+    type: "account_connected",
+    platform: "linkedin",
+    title: "Account connected",
+    description: `LinkedIn account connected to AutoPilot.`,
+  });
 
   return NextResponse.redirect(appUrl("/onboarding?linkedin=connected"));
 }

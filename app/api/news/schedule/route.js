@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import {
   Post,
@@ -113,6 +114,15 @@ export async function POST(request) {
     },
     { new: true, upsert: true },
   );
+
+  await logActivity({
+    userId: currentUser._id,
+    type: "post_scheduled",
+    platform: "linkedin",
+    title: "Post scheduled",
+    description: `"${title}" was scheduled for LinkedIn.`,
+    postId: post._id,
+  });
 
   return NextResponse.json({
     post: {

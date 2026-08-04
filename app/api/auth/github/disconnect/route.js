@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, User } from "@/lib/models";
 
@@ -40,6 +41,14 @@ export async function POST() {
     { user_id: currentUser._id, platform: "github" },
     { $set: { status: "revoked" } },
   );
+
+  await logActivity({
+    userId: currentUser._id,
+    type: "account_disconnected",
+    platform: "github",
+    title: "Account disconnected",
+    description: "GitHub account was disconnected.",
+  });
 
   return NextResponse.json({ connected: false, platform: "github" });
 }

@@ -12,7 +12,7 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, GithubEvent, Post, User } from "@/lib/models";
+import { ActivityLog, ConnectedAccount, Post, User } from "@/lib/models";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import DashboardToolbar from "@/components/dashboard/DashboardToolbar";
 import EmptyState from "@/components/dashboard/EmptyState";
@@ -44,11 +44,30 @@ type ConnectedAccountSummary = {
   connected_at: Date;
 };
 
-type GithubEventSummary = {
+type ActivityLogType =
+  | "draft_generated"
+  | "post_published"
+  | "post_scheduled"
+  | "account_connected"
+  | "account_disconnected";
+
+type ActivityLogSummary = {
   _id: string;
-  repo_name: string;
-  event_type: string;
+  type: ActivityLogType;
+  platform: string;
+  title: string;
+  description: string;
   created_at: Date;
+};
+
+type ActivityFeedUiType = "success" | "ai" | "warning" | "scheduled" | "connection" | "disconnection";
+
+const ACTIVITY_TYPE_TO_UI: Record<ActivityLogType, ActivityFeedUiType> = {
+  draft_generated: "ai",
+  post_published: "success",
+  post_scheduled: "scheduled",
+  account_connected: "connection",
+  account_disconnected: "disconnection",
 };
 
 const platformImages: Record<string, string> = {
@@ -147,11 +166,11 @@ export default async function DashboardPage() {
       .select("platform platform_username status connected_at")
       .sort({ connected_at: -1 })
       .lean<ConnectedAccountSummary[]>(),
-    GithubEvent.find({ user_id: user._id })
-      .select("repo_name event_type created_at")
+    ActivityLog.find({ user_id: user._id })
+      .select("type platform title description created_at")
       .sort({ created_at: -1 })
       .limit(5)
-      .lean<GithubEventSummary[]>(),
+      .lean<ActivityLogSummary[]>(),
     Post.countDocuments({ user_id: user._id, status: "published" }),
     Post.countDocuments({ user_id: user._id, status: "scheduled" }),
     Post.countDocuments({ user_id: user._id, status: "draft" }),
@@ -159,15 +178,12 @@ export default async function DashboardPage() {
   const activeAccounts = accounts.filter((account) => account.status === "active");
   const greeting = getGreeting(user.timezone || undefined);
   const firstName = user.name?.trim().split(" ")[0] || "there";
-  const activityFeedItems = activities.slice(0, 3).map((activity, index) => ({
+  const activityFeedItems = activities.slice(0, 3).map((activity) => ({
     id: activity._id.toString(),
-    title: index === 0 ? "AI Agent generated a draft post" : `${activity.event_type.replaceAll("_", " ")} received`,
-    description:
-      index === 0
-        ? `New draft created from ${activity.repo_name}.`
-        : `${activity.repo_name} was processed by AutoPilot automation.`,
+    title: activity.title,
+    description: activity.description,
     time: getRelativeTime(activity.created_at),
-    type: index === 0 ? ("ai" as const) : ("success" as const),
+    type: ACTIVITY_TYPE_TO_UI[activity.type] || "success",
   }));
 
   return (

@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
 import { Post, PostPlatform, User, getKathmanduDate, parseKathmanduDatetimeLocal } from "@/lib/models";
 import { getPostExpirationDate } from "@/lib/post-retention-config";
@@ -109,6 +110,17 @@ export async function POST(request) {
     platform: MANUAL_POST_PLATFORM,
     status: "pending",
   });
+
+  if (status === "scheduled") {
+    await logActivity({
+      userId: currentUser._id,
+      type: "post_scheduled",
+      platform: MANUAL_POST_PLATFORM,
+      title: "Post scheduled",
+      description: "Your post was scheduled for LinkedIn.",
+      postId: post._id,
+    });
+  }
 
   return NextResponse.json(
     {
