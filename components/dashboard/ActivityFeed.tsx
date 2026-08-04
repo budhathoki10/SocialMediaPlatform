@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, AlertTriangle, Bot, CheckCircle2, RefreshCcw } from "lucide-react";
+import { AlertTriangle, Bot, CalendarClock, CheckCircle2, History, Link2, RefreshCcw, Unlink2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
@@ -12,19 +12,25 @@ type ActivityItem = {
   title: string;
   description: string;
   time: string;
-  type: "success" | "ai" | "warning";
+  type: "success" | "ai" | "warning" | "scheduled" | "connection" | "disconnection";
 };
 
 const iconStyles = {
   success: "bg-emerald-50 text-emerald-600 ring-emerald-100",
   ai: "bg-primary-tint text-primary ring-indigo-100",
   warning: "bg-amber-50 text-amber-600 ring-amber-100",
+  scheduled: "bg-sky-50 text-sky-600 ring-sky-100",
+  connection: "bg-violet-50 text-violet-600 ring-violet-100",
+  disconnection: "bg-slate-100 text-slate-500 ring-slate-200",
 };
 
 const iconMap = {
   success: CheckCircle2,
   ai: Bot,
   warning: AlertTriangle,
+  scheduled: CalendarClock,
+  connection: Link2,
+  disconnection: Unlink2,
 };
 
 function ActivityFeedSkeleton() {
@@ -74,7 +80,7 @@ export default function ActivityFeed({ initialItems }: { initialItems: ActivityI
     <section className="min-h-[278px] overflow-hidden rounded-card border border-slate-200 bg-white shadow-card">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div className="flex items-center gap-2">
-          <Activity className="h-4 w-4 text-primary" />
+          <History className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-bold text-slate-950">Activity Feed</h2>
         </div>
         <PressableButton
@@ -98,7 +104,7 @@ export default function ActivityFeed({ initialItems }: { initialItems: ActivityI
         </div>
       ) : items.length === 0 ? (
         <EmptyState
-          icon={Activity}
+          icon={History}
           title="No logs"
           description="Activity logs will appear here when automation runs."
           className="min-h-48"

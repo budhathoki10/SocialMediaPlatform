@@ -9,6 +9,7 @@
     "start": "node app.js",
     "lint": "eslint",
     "git:feature": "node scripts/git-feature-workflow.js",
+    "migrate:activity-log": "node scripts/migrate-activity-log-backfill.js",
     "test": "node --test"
   },
   "dependencies": {
