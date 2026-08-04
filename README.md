@@ -59,7 +59,7 @@ This is the most built-out feature. Flow for every incoming DM/comment:
 6. **Optional full auto-send** — if the account owner has both the auto-reply agent and Instagram platform permission enabled in Settings, any draft that comes back `tone: "ready"` is sent immediately via the Graph API without waiting for approval. Anything less certain always waits for a human.
 
 ### 2.6 Auto-Reply Settings
-Per-user configuration (`/dashboard/auto-reply`, backed by `AutoReplySettings`) covers: enable/disable the agent, tone, AI semantic analysis toggle, spam filtering, per-platform send permission, contact filtering (mutual connections / verified only), keyword exclusions, human-fallback confidence threshold, and response style (emoji usage, length, greeting style, sign-off, link/CTA policy, max replies per contact per 24h, business-hours awareness).
+Per-user configuration (`/dashboard/auto-reply`, backed by `AutoReplySettings`) covers: enable/disable the agent, tone, AI semantic analysis toggle, spam filtering, per-platform send permission, contact filtering (mutual connections / verified only), keyword exclusions, human-fallback confidence threshold, and response style (emoji usage, length, greeting style, sign-off, link/CTA policy, max replies per contact per day (resets at Kathmandu midnight), business-hours awareness).
 
 ### 2.7 Feedback
 Logged-in users can submit feedback (`/dashboard/feedback` → `POST /api/feedback`), stored per user in MongoDB.
