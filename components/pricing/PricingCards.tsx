@@ -9,7 +9,7 @@ import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { DURATION, EASE, MOTION_OK_QUERY, SPRING, STAGGER } from "@/lib/motion/tokens";
 import CountUp from "@/components/motion/CountUp";
 import MagneticWrap from "@/components/motion/MagneticWrap";
-import PressableLink, { PressableAnchor } from "@/components/motion/PressableLink";
+import PressableLink from "@/components/motion/PressableLink";
 import { PLANS, type BillingPeriod, type Plan } from "./data";
 
 const BADGE_ICON: Record<NonNullable<Plan["badge"]>["icon"], LucideIcon> = {
@@ -164,23 +164,12 @@ function PricingCard({ plan, period }: { plan: Plan; period: BillingPeriod }) {
   const suffix = plan.monthlyPrice === 0 ? "/month" : isYearly ? "/year" : "/month";
   const BadgeIcon = plan.badge ? BADGE_ICON[plan.badge.icon] : null;
 
-  const isCheckoutLink = plan.ctaHref.startsWith("/api/billing/checkout");
-  const ctaHref = isCheckoutLink ? `${plan.ctaHref}&period=${period}` : plan.ctaHref;
-  const ctaClassName = `inline-flex h-11 w-full items-center justify-center rounded-lg px-5 text-sm font-bold transition ${CTA_STYLES[plan.ctaStyle]}`;
-
-  // Checkout links redirect server-side to Freemius (an external domain), so
-  // they need a real browser navigation — Next's <Link> client transition
-  // expects an in-app route and won't follow that redirect correctly.
-  const cta = isCheckoutLink ? (
-    <PressableAnchor
-      href={ctaHref}
+  const cta = (
+    <PressableLink
+      href={plan.ctaHref}
       whileHover={plan.popular ? undefined : { y: -1 }}
-      className={ctaClassName}
+      className={`inline-flex h-11 w-full items-center justify-center rounded-lg px-5 text-sm font-bold transition ${CTA_STYLES[plan.ctaStyle]}`}
     >
-      {plan.ctaLabel}
-    </PressableAnchor>
-  ) : (
-    <PressableLink href={ctaHref} whileHover={plan.popular ? undefined : { y: -1 }} className={ctaClassName}>
       {plan.ctaLabel}
     </PressableLink>
   );
