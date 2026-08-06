@@ -10,6 +10,7 @@
     "lint": "eslint",
     "git:feature": "node scripts/git-feature-workflow.js",
     "migrate:activity-log": "node scripts/migrate-activity-log-backfill.js",
+    "seed:billing-plans": "node scripts/seed-billing-plans.js",
     "test": "node --test"
   },
   "dependencies": {
