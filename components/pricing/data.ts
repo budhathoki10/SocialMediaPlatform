@@ -39,7 +39,6 @@ export const PLANS: Plan[] = [
       { label: "WhatsApp Integration", included: false },
       { label: "5 Scheduled Posts / Month", included: true },
       { label: "Basic Analytics", included: true },
-      { label: "AI Auto Reply", included: false },
       { label: "Community Support", included: true },
       { label: "1 Account per Platform", included: true },
     ],
@@ -61,7 +60,7 @@ export const PLANS: Plan[] = [
       { label: "WhatsApp Integration", included: true },
       { label: "Unlimited Scheduled Posts", included: true },
       { label: "Full Analytics Dashboard", included: true },
-      { label: "500 AI Auto Replies / Month", included: true },
+      { label: "2000 AI Auto Replies / Month", included: true },
       { label: "Contact Filtering", included: true },
       { label: "Keyword Exclusions", included: true },
       { label: "Human Fallback Threshold", included: true },
@@ -86,11 +85,6 @@ export const PLANS: Plan[] = [
       { label: "Unlimited Scheduled Posts", included: true },
       { label: "Unlimited AI Auto Replies*", included: true },
       { label: "Multiple Connected Accounts", included: true },
-      { label: "Up To 5 Team Members", included: true },
-      { label: "Exportable Analytics", included: true },
-      { label: "Priority Support", included: true },
-      { label: "Dedicated Support Access", included: true },
-      { label: "Agency-Level Account Management", included: true },
     ],
   },
 ];
@@ -129,7 +123,7 @@ export const COMPARISON_TABLE: ComparisonCategory[] = [
   {
     name: "Auto Reply",
     rows: [
-      { feature: "AI Auto Replies", free: false, pro: "500 / month", unlimited: "Unlimited*" },
+      { feature: "AI Auto Replies", free: false, pro: "2000 / month", unlimited: "Unlimited*" },
       { feature: "Contact Filtering", free: false, pro: true, unlimited: true },
       { feature: "Keyword Exclusions", free: false, pro: true, unlimited: true },
       { feature: "Human Fallback", free: false, pro: true, unlimited: true },
@@ -142,7 +136,6 @@ export const COMPARISON_TABLE: ComparisonCategory[] = [
     name: "Team & Accounts",
     rows: [
       { feature: "Connected Accounts", free: "1 / platform", pro: "1 / platform", unlimited: "Multiple" },
-      { feature: "Team Members", free: "1", pro: "1", unlimited: "5" },
     ],
   },
   {
@@ -150,7 +143,6 @@ export const COMPARISON_TABLE: ComparisonCategory[] = [
     rows: [
       { feature: "Community Support", free: true, pro: true, unlimited: true },
       { feature: "Priority Email", free: false, pro: true, unlimited: true },
-      { feature: "Dedicated Support", free: false, pro: false, unlimited: true },
     ],
   },
 ];
