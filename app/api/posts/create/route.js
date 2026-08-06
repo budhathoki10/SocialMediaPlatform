@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
+import { canScheduleAnotherPost } from "@/lib/entitlements";
 import { Post, PostPlatform, User, getKathmanduDate, parseKathmanduDatetimeLocal } from "@/lib/models";
 import { getPostExpirationDate } from "@/lib/post-retention-config";
 
@@ -21,7 +22,7 @@ async function getCurrentUser() {
   await connectDB();
 
   if (session.user.id) {
-    const user = await User.findById(session.user.id).select("_id");
+    const user = await User.findById(session.user.id).select("_id plan");
 
     if (user) {
       return user;
@@ -29,7 +30,7 @@ async function getCurrentUser() {
   }
 
   if (session.user.email) {
-    return User.findOne({ email: session.user.email }).select("_id");
+    return User.findOne({ email: session.user.email }).select("_id plan");
   }
 
   return null;
@@ -73,6 +74,18 @@ export async function POST(request) {
 
     if (scheduledTime > expiresAt) {
       return NextResponse.json({ error: "Posts can only be scheduled within 10 days." }, { status: 400 });
+    }
+
+    const quota = await canScheduleAnotherPost(currentUser._id, currentUser.plan);
+
+    if (!quota.allowed) {
+      return NextResponse.json(
+        {
+          error: `You've reached your plan's limit of ${quota.limit} scheduled posts this month. Upgrade to Pro for unlimited scheduled posts.`,
+          code: "plan_limit_reached",
+        },
+        { status: 403 },
+      );
     }
   }
 

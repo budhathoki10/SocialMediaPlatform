@@ -12,13 +12,16 @@ import {
   Save,
   Send,
   Smile,
+  Zap,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion, type Variants } from "motion/react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 import CharacterCounter from "@/components/motion/CharacterCounter";
+import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
 import PressableButton from "@/components/motion/PressableButton";
+import { PressableAnchor } from "@/components/motion/PressableLink";
 import { SPRING } from "@/lib/motion/tokens";
 
 const monthSlideVariants: Variants = {
@@ -106,6 +109,7 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
   const [savedMode, setSavedMode] = useState<SaveMode | null>(null);
   const [saveMessage, setSaveMessage] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [planLimitMessage, setPlanLimitMessage] = useState("");
   const hasContent = content.trim().length > 0;
   const displayName = userName?.trim().split(" ")[0] || "there";
 
@@ -237,6 +241,11 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (data.code === "plan_limit_reached") {
+          setPlanLimitMessage(data.error || "You've reached your plan's limit.");
+          return;
+        }
+
         throw new Error(data.error || "Unable to save post.");
       }
 
@@ -510,6 +519,51 @@ export default function CreatePostComposer({ userName }: { userName?: string | n
           </p>
         )}
       </section>
+
+      <AnimatePresence>
+        {planLimitMessage && (
+          <ModalBackdrop
+            onClick={() => setPlanLimitMessage("")}
+            className="fixed inset-0 z-50 grid place-items-center bg-slate-900/10 p-4 backdrop-blur-[2px]"
+          >
+            <ModalPanel
+              onClick={(event) => event.stopPropagation()}
+              className="relative w-full max-w-[440px] rounded-panel border border-slate-200 bg-white p-7 text-center shadow-panel"
+            >
+              <PressableButton
+                type="button"
+                onClick={() => setPlanLimitMessage("")}
+                aria-label="Close"
+                className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-4 w-4" />
+              </PressableButton>
+
+              <span className="mx-auto grid h-11 w-11 place-items-center rounded-control bg-primary-tint text-primary">
+                <Zap className="h-5 w-5" />
+              </span>
+              <h3 className="mt-4 text-base font-bold text-slate-950">Plan limit reached</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">{planLimitMessage}</p>
+
+              <div className="mt-6 flex flex-col gap-2.5">
+                <PressableAnchor
+                  href="/api/billing/checkout?plan=pro&period=monthly"
+                  className="inline-flex h-10 items-center justify-center rounded-control bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover"
+                >
+                  Upgrade to Pro
+                </PressableAnchor>
+                <PressableButton
+                  type="button"
+                  onClick={() => setPlanLimitMessage("")}
+                  className="inline-flex h-10 items-center justify-center rounded-control border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Maybe later
+                </PressableButton>
+              </div>
+            </ModalPanel>
+          </ModalBackdrop>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

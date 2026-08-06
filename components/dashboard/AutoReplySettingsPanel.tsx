@@ -32,6 +32,7 @@ export type AutoReplySettingsData = {
     signOffStyle: string;
     customSignOff: string;
     linkCtaEnabled: boolean;
+    maxRepliesPerContactEnabled: boolean;
     maxRepliesPerContact: number;
     businessHoursAware: boolean;
     businessHoursStart: string;
@@ -81,6 +82,7 @@ const DEFAULT_SETTINGS: AutoReplySettingsData = {
     signOffStyle: "team_name",
     customSignOff: "AutoPilot Support Team",
     linkCtaEnabled: true,
+    maxRepliesPerContactEnabled: false,
     maxRepliesPerContact: 1,
     businessHoursAware: false,
     businessHoursStart: "09:00",
@@ -1041,41 +1043,52 @@ export default function AutoReplySettingsPanel({
                 }
               />
               <Row
-                label="Max auto replies and AI drafts per user"
-                description="Daily auto-reply and AI draft limit for the same person."
+                label="Cap auto replies per user"
+                description="Off: keep replying to the same person until your plan's monthly limit. On: cap replies to them per day."
                 control={
-                  <div className="flex items-center gap-3">
-                    <PressableButton
-                      type="button"
-                      aria-label="Decrease max replies per contact"
-                      disabled={settings.responseStyle.maxRepliesPerContact <= 1}
-                      onClick={() =>
-                        updateResponseStyle({
-                          maxRepliesPerContact: stepMaxRepliesPerContact(settings.responseStyle.maxRepliesPerContact, -1),
-                        })
-                      }
-                      className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
-                    >
-                      <Minus className="h-3.5 w-3.5" />
-                    </PressableButton>
-                    <span className="w-4 text-center text-sm font-bold text-slate-800">
-                      {settings.responseStyle.maxRepliesPerContact}
-                    </span>
-                    <PressableButton
-                      type="button"
-                      aria-label="Increase max replies per contact"
-                      onClick={() =>
-                        updateResponseStyle({
-                          maxRepliesPerContact: stepMaxRepliesPerContact(settings.responseStyle.maxRepliesPerContact, 1),
-                        })
-                      }
-                      className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 hover:bg-slate-50"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                    </PressableButton>
-                  </div>
+                  <Toggle
+                    checked={settings.responseStyle.maxRepliesPerContactEnabled}
+                    onChange={(value) => updateResponseStyle({ maxRepliesPerContactEnabled: value })}
+                    label="Toggle per-user daily reply cap"
+                  />
                 }
               />
+              <div
+                className={`flex items-center gap-3 pb-4 transition-opacity duration-300 ${
+                  settings.responseStyle.maxRepliesPerContactEnabled ? "opacity-100" : "pointer-events-none opacity-50"
+                }`}
+                inert={!settings.responseStyle.maxRepliesPerContactEnabled}
+              >
+                <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-slate-400">Per day</span>
+                <PressableButton
+                  type="button"
+                  aria-label="Decrease max replies per contact"
+                  disabled={settings.responseStyle.maxRepliesPerContact <= 1}
+                  onClick={() =>
+                    updateResponseStyle({
+                      maxRepliesPerContact: stepMaxRepliesPerContact(settings.responseStyle.maxRepliesPerContact, -1),
+                    })
+                  }
+                  className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </PressableButton>
+                <span className="w-4 text-center text-sm font-bold text-slate-800">
+                  {settings.responseStyle.maxRepliesPerContact}
+                </span>
+                <PressableButton
+                  type="button"
+                  aria-label="Increase max replies per contact"
+                  onClick={() =>
+                    updateResponseStyle({
+                      maxRepliesPerContact: stepMaxRepliesPerContact(settings.responseStyle.maxRepliesPerContact, 1),
+                    })
+                  }
+                  className="grid h-8 w-8 place-items-center rounded-control border border-slate-200 text-slate-500 hover:bg-slate-50"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </PressableButton>
+              </div>
               <Row
                 label="Business hours awareness"
                 description="Reply on a delay outside your set business hours."

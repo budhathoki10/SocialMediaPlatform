@@ -46,6 +46,10 @@ async function runScheduledPostCron(baseUrl) {
     if (data.published || data.failed) {
       console.log("Scheduled post cron result:", data);
     }
+
+    if (data.billing?.expired) {
+      console.log(`Billing: downgraded ${data.billing.expired} overdue subscription(s) to free.`);
+    }
   } catch (error) {
     console.error("Unable to run scheduled post cron:", error);
   } finally {

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
+import { planAllowsAutoReply } from "@/lib/entitlements";
 import { AutoReplySettings, normalizeMaxRepliesPerContact, User } from "@/lib/models";
 
 const TONE_VALUES = ["professional", "friendly", "creative", "concise"];
@@ -22,12 +23,12 @@ async function getCurrentUser() {
   await connectDB();
 
   if (session.user.id) {
-    const user = await User.findById(session.user.id).select("_id");
+    const user = await User.findById(session.user.id).select("_id plan");
     if (user) return user;
   }
 
   if (session.user.email) {
-    return User.findOne({ email: session.user.email }).select("_id");
+    return User.findOne({ email: session.user.email }).select("_id plan");
   }
 
   return null;
@@ -58,6 +59,7 @@ function formatSettings(doc) {
       signOffStyle: doc.response_style?.sign_off_style,
       customSignOff: doc.response_style?.custom_sign_off,
       linkCtaEnabled: doc.response_style?.link_cta_enabled,
+      maxRepliesPerContactEnabled: doc.response_style?.max_replies_per_contact_enabled ?? false,
       maxRepliesPerContact: doc.response_style?.max_replies_per_contact,
       businessHoursAware: doc.response_style?.business_hours_aware,
       businessHoursStart: doc.response_style?.business_hours_start,
@@ -95,6 +97,16 @@ export async function PUT(request) {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
+
+  if (body.enabled === true && !planAllowsAutoReply(currentUser.plan)) {
+    return NextResponse.json(
+      {
+        error: "Auto-reply is available on the Pro and Unlimited plans. Upgrade to enable it.",
+        code: "plan_limit_reached",
+      },
+      { status: 403 },
+    );
   }
 
   const update = { updated_at: new Date() };
@@ -150,6 +162,9 @@ export async function PUT(request) {
     if (SIGN_OFF_VALUES.includes(style.signOffStyle)) update["response_style.sign_off_style"] = style.signOffStyle;
     if (typeof style.customSignOff === "string") update["response_style.custom_sign_off"] = style.customSignOff.trim();
     if (typeof style.linkCtaEnabled === "boolean") update["response_style.link_cta_enabled"] = style.linkCtaEnabled;
+    if (typeof style.maxRepliesPerContactEnabled === "boolean") {
+      update["response_style.max_replies_per_contact_enabled"] = style.maxRepliesPerContactEnabled;
+    }
     if (Number.isFinite(style.maxRepliesPerContact)) {
       update["response_style.max_replies_per_contact"] = normalizeMaxRepliesPerContact(style.maxRepliesPerContact);
     }
