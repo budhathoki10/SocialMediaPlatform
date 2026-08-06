@@ -56,9 +56,5 @@ export async function GET(request) {
   if (firstName) checkoutUrl.searchParams.set("first", firstName);
   if (lastNameParts.length) checkoutUrl.searchParams.set("last", lastNameParts.join(" "));
 
-  if (process.env.FREEMIUS_SANDBOX === "true") {
-    checkoutUrl.searchParams.set("sandbox", "true");
-  }
-
   return NextResponse.redirect(checkoutUrl.toString());
 }

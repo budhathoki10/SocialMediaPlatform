@@ -88,12 +88,16 @@ async function findPlanByProviderId(providerPlanId) {
 // them, so either one alone must be enough to activate.
 //
 // periodEnd is only known authoritatively from subscription.created's
-// `next_payment` field — payment.created (a renewal charge) carries no due
-// date at all. When it's missing, we approximate one billing cycle forward
-// from whichever is later: the subscription's existing current_period_end
-// or now. This estimate is what expireOverdueSubscriptions() checks against,
-// so it needs to keep advancing on every renewal or paying customers would
-// eventually get falsely downgraded.
+// `next_payment` field — payment.created (fired for both the very first
+// charge AND every renewal charge) carries no due date at all. When it's
+// missing, extend by one cycle ONLY if the existing period has already
+// elapsed (a genuine renewal) — otherwise keep the existing value as-is.
+// Without that guard, the initial payment.created (which always fires
+// alongside subscription.created for the same charge) would extend a
+// freshly-created yearly subscription's end date an extra year on top of
+// what subscription.created already set (e.g. 2026 -> 2028 instead of
+// 2026 -> 2027). This estimate is what expireOverdueSubscriptions() checks
+// against, so on actual renewals it still needs to keep advancing.
 async function activateSubscription({
   eventType,
   providerSubscriptionId,
@@ -129,12 +133,20 @@ async function activateSubscription({
   const now = new Date();
   const billingPeriod =
     billingCycle != null ? (Number(billingCycle) === 12 ? "yearly" : "monthly") : existing?.billing_period || "monthly";
-  const resolvedPeriodEnd =
-    periodEnd ||
-    addBillingCycle(
-      existing?.current_period_end && existing.current_period_end > now ? existing.current_period_end : now,
-      billingPeriod,
-    );
+
+  let resolvedPeriodEnd;
+
+  if (periodEnd) {
+    // Authoritative value straight from Freemius (subscription.created's next_payment).
+    resolvedPeriodEnd = periodEnd;
+  } else if (existing?.current_period_end && existing.current_period_end > now) {
+    // Current period hasn't ended yet — this payment.created is confirming
+    // the same charge subscription.created already accounted for. Don't extend.
+    resolvedPeriodEnd = existing.current_period_end;
+  } else {
+    // No existing period, or it already elapsed — a genuine renewal.
+    resolvedPeriodEnd = addBillingCycle(existing?.current_period_end || now, billingPeriod);
+  }
 
   await Subscription.findOneAndUpdate(
     { provider_subscription_id: String(providerSubscriptionId) },

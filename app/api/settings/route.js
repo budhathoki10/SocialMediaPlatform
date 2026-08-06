@@ -3,14 +3,10 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { ConnectedAccount, Post, User } from "@/lib/models";
+import { countAutoRepliesThisMonth, countScheduledPostsThisMonth, getPlanLimits } from "@/lib/entitlements";
+import { ConnectedAccount, Subscription, User } from "@/lib/models";
 
 const CONNECTED_PLATFORMS = ["github", "linkedin", "instagram"];
-
-// Free-tier post cap from the project's own planning doc — not enforced
-// anywhere server-side yet, shown for reference only (see README "Not Yet
-// Implemented": billing/plan enforcement).
-const FREE_PLAN_MONTHLY_POST_CAP = 5;
 
 async function getCurrentUser() {
   const session = await getServerSession(authOptions);
@@ -41,16 +37,18 @@ export async function GET() {
     return NextResponse.json({ error: "Login required." }, { status: 401 });
   }
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  const [accounts, postsThisMonth] = await Promise.all([
+  const [accounts, postsThisMonth, autoRepliesThisMonth, subscription] = await Promise.all([
     ConnectedAccount.find({ user_id: user._id, platform: { $in: CONNECTED_PLATFORMS } })
       .select("platform platform_username status connected_at")
       .lean(),
-    Post.countDocuments({ user_id: user._id, created_at: { $gte: startOfMonth } }),
+    countScheduledPostsThisMonth(user._id),
+    countAutoRepliesThisMonth(user._id),
+    Subscription.findOne({ user_id: user._id, status: { $in: ["active", "past_due"] } })
+      .sort({ created_at: -1 })
+      .lean(),
   ]);
   const accountsByPlatform = new Map(accounts.map((account) => [account.platform, account]));
+  const limits = getPlanLimits(user.plan);
 
   return NextResponse.json({
     profile: {
@@ -73,7 +71,17 @@ export async function GET() {
     }),
     billing: {
       postsThisMonth,
-      postCap: FREE_PLAN_MONTHLY_POST_CAP,
+      postCap: limits.scheduledPostsPerMonth === Infinity ? null : limits.scheduledPostsPerMonth,
+      autoRepliesThisMonth,
+      autoReplyCap: limits.autoRepliesPerMonth === Infinity ? null : limits.autoRepliesPerMonth,
+      subscription: subscription
+        ? {
+            status: subscription.status,
+            billingPeriod: subscription.billing_period,
+            currentPeriodEnd: subscription.current_period_end?.toISOString?.() || null,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+          }
+        : null,
     },
   });
 }

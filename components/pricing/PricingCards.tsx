@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useGSAP } from "@gsap/react";
 import { AnimatePresence, motion } from "motion/react";
 import { Check, Flame, X, Zap, type LucideIcon } from "lucide-react";
@@ -23,9 +23,12 @@ const CTA_STYLES: Record<Plan["ctaStyle"], string> = {
   gradient: "pricing-cta-gradient text-white",
 };
 
+const PLAN_RANK: Record<Plan["id"], number> = { free: 0, pro: 1, unlimited: 2 };
+
 export default function PricingCards({
   titleAs = "h2",
   animated = true,
+  currentPlan,
 }: {
   titleAs?: "h1" | "h2";
   /**
@@ -37,6 +40,12 @@ export default function PricingCards({
    * for a plain, immediately-visible render instead.
    */
   animated?: boolean;
+  /** The logged-in user's active plan, if any. When set, the card matching
+   * it shows a disabled "Current Plan" state instead of a buy button, and
+   * any plan at or below it is disabled too (downgrades happen through the
+   * billing portal, not by re-running checkout). Omit on the public
+   * marketing page, where there's no logged-in plan to compare against. */
+  currentPlan?: Plan["id"];
 } = {}) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
@@ -93,7 +102,7 @@ export default function PricingCards({
       <div className="mx-auto mt-16 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:items-start">
         {PLANS.map((plan) => (
           <div key={plan.id} data-pricing="card" className={plan.popular ? "lg:-mt-5" : undefined}>
-            <PricingCard plan={plan} period={period} />
+            <PricingCard plan={plan} period={period} currentPlan={currentPlan} />
           </div>
         ))}
       </div>
@@ -158,7 +167,7 @@ function BillingToggle({
   );
 }
 
-function PricingCard({ plan, period }: { plan: Plan; period: BillingPeriod }) {
+function PricingCard({ plan, period, currentPlan }: { plan: Plan; period: BillingPeriod; currentPlan?: Plan["id"] }) {
   const isYearly = period === "yearly" && plan.yearlyPrice != null;
   const price = isYearly ? plan.yearlyPrice! : plan.monthlyPrice;
   const suffix = plan.monthlyPrice === 0 ? "/month" : isYearly ? "/year" : "/month";
@@ -168,22 +177,38 @@ function PricingCard({ plan, period }: { plan: Plan; period: BillingPeriod }) {
   const ctaHref = isCheckoutLink ? `${plan.ctaHref}&period=${period}` : plan.ctaHref;
   const ctaClassName = `inline-flex h-11 w-full items-center justify-center rounded-lg px-5 text-sm font-bold transition ${CTA_STYLES[plan.ctaStyle]}`;
 
-  // Checkout links redirect server-side to Freemius (an external domain), so
-  // they need a real browser navigation — Next's <Link> client transition
-  // expects an in-app route and won't follow that redirect correctly.
-  const cta = isCheckoutLink ? (
-    <PressableAnchor
-      href={ctaHref}
-      whileHover={plan.popular ? undefined : { y: -1 }}
-      className={ctaClassName}
-    >
-      {plan.ctaLabel}
-    </PressableAnchor>
-  ) : (
-    <PressableLink href={ctaHref} whileHover={plan.popular ? undefined : { y: -1 }} className={ctaClassName}>
-      {plan.ctaLabel}
-    </PressableLink>
-  );
+  const isCurrentPlan = currentPlan === plan.id;
+  const isAtOrBelowCurrentPlan = currentPlan != null && PLAN_RANK[plan.id] <= PLAN_RANK[currentPlan];
+
+  let cta: ReactNode;
+
+  if (isAtOrBelowCurrentPlan) {
+    cta = (
+      <button
+        type="button"
+        disabled
+        className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-5 text-sm font-bold text-slate-400"
+      >
+        {isCurrentPlan ? "Current Plan" : "Included"}
+      </button>
+    );
+  } else if (isCheckoutLink) {
+    // Checkout links redirect server-side to Freemius (an external domain),
+    // so they need a real browser navigation — Next's <Link> client
+    // transition expects an in-app route and won't follow that redirect
+    // correctly.
+    cta = (
+      <PressableAnchor href={ctaHref} whileHover={plan.popular ? undefined : { y: -1 }} className={ctaClassName}>
+        {plan.ctaLabel}
+      </PressableAnchor>
+    );
+  } else {
+    cta = (
+      <PressableLink href={ctaHref} whileHover={plan.popular ? undefined : { y: -1 }} className={ctaClassName}>
+        {plan.ctaLabel}
+      </PressableLink>
+    );
+  }
 
   return (
     <article

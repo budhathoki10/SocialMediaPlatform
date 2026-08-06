@@ -9,7 +9,7 @@ import EmptyState from "@/components/dashboard/EmptyState";
 import LogoutButton from "@/components/dashboard/LogoutButton";
 import { ModalBackdrop, ModalPanel } from "@/components/motion/Modal";
 import PressableButton from "@/components/motion/PressableButton";
-import PressableLink from "@/components/motion/PressableLink";
+import PressableLink, { PressableAnchor } from "@/components/motion/PressableLink";
 import HoverCard from "@/components/motion/HoverCard";
 
 export type SettingsData = {
@@ -28,7 +28,15 @@ export type SettingsData = {
   }[];
   billing: {
     postsThisMonth: number;
-    postCap: number;
+    postCap: number | null;
+    autoRepliesThisMonth: number;
+    autoReplyCap: number | null;
+    subscription: {
+      status: string;
+      billingPeriod: string;
+      currentPeriodEnd: string | null;
+      cancelAtPeriodEnd: boolean;
+    } | null;
   };
 };
 
@@ -39,8 +47,33 @@ const DEFAULT_SETTINGS: SettingsData = {
     { platform: "linkedin", connected: false, username: null, connectedAt: null },
     { platform: "instagram", connected: false, username: null, connectedAt: null },
   ],
-  billing: { postsThisMonth: 0, postCap: 5 },
+  billing: {
+    postsThisMonth: 0,
+    postCap: 5,
+    autoRepliesThisMonth: 0,
+    autoReplyCap: 0,
+    subscription: null,
+  },
 };
+
+const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", unlimited: "Unlimited" };
+
+const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  past_due: "Past Due",
+  canceled: "Cancelled",
+  trialing: "Trialing",
+  incomplete: "Incomplete",
+  incomplete_expired: "Incomplete",
+  free_trial: "Free Trial",
+};
+
+function formatRenewalDate(isoDate: string | null) {
+  if (!isoDate) return null;
+  const date = new Date(isoDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
+}
 
 const platformImages: Record<string, string> = {
   github: "/landing/github.svg",
@@ -223,7 +256,12 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
   const [actionError, setActionError] = useState("");
 
   const hasAnyConnection = connectedAccounts.some((account) => account.connected);
-  const usagePercent = Math.min(100, Math.round((baseline.billing.postsThisMonth / baseline.billing.postCap) * 100));
+  const { postsThisMonth, postCap, autoRepliesThisMonth, autoReplyCap, subscription } = baseline.billing;
+  const postUsagePercent = postCap ? Math.min(100, Math.round((postsThisMonth / postCap) * 100)) : 0;
+  const autoReplyUsagePercent = autoReplyCap ? Math.min(100, Math.round((autoRepliesThisMonth / autoReplyCap) * 100)) : 0;
+  const planLabel = PLAN_LABELS[baseline.profile.plan] || baseline.profile.plan;
+  const isPaidPlan = baseline.profile.plan !== "free";
+  const renewalDate = formatRenewalDate(subscription?.currentPeriodEnd ?? null);
 
   async function disconnectPlatform(platform: string) {
     const response = await fetch(disconnectEndpoints[platform], { method: "POST" });
@@ -383,38 +421,93 @@ export default function SettingsPanel({ initialSettings }: { initialSettings: Se
       <Card>
         <SectionHeader title="Billing & Plan" />
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-control border border-primary/20 bg-primary-tint px-4 py-4">
-          <div>
-            <p className="text-sm font-bold capitalize text-primary">{baseline.profile.plan || "free"} plan</p>
-            <p className="mt-1 text-xs text-slate-600">Unlock advanced automation tools and analytics.</p>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-bold text-primary">{planLabel} plan</p>
+              {subscription ? (
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                    subscription.status === "active"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : subscription.status === "past_due"
+                        ? "bg-amber-50 text-amber-700"
+                        : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {SUBSCRIPTION_STATUS_LABELS[subscription.status] || subscription.status}
+                </span>
+              ) : null}
+            </div>
+            {subscription ? (
+              <p className="mt-1 text-xs text-slate-600">
+                {subscription.billingPeriod === "yearly" ? "Billed yearly" : "Billed monthly"}
+                {renewalDate
+                  ? ` — ${subscription.cancelAtPeriodEnd ? "access ends" : "renews"} ${renewalDate}`
+                  : ""}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-slate-600">Unlock advanced automation tools and analytics.</p>
+            )}
           </div>
-          <PressableButton
-            type="button"
-            onClick={() => alert("Billing is coming soon — we're still building this.")}
-            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-control bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover"
-          >
-            <Zap className="h-4 w-4" />
-            Upgrade to Pro
-          </PressableButton>
+
+          {isPaidPlan ? (
+            <span className="text-xs font-semibold text-slate-500">Contact support to manage your subscription.</span>
+          ) : (
+            <PressableAnchor
+              href="/api/billing/checkout?plan=pro&period=monthly"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-control bg-primary px-4 text-sm font-bold text-white transition hover:bg-primary-hover"
+            >
+              <Zap className="h-4 w-4" />
+              Upgrade to Pro
+            </PressableAnchor>
+          )}
         </div>
 
-        <div className="mt-5">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-600">
-            <span>Posts this month</span>
-            <span>
-              {baseline.billing.postsThisMonth} / {baseline.billing.postCap}
-            </span>
+        <div className="mt-5 space-y-4">
+          <div>
+            <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+              <span>Scheduled posts this month</span>
+              <span>{postCap === null ? `${postsThisMonth} / Unlimited` : `${postsThisMonth} / ${postCap}`}</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: postCap === null ? "6%" : `${postUsagePercent}%` }}
+              />
+            </div>
           </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
-            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${usagePercent}%` }} />
-          </div>
-          <p className="mt-2 text-[11px] text-slate-400">Usage shown for reference — plan limits aren&apos;t enforced yet.</p>
+
+          {isPaidPlan ? (
+            <div>
+              <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                <span>AI auto-replies this month</span>
+                <span>
+                  {autoReplyCap === null ? `${autoRepliesThisMonth} / Unlimited` : `${autoRepliesThisMonth} / ${autoReplyCap}`}
+                </span>
+              </div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: autoReplyCap === null ? "6%" : `${autoReplyUsagePercent}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              AI auto-reply isn&apos;t included on the Free plan.{" "}
+              <PressableAnchor href="/api/billing/checkout?plan=pro&period=monthly" className="font-bold text-primary">
+                Upgrade to unlock it
+              </PressableAnchor>
+              .
+            </p>
+          )}
         </div>
 
         <div className="mt-5 border-t border-slate-100 pt-5">
           <EmptyState
             icon={Receipt}
             title="No billing history"
-            description="Payment methods and invoices will appear here once billing is live."
+            description="Invoices and receipts are available from Freemius's billing portal."
             className="min-h-32"
           />
         </div>
