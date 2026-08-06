@@ -1,19 +1,45 @@
-// PHASE 1 — logging only. Receives Freemius webhook POSTs and returns 200
-// immediately for every event (Freemius retries on non-2xx / slow
-// responses), but only console.logs events that represent a completed
-// payment — Freemius fires many events per checkout (cart, user, card,
-// subscription, license, ...) and only "payment.created" is the actual
-// successful charge.
-// PHASE 2 will add signature verification and database writes — do not
-// treat anything logged here as verified/trusted yet.
+// PHASE 2 — signature verification. Every request's raw body must produce a
+// HMAC-SHA256 hex digest (keyed with the product's Freemius Secret Key,
+// found on the product's page — NOT the pk_/sk_ values on individual
+// licenses) matching the X-Signature header, or it's rejected before we
+// look at it. Still logging only — database writes are Phase 3.
+import crypto from "node:crypto";
 
 export const dynamic = "force-dynamic";
 
 const LOGGED_EVENT_TYPES = new Set(["payment.created"]);
 
+function isValidFreemiusSignature(rawBody, signatureHeader) {
+  const secret = process.env.FREEMIUS_SECRET_KEY;
+
+  if (!secret || !signatureHeader) return false;
+
+  const expectedSignature = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  // console.log(expectedSignature, "expectedSignature");
+  const expectedBuffer = Buffer.from(expectedSignature, "hex");
+    // console.log(expectedBuffer, "expectedBuffer");
+  const receivedBuffer = Buffer.from(signatureHeader, "hex");
+    // console.log(receivedBuffer, "receivedBuffer");
+  if (expectedBuffer.length !== receivedBuffer.length) return false;
+
+  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
 export async function POST(request) {
-  const headers = Object.fromEntries(request.headers.entries());
   const rawBody = await request.text();
+  const signatureHeader = request.headers.get("x-signature");
+
+  if (!process.env.FREEMIUS_SECRET_KEY) {
+    console.error("FREEMIUS_SECRET_KEY is not set — cannot verify webhook signatures.");
+    return Response.json({ error: "Webhook not configured" }, { status: 500 });
+  }
+
+  if (!isValidFreemiusSignature(rawBody, signatureHeader)) {
+    console.warn("Rejected Freemius webhook with invalid signature.", {
+      hasSignatureHeader: Boolean(signatureHeader),
+    });
+    return Response.json({ error: "Invalid signature" }, { status: 403 });
+  }
 
   let payload = rawBody;
   try {
@@ -23,10 +49,7 @@ export async function POST(request) {
   }
 
   if (typeof payload === "object" && payload !== null && LOGGED_EVENT_TYPES.has(payload.type)) {
-    console.log("=== FREEMIUS WEBHOOK RECEIVED (payment) ===");
-    console.log("--- Headers ---");
-    console.log(JSON.stringify(headers, null, 2));
-    console.log("--- Payload ---");
+    console.log("=== FREEMIUS WEBHOOK RECEIVED (verified, payment) ===");
     console.log(JSON.stringify(payload, null, 2));
   }
 
