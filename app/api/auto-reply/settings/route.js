@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { planAllowsAutoReply } from "@/lib/entitlements";
+import { getCurrentPlan, planAllowsAutoReply } from "@/lib/entitlements";
 import { AutoReplySettings, normalizeMaxRepliesPerContact, User } from "@/lib/models";
 
 const TONE_VALUES = ["professional", "friendly", "creative", "concise"];
@@ -23,12 +23,12 @@ async function getCurrentUser() {
   await connectDB();
 
   if (session.user.id) {
-    const user = await User.findById(session.user.id).select("_id plan");
+    const user = await User.findById(session.user.id).select("_id");
     if (user) return user;
   }
 
   if (session.user.email) {
-    return User.findOne({ email: session.user.email }).select("_id plan");
+    return User.findOne({ email: session.user.email }).select("_id");
   }
 
   return null;
@@ -99,7 +99,7 @@ export async function PUT(request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  if (body.enabled === true && !planAllowsAutoReply(currentUser.plan)) {
+  if (body.enabled === true && !planAllowsAutoReply(await getCurrentPlan(currentUser._id))) {
     return NextResponse.json(
       {
         error: "Auto-reply is available on the Pro and Unlimited plans. Upgrade to enable it.",

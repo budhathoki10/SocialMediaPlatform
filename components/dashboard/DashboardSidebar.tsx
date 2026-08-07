@@ -44,6 +44,8 @@ const settingsItems = [
   { label: "Upgrade Plan", Icon: Zap, href: "/dashboard/settings/billing" },
 ];
 
+const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", unlimited: "Unlimited" };
+
 function SidebarIconTooltip({ label, children }: { children: React.ReactNode; label: string }) {
   return (
     <span className="sidebar-nav-icon">
@@ -66,6 +68,7 @@ function SidebarNavContent({
   settingsOpen,
   setSettingsOpen,
   settingsActive,
+  plan,
   onNavigate,
 }: {
   pathname: string;
@@ -75,6 +78,7 @@ function SidebarNavContent({
   settingsOpen: boolean;
   setSettingsOpen: (updater: (open: boolean) => boolean) => void;
   settingsActive: boolean;
+  plan?: string;
   onNavigate?: () => void;
 }) {
   return (
@@ -203,12 +207,21 @@ function SidebarNavContent({
                   onClick={onNavigate}
                   className={`sidebar-social-item ${pathname === href ? "text-primary" : ""}`}
                 >
-                  <span className="grid h-5 w-5 place-items-center">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center">
                     <Icon className="h-4 w-4" />
                   </span>
-                  <span>{label}</span>
+                  <span className="truncate">{label}</span>
                 </Link>
               ))}
+              <div className="flex justify-end px-4 pt-0.5">
+                <span
+                  className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                    plan && plan !== "free" ? "bg-primary-tint text-primary" : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {PLAN_LABELS[plan || "free"] || "Free"} Plan
+                </span>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -234,9 +247,11 @@ type SidebarUser = {
 export default function DashboardSidebar({
   children,
   user,
+  plan,
 }: {
   children: ReactNode;
   user?: SidebarUser;
+  plan?: string;
 }) {
   const pathname = usePathname();
   const [socialOpen, setSocialOpen] = useState(false);
@@ -309,6 +324,7 @@ export default function DashboardSidebar({
             settingsOpen={settingsOpen}
             setSettingsOpen={setSettingsOpen}
             settingsActive={settingsActive}
+            plan={plan}
           />
         </aside>
 
@@ -349,6 +365,7 @@ export default function DashboardSidebar({
                 settingsOpen={settingsOpen}
                 setSettingsOpen={setSettingsOpen}
                 settingsActive={settingsActive}
+                plan={plan}
                 onNavigate={() => setMobileNavOpen(false)}
               />
             </motion.aside>

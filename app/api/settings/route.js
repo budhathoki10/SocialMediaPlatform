@@ -3,7 +3,13 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { countAutoRepliesThisMonth, countScheduledPostsThisMonth, getPlanLimits } from "@/lib/entitlements";
+import {
+  ACTIVE_PLAN_STATUSES,
+  countAutoRepliesThisMonth,
+  countScheduledPostsThisMonth,
+  getPlanLimits,
+  planFromSubscription,
+} from "@/lib/entitlements";
 import { ConnectedAccount, Subscription, User } from "@/lib/models";
 
 const CONNECTED_PLATFORMS = ["github", "linkedin", "instagram"];
@@ -43,19 +49,20 @@ export async function GET() {
       .lean(),
     countScheduledPostsThisMonth(user._id),
     countAutoRepliesThisMonth(user._id),
-    Subscription.findOne({ user_id: user._id, status: { $in: ["active", "past_due"] } })
+    Subscription.findOne({ user_id: user._id, status: { $in: ACTIVE_PLAN_STATUSES } })
       .sort({ created_at: -1 })
       .lean(),
   ]);
   const accountsByPlatform = new Map(accounts.map((account) => [account.platform, account]));
-  const limits = getPlanLimits(user.plan);
+  const plan = planFromSubscription(subscription);
+  const limits = getPlanLimits(plan);
 
   return NextResponse.json({
     profile: {
       name: user.name,
       email: user.email,
       avatarUrl: user.avatar_url,
-      plan: user.plan,
+      plan,
       timezone: user.timezone,
     },
     connectedAccounts: CONNECTED_PLATFORMS.map((platform) => {

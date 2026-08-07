@@ -34,7 +34,6 @@ function normalizeAuthUser(profile) {
     email: profile.email.toLowerCase(),
     name: profile.name || profile.email.split("@")[0],
     avatar_url: profile.image || profile.picture || null,
-    plan: "free",
     timezone: "Asia/Kathmandu",
   };
 }
@@ -75,7 +74,6 @@ async function findOrCreateUser(profile) {
     {
       $setOnInsert: {
         email: authUser.email,
-        plan: authUser.plan,
         timezone: authUser.timezone,
       },
       $set: {

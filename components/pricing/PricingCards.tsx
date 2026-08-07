@@ -29,6 +29,7 @@ export default function PricingCards({
   titleAs = "h2",
   animated = true,
   currentPlan,
+  currentPeriod,
 }: {
   titleAs?: "h1" | "h2";
   /**
@@ -42,10 +43,18 @@ export default function PricingCards({
   animated?: boolean;
   /** The logged-in user's active plan, if any. When set, the card matching
    * it shows a disabled "Current Plan" state instead of a buy button, and
-   * any plan at or below it is disabled too (downgrades happen through the
-   * billing portal, not by re-running checkout). Omit on the public
-   * marketing page, where there's no logged-in plan to compare against. */
+   * any plan strictly below it is disabled too as "Included" (downgrades
+   * happen through the billing portal, not by re-running checkout). Omit on
+   * the public marketing page, where there's no logged-in plan to compare
+   * against. */
   currentPlan?: Plan["id"];
+  /** The logged-in user's active billing_period ("monthly"/"yearly"), if
+   * any. Combined with currentPlan to tell "Unlimited monthly" apart from
+   * "Unlimited yearly" — without this, toggling to the period you *aren't*
+   * on would wrongly show your current plan's card as already-owned even
+   * though you'd actually be switching billing cadence. Free has no period
+   * of its own, so it's always treated as a match regardless of this value. */
+  currentPeriod?: BillingPeriod | null;
 } = {}) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
@@ -102,7 +111,7 @@ export default function PricingCards({
       <div className="mx-auto mt-16 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:items-start">
         {PLANS.map((plan) => (
           <div key={plan.id} data-pricing="card" className={plan.popular ? "lg:-mt-5" : undefined}>
-            <PricingCard plan={plan} period={period} currentPlan={currentPlan} />
+            <PricingCard plan={plan} period={period} currentPlan={currentPlan} currentPeriod={currentPeriod} />
           </div>
         ))}
       </div>
@@ -167,7 +176,17 @@ function BillingToggle({
   );
 }
 
-function PricingCard({ plan, period, currentPlan }: { plan: Plan; period: BillingPeriod; currentPlan?: Plan["id"] }) {
+function PricingCard({
+  plan,
+  period,
+  currentPlan,
+  currentPeriod,
+}: {
+  plan: Plan;
+  period: BillingPeriod;
+  currentPlan?: Plan["id"];
+  currentPeriod?: BillingPeriod | null;
+}) {
   const isYearly = period === "yearly" && plan.yearlyPrice != null;
   const price = isYearly ? plan.yearlyPrice! : plan.monthlyPrice;
   const suffix = plan.monthlyPrice === 0 ? "/month" : isYearly ? "/year" : "/month";
@@ -177,12 +196,24 @@ function PricingCard({ plan, period, currentPlan }: { plan: Plan; period: Billin
   const ctaHref = isCheckoutLink ? `${plan.ctaHref}&period=${period}` : plan.ctaHref;
   const ctaClassName = `inline-flex h-11 w-full items-center justify-center rounded-lg px-5 text-sm font-bold transition ${CTA_STYLES[plan.ctaStyle]}`;
 
-  const isCurrentPlan = currentPlan === plan.id;
-  const isAtOrBelowCurrentPlan = currentPlan != null && PLAN_RANK[plan.id] <= PLAN_RANK[currentPlan];
+  const isFreeCard = plan.id === "free";
+  const hasPaidPlan = currentPlan != null && currentPlan !== "free";
+
+  // Monthly and yearly are treated as fully separate subscriptions — a plan
+  // billed on one period has no bearing on the other period's tab. Only
+  // the tab matching your actual billing_period applies plan-tier
+  // comparisons at all. Free is the one exception: it has no period of its
+  // own, so any paid plan (on either cadence) trivially includes it.
+  const periodMatchesSubscription = currentPeriod === period;
+
+  const isCurrentPlan = isFreeCard ? currentPlan === "free" : periodMatchesSubscription && currentPlan === plan.id;
+  const isBelowCurrentPlan = isFreeCard
+    ? hasPaidPlan
+    : periodMatchesSubscription && currentPlan != null && PLAN_RANK[plan.id] < PLAN_RANK[currentPlan];
 
   let cta: ReactNode;
 
-  if (isAtOrBelowCurrentPlan) {
+  if (isCurrentPlan || isBelowCurrentPlan) {
     cta = (
       <button
         type="button"

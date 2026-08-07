@@ -32,7 +32,6 @@ type DashboardUser = {
   _id?: string;
   name?: string | null;
   avatar_url?: string | null;
-  plan?: string | null;
   timezone?: string | null;
 };
 
@@ -154,7 +153,7 @@ export default async function DashboardPage() {
 
   const userQuery = sessionUser.id ? { _id: sessionUser.id } : { email: sessionUser.email };
   const user = await User.findOne(userQuery)
-    .select("_id name avatar_url plan timezone")
+    .select("_id name avatar_url timezone")
     .lean<DashboardUser>();
 
   if (!user?._id) {
@@ -188,7 +187,7 @@ export default async function DashboardPage() {
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-      <DashboardToolbar title="AutoPilot Dashboard" user={{ name: user.name, image: user.avatar_url, plan: user.plan }} />
+      <DashboardToolbar title="AutoPilot Dashboard" user={{ name: user.name, image: user.avatar_url }} />
 
       <div className="min-h-0 flex-1 overflow-y-auto">
           <StaggerGroup className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-7 sm:px-6 lg:px-8">

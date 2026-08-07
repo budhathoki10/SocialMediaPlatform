@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
-import { getPlanLimits } from "@/lib/entitlements";
+import { getCurrentPlan, getPlanLimits } from "@/lib/entitlements";
 import { AutoReplyRule, User } from "@/lib/models";
 
 const MAX_KEYWORD_LENGTH = 200;
@@ -28,12 +28,12 @@ async function getCurrentUser() {
   await connectDB();
 
   if (session.user.id) {
-    const user = await User.findById(session.user.id).select("_id plan");
+    const user = await User.findById(session.user.id).select("_id");
     if (user) return user;
   }
 
   if (session.user.email) {
-    return User.findOne({ email: session.user.email }).select("_id plan");
+    return User.findOne({ email: session.user.email }).select("_id");
   }
 
   return null;
@@ -68,7 +68,9 @@ export async function POST(request) {
     return NextResponse.json({ error: "Login required." }, { status: 401 });
   }
 
-  if (!getPlanLimits(currentUser.plan).autoReplyKeywordRules) {
+  const plan = await getCurrentPlan(currentUser._id);
+
+  if (!getPlanLimits(plan).autoReplyKeywordRules) {
     return NextResponse.json(
       {
         error: "Keyword auto-reply rules are available on the Pro and Unlimited plans. Upgrade to create rules.",
