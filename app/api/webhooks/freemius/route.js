@@ -19,11 +19,24 @@
 // from /api/cron, which downgrades anyone whose current_period_end has
 // passed regardless of whether Freemius has confirmed cancellation yet.
 //
+// BILLING POLICY — deliberate, not something to "fix":
+//   - No refunds are issued. There is no refund/chargeback event handler
+//     here on purpose; a refunded subscription is not force-deactivated.
+//   - Cancellation is immediate, not prorated. handleSubscriptionCancelled
+//     below revokes access the moment the webhook lands, regardless of how
+//     much of the current paid period is left — there is no "stay active
+//     until period end" plan. `cancel_at_period_end` exists on the
+//     Subscription schema and is surfaced via /api/settings, but is never
+//     set to true anywhere; it's a placeholder for a feature this product
+//     does not offer, not a bug.
+//
 // NOTE: "payment.failed" is my best-guess event name following Freemius's
 // own <entity>.<action> convention (payment.created, subscription.created,
-// ...) — it has not been observed in a real payload. Confirm the exact name
-// against the event checklist on the product's Freemius webhook settings
-// page and adjust HANDLED_EVENT_TYPES/EVENT_HANDLERS below if it differs.
+// ...) — it has not been observed in a real payload. The POST handler below
+// logs every event type actually received (handled or not), specifically so
+// a wrong guess like this one surfaces in the logs instead of silently never
+// firing — check there to confirm the real name and adjust
+// HANDLED_EVENT_TYPES/EVENT_HANDLERS if it differs.
 import crypto from "node:crypto";
 
 import { connectDB } from "@/lib/db";
@@ -133,6 +146,7 @@ async function activateSubscription({
   const now = new Date();
   const billingPeriod =
     billingCycle != null ? (Number(billingCycle) === 12 ? "yearly" : "monthly") : existing?.billing_period || "monthly";
+  const amount = billingPeriod === "yearly" ? billingPlan.yearly_price : billingPlan.monthly_price;
 
   let resolvedPeriodEnd;
 
@@ -159,6 +173,8 @@ async function activateSubscription({
         provider: "freemius",
         provider_customer_id: freemiusUser?.id ? String(freemiusUser.id) : null,
         provider_subscription_id: String(providerSubscriptionId),
+        amount,
+        currency: billingPlan.currency,
         current_period_end: resolvedPeriodEnd,
         cancel_at_period_end: false,
         canceled_at: null,
@@ -169,8 +185,6 @@ async function activateSubscription({
     },
     { upsert: true, setDefaultsOnInsert: true },
   );
-
-  await User.updateOne({ _id: user._id }, { $set: { plan: billingPlan.plan } });
 }
 
 async function handlePaymentCreated(payload) {
@@ -213,8 +227,10 @@ async function handleSubscriptionCreated(payload) {
   });
 }
 
-// Informational only — does NOT touch User.plan. The hard access cutoff is
-// time-based (see file header), not dependent on this event ever arriving.
+// Informational only — a past_due Subscription still counts as active plan
+// access (see ACTIVE_PLAN_STATUSES in lib/entitlements.js). The hard access
+// cutoff is time-based (see file header), not dependent on this event ever
+// arriving.
 async function handlePaymentFailed(payload) {
   const payment = payload.objects?.payment;
 
@@ -235,6 +251,10 @@ async function handlePaymentFailed(payload) {
   }
 }
 
+// Revokes access immediately, not at the end of the paid period — this
+// product doesn't prorate cancellations or offer refunds (see BILLING
+// POLICY note at the top of this file). `cancel_at_period_end` is
+// deliberately left false here; it's unused by design, not an oversight.
 async function handleSubscriptionCancelled(payload) {
   const subscription = payload.objects?.subscription;
 
@@ -258,10 +278,7 @@ async function handleSubscriptionCancelled(payload) {
     console.warn("subscription.cancelled: no Subscription found for provider_subscription_id.", {
       provider_subscription_id: subscription.id,
     });
-    return;
   }
-
-  await User.updateOne({ _id: updated.user_id }, { $set: { plan: "free" } });
 }
 
 // license.expired doesn't carry a subscription id, only the license's own
@@ -290,12 +307,12 @@ async function handleLicenseExpired(payload) {
 
   if (!activeSubscription) return;
 
-  activeSubscription.status = "canceled";
-  activeSubscription.canceled_at = new Date();
+  // "expired", not "canceled" — Freemius is telling us the license ran out,
+  // not that the user (or anyone) actively cancelled it.
+  activeSubscription.status = "expired";
+  activeSubscription.expired_at = new Date();
   activeSubscription.updated_at = new Date();
   await activeSubscription.save();
-
-  await User.updateOne({ _id: user._id }, { $set: { plan: "free" } });
 }
 
 const EVENT_HANDLERS = {
@@ -331,6 +348,11 @@ export async function POST(request) {
 
   const eventType = typeof payload === "object" && payload !== null ? payload.type : null;
 
+  // Logged for every delivery, handled or not — this is what lets a wrong
+  // event-name guess (see the payment.failed NOTE above) get caught from
+  // real traffic instead of silently never firing.
+  console.log(`Freemius webhook received: ${eventType || "(missing type)"}`);
+
   if (eventType && HANDLED_EVENT_TYPES.has(eventType)) {
     console.log(`=== FREEMIUS WEBHOOK RECEIVED (${eventType}) ===`);
     console.log(JSON.stringify(payload, null, 2));
@@ -343,6 +365,12 @@ export async function POST(request) {
       // Freemius's own dashboard keeps a delivery log to catch this from.
       console.error(`Failed processing Freemius webhook "${eventType}".`, error);
     }
+  } else if (eventType && /payment|subscription|license/i.test(eventType)) {
+    // Looks billing-relevant but isn't in HANDLED_EVENT_TYPES — either a
+    // naming mismatch against one of our guessed event names, or a
+    // genuinely new event type we don't handle yet. Full payload so it can
+    // be confirmed and added rather than silently dropped.
+    console.warn(`Unhandled billing-looking Freemius event "${eventType}":`, JSON.stringify(payload, null, 2));
   }
 
   return Response.json({ received: true }, { status: 200 });

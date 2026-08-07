@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logActivity } from "@/lib/activity";
 import { connectDB } from "@/lib/db";
-import { canScheduleAnotherPost } from "@/lib/entitlements";
+import { canScheduleAnotherPost, getCurrentPlan } from "@/lib/entitlements";
 import { Post, PostPlatform, User, getKathmanduDate, parseKathmanduDatetimeLocal } from "@/lib/models";
 import { getPostExpirationDate } from "@/lib/post-retention-config";
 
@@ -22,7 +22,7 @@ async function getCurrentUser() {
   await connectDB();
 
   if (session.user.id) {
-    const user = await User.findById(session.user.id).select("_id plan");
+    const user = await User.findById(session.user.id).select("_id");
 
     if (user) {
       return user;
@@ -30,7 +30,7 @@ async function getCurrentUser() {
   }
 
   if (session.user.email) {
-    return User.findOne({ email: session.user.email }).select("_id plan");
+    return User.findOne({ email: session.user.email }).select("_id");
   }
 
   return null;
@@ -76,7 +76,8 @@ export async function POST(request) {
       return NextResponse.json({ error: "Posts can only be scheduled within 10 days." }, { status: 400 });
     }
 
-    const quota = await canScheduleAnotherPost(currentUser._id, currentUser.plan);
+    const plan = await getCurrentPlan(currentUser._id);
+    const quota = await canScheduleAnotherPost(currentUser._id, plan);
 
     if (!quota.allowed) {
       return NextResponse.json(

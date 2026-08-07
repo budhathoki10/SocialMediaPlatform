@@ -62,6 +62,7 @@ const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
   active: "Active",
   past_due: "Past Due",
   canceled: "Cancelled",
+  expired: "Expired",
   trialing: "Trialing",
   incomplete: "Incomplete",
   incomplete_expired: "Incomplete",

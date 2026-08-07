@@ -20,7 +20,6 @@ type DashboardUser = {
   _id?: string;
   name?: string | null;
   avatar_url?: string | null;
-  plan?: string | null;
 };
 
 type PostPlatformSummary = {
@@ -80,7 +79,7 @@ async function getCurrentUser() {
 
   if (sessionUser.id) {
     const user = await User.findById(sessionUser.id)
-      .select("_id name avatar_url plan")
+      .select("_id name avatar_url")
       .lean<DashboardUser>();
 
     if (user) return user;
@@ -88,7 +87,7 @@ async function getCurrentUser() {
 
   if (sessionUser.email) {
     return User.findOne({ email: sessionUser.email })
-      .select("_id name avatar_url plan")
+      .select("_id name avatar_url")
       .lean<DashboardUser>();
   }
 
@@ -175,7 +174,7 @@ export default async function ScheduledPostsPage({
 
   return (
     <section className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-      <DashboardToolbar title="Scheduled Posts" user={{ name: user.name, image: user.avatar_url, plan: user.plan }} />
+      <DashboardToolbar title="Scheduled Posts" user={{ name: user.name, image: user.avatar_url }} />
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-7 sm:px-6 lg:px-8">
             <div className="mx-auto w-full max-w-6xl">
