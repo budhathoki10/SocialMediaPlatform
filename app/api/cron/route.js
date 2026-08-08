@@ -1,7 +1,6 @@
 import { publishLinkedInPost } from "@/app/api/share/linkedin/route";
 import { connectDB } from "@/lib/db";
 import { Post, getKathmanduDate } from "@/lib/models";
-import { expireOverdueSubscriptions } from "@/lib/subscriptions";
 import { processQueuedPostJobs } from "@/lib/working";
 import { NextResponse } from "next/server";
 
@@ -29,8 +28,6 @@ export async function GET(request) {
 
   await connectDB();
 
-  const billingResult = await expireOverdueSubscriptions();
-
   const now = getKathmanduDate();
   const posts = await Post.find({
     scheduled_time: { $lte: now },
@@ -45,7 +42,6 @@ export async function GET(request) {
       ok: true,
       message: "No posts due",
       queue: queueResult,
-      billing: billingResult,
       count: 0,
       published: 0,
       failed: 0,
@@ -77,7 +73,6 @@ export async function GET(request) {
     ok: true,
     platform: "linkedin",
     queue: queueResult,
-    billing: billingResult,
     count: results.length,
     published: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,

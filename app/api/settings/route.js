@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/db";
 import {
-  ACTIVE_PLAN_STATUSES,
+  activeSubscriptionFilter,
   countAutoRepliesThisMonth,
   countScheduledPostsThisMonth,
   getPlanLimits,
@@ -49,7 +49,7 @@ export async function GET() {
       .lean(),
     countScheduledPostsThisMonth(user._id),
     countAutoRepliesThisMonth(user._id),
-    Subscription.findOne({ user_id: user._id, status: { $in: ACTIVE_PLAN_STATUSES } })
+    Subscription.findOne(activeSubscriptionFilter(user._id))
       .sort({ created_at: -1 })
       .lean(),
   ]);
