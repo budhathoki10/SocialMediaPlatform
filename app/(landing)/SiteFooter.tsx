@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { Check, GitBranch, Link2 } from "lucide-react";
@@ -61,7 +62,7 @@ export default function SiteFooter() {
     <footer ref={footerRef} className="bg-[#f7f8fb] px-5 py-16 sm:px-8 lg:px-10">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.4fr_2fr]">
         <div data-footer="brand">
-          <a href="#" className="flex items-center gap-2 text-sm font-bold text-slate-950">
+          <Link href="/" className="flex items-center gap-2 text-sm font-bold text-slate-950">
             <Image
               src="/landing/autopilot-logo.png"
               alt="AutoPilot"
@@ -70,7 +71,7 @@ export default function SiteFooter() {
               className="h-11 w-auto"
               style={{ width: "auto" }}
             />
-          </a>
+          </Link>
           <p className="mt-5 max-w-sm text-sm leading-6 text-slate-500">
             The all-in-one automation suite for modern developers and digital creators.
           </p>

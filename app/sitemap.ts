@@ -1,11 +1,13 @@
 import type { MetadataRoute } from "next";
 
+import { SITE_URL } from "@/lib/seo";
+
 // Next.js serves this at /sitemap.xml automatically. Only the public,
 // unauthenticated marketing/legal pages belong here — every /dashboard/*
 // route (and /onboarding) requires a signed-in session (see
 // app/dashboard/layout.tsx), so listing them would just send Google crawl
 // requests at pages it can never actually see the content of.
-const baseUrl = (process.env.NEXTAUTH_URL || "https://www.kushalbudhathoki.com.np").replace(/\/$/, "");
+const baseUrl = SITE_URL;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
