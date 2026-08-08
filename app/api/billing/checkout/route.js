@@ -1,14 +1,15 @@
-// Builds a Freemius checkout URL for the logged-in user and redirects to it.
-// The buyer's email is forced to match the session so the webhook payload's
-// `email` field can be matched back to our own `User` collection later
-// (Phase 3) — Freemius doesn't offer a way to echo an arbitrary internal id
-// through checkout, so email is the reliable join key instead.
+// Thin route — resolves the logged-in user + their plan choice, then
+// delegates the actual checkout-link construction to lib/billing (Freemius
+// specifics live there, not here).
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { billing } from "@/lib/billing";
 import { connectDB } from "@/lib/db";
-import { BillingPlan } from "@/lib/models";
+import { activeSubscriptionFilter } from "@/lib/entitlements";
+import { isFreemiusConfigured } from "@/lib/freemius";
+import { BillingPlan, Subscription, User } from "@/lib/models";
 
 export const dynamic = "force-dynamic";
 
@@ -34,27 +35,39 @@ export async function GET(request) {
     return NextResponse.redirect(appUrl(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`));
   }
 
+  if (!isFreemiusConfigured()) {
+    console.error("Cannot build Freemius checkout — FREEMIUS_PRODUCT_ID/API_KEY/SECRET_KEY/PUBLIC_KEY are not set.");
+    return NextResponse.redirect(appUrl("/billing?error=checkout_unavailable"));
+  }
+
   await connectDB();
 
   const billingPlan = await BillingPlan.findOne({ plan, is_active: true }).lean();
 
-  if (!billingPlan?.provider_plan_id || !billingPlan?.provider_product_id) {
+  if (!billingPlan?.provider_plan_id) {
     console.error(
-      `Cannot build Freemius checkout for plan "${plan}" — billing_plans is missing provider IDs. Run npm run seed:billing-plans.`,
+      `Cannot build Freemius checkout for plan "${plan}" — billing_plans is missing provider_plan_id. Run npm run seed:billing-plans.`,
     );
     return NextResponse.redirect(appUrl("/billing?error=checkout_unavailable"));
   }
 
-  const checkoutUrl = new URL(
-    `https://checkout.freemius.com/product/${billingPlan.provider_product_id}/plan/${billingPlan.provider_plan_id}/`,
-  );
+  const user = await User.findOne({ email: session.user.email }).select("_id").lean();
 
-  checkoutUrl.searchParams.set("billing_cycle", period === "yearly" ? "annual" : "monthly");
-  checkoutUrl.searchParams.set("email", session.user.email);
+  // If the user already has an active license for *any* plan/period, pass
+  // its licenseId through so the checkout is authorized as an upgrade
+  // against that existing license instead of starting an unrelated second
+  // subscription.
+  const existingSubscription = user
+    ? await Subscription.findOne(activeSubscriptionFilter(user._id)).sort({ created_at: -1 }).select("fs_license_id").lean()
+    : null;
 
-  const [firstName, ...lastNameParts] = (session.user.name || "").trim().split(" ");
-  if (firstName) checkoutUrl.searchParams.set("first", firstName);
-  if (lastNameParts.length) checkoutUrl.searchParams.set("last", lastNameParts.join(" "));
+  const checkoutUrl = await billing.buildCheckoutUrl({
+    email: session.user.email,
+    name: session.user.name,
+    providerPlanId: billingPlan.provider_plan_id,
+    period,
+    existingLicenseId: existingSubscription?.fs_license_id || null,
+  });
 
-  return NextResponse.redirect(checkoutUrl.toString());
+  return NextResponse.redirect(checkoutUrl);
 }
