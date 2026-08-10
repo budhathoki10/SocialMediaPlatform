@@ -23,8 +23,6 @@ const CTA_STYLES: Record<Plan["ctaStyle"], string> = {
   gradient: "pricing-cta-gradient text-white",
 };
 
-const PLAN_RANK: Record<Plan["id"], number> = { free: 0, pro: 1, unlimited: 2 };
-
 export default function PricingCards({
   titleAs = "h2",
   animated = true,
@@ -207,9 +205,11 @@ function PricingCard({
   const periodMatchesSubscription = currentPeriod === period;
 
   const isCurrentPlan = isFreeCard ? currentPlan === "free" : periodMatchesSubscription && currentPlan === plan.id;
-  const isBelowCurrentPlan = isFreeCard
-    ? hasPaidPlan
-    : periodMatchesSubscription && currentPlan != null && PLAN_RANK[plan.id] < PLAN_RANK[currentPlan];
+  // "Included" only ever shows on the Free card (it's baked into every paid
+  // plan by definition). A paid plan that ranks below the current one (e.g.
+  // Pro while subscribed to Unlimited) is NOT marked "Included" — it stays a
+  // normal, clickable CTA so the user can switch to it directly.
+  const isBelowCurrentPlan = isFreeCard && hasPaidPlan;
 
   let cta: ReactNode;
 
@@ -220,7 +220,7 @@ function PricingCard({
         disabled
         className="inline-flex h-11 w-full cursor-not-allowed items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-5 text-sm font-bold text-slate-400"
       >
-        {isCurrentPlan ? "Current Plan" : "Included"}
+        {isCurrentPlan ? "Current Plan" : "Free"}
       </button>
     );
   } else if (isCheckoutLink) {

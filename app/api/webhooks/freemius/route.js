@@ -40,7 +40,7 @@
 import crypto from "node:crypto";
 
 import { connectDB } from "@/lib/db";
-import { BillingPlan, Subscription, User } from "@/lib/models";
+import { BillingPlan, Subscription, User, WebhookEvent } from "@/lib/models";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +84,20 @@ function addBillingCycle(fromDate, billingPeriod) {
   }
 
   return base;
+}
+
+// Claims payload.id for this event exactly once via the unique
+// {provider, event_id} index — returns true if it was already claimed
+// (a retry or a replayed/captured payload), false if this delivery just
+// claimed it and is safe to process.
+async function isDuplicateEvent(eventId, eventType) {
+  try {
+    await WebhookEvent.create({ provider: "freemius", event_id: String(eventId), event_type: eventType || null });
+    return false;
+  } catch (error) {
+    if (error?.code === 11000) return true;
+    throw error;
+  }
 }
 
 async function findInternalUser(email) {
@@ -359,7 +373,18 @@ export async function POST(request) {
 
     try {
       await connectDB();
-      await EVENT_HANDLERS[eventType](payload);
+
+      if (!payload.id) {
+        // No event id to dedupe against — processing it would leave no way
+        // to distinguish a legitimate retry from a captured/replayed
+        // payload, so fail closed rather than risk re-activating a
+        // cancelled subscription.
+        console.error(`Freemius webhook "${eventType}" has no payload.id — skipping (cannot guard against replay).`);
+      } else if (await isDuplicateEvent(payload.id, eventType)) {
+        console.warn(`Ignoring duplicate/replayed Freemius webhook event "${eventType}" (id: ${payload.id}).`);
+      } else {
+        await EVENT_HANDLERS[eventType](payload);
+      }
     } catch (error) {
       // Ack with 200 anyway — retries would just hit the same DB error, and
       // Freemius's own dashboard keeps a delivery log to catch this from.
