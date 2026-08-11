@@ -98,6 +98,7 @@ export async function GET(req) {
   const longTokenData = await longTokenRes.json();
 
   if (!longTokenData.access_token) {
+    console.error("Instagram long-lived token exchange failed:", longTokenRes.status, longTokenData);
     return NextResponse.redirect(appUrl("/onboarding?error=instagram_long_token_failed"));
   }
 
