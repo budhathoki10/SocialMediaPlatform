@@ -67,25 +67,28 @@ export default function SettingsMenu({ buttonClassName = DEFAULT_BUTTON_CLASSNAM
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: -6 }}
             transition={SPRING.gentle}
-            className="absolute right-0 top-11 z-30 w-64 overflow-hidden rounded-card border border-slate-200 bg-white p-1.5 shadow-panel"
+            className="absolute right-0 top-11 z-30 w-64"
           >
-            {MENU_ITEMS.map(({ label, description, href, Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                role="menuitem"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-3 rounded-control px-3 py-2.5 transition hover:bg-slate-50"
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-bold text-slate-900">{label}</span>
-                  <span className="block truncate text-xs text-slate-500">{description}</span>
-                </span>
-              </Link>
-            ))}
+            <span className="absolute -top-1.5 right-3 h-3 w-3 rotate-45 border-l border-t border-slate-200 bg-white" />
+            <div className="relative overflow-hidden rounded-card border border-slate-200 bg-white p-1.5 shadow-panel">
+              {MENU_ITEMS.map(({ label, description, href, Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  role="menuitem"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 rounded-control px-3 py-2.5 transition hover:bg-slate-50"
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-bold text-slate-900">{label}</span>
+                    <span className="block truncate text-xs text-slate-500">{description}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
