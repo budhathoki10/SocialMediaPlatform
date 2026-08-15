@@ -1,4 +1,5 @@
 // this is the webhook where instagram sends the events when a user sends a message or comments on a post. This webhook will receive the events and create a draft in the database for the user to reply to.
+import { uploadProfilePictureFromUrl } from "@/lib/cloudinary";
 import { connectDB } from "@/lib/db";
 import { markInstagramReplySent, upsertInstagramDraft } from "@/lib/instagram-drafts";
 import { ConnectedAccount } from "@/lib/models";
@@ -143,10 +144,19 @@ async function getInstagramSenderProfile(senderId, accessTokens) {
       const profile = await response.json();
 
       if (response.ok) {
+        // Mirror Meta's short-lived profile_pic CDN link into Cloudinary so it
+        // doesn't rot in the drafts inbox; public_id is the stable sender id
+        // so repeat events overwrite the same asset. Falls back to Meta's own
+        // URL if Cloudinary isn't configured or the upload fails.
+        const cloudinaryProfilePictureUrl = await uploadProfilePictureFromUrl(profile?.profile_pic, {
+          publicId: senderId,
+          folder: "instagram/senders",
+        });
+
         return {
           name: profile?.name || profile?.username || null,
           username: profile?.username || profile?.name || null,
-          profilePictureUrl: profile?.profile_pic || null,
+          profilePictureUrl: cloudinaryProfilePictureUrl || profile?.profile_pic || null,
         };
       }
     } catch {
