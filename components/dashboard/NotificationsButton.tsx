@@ -64,15 +64,18 @@ export default function NotificationsButton({ className = "", buttonClassName = 
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: -6 }}
             transition={SPRING.gentle}
-            className="absolute right-0 top-11 z-30 w-64 rounded-card border border-slate-200 bg-white p-4 text-center shadow-panel"
+            className="absolute right-0 top-11 z-30 w-64"
           >
-            <span className="mx-auto grid h-9 w-9 place-items-center rounded-control bg-primary-tint text-primary">
-              <CheckCheck className="h-4 w-4" />
-            </span>
-            <p className="mt-2 text-sm font-semibold text-slate-700">You&apos;re all caught up</p>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              New activity on your connected accounts will show up here.
-            </p>
+            <span className="absolute -top-1.5 right-3 h-3 w-3 rotate-45 border-l border-t border-slate-200 bg-white" />
+            <div className="relative overflow-hidden rounded-card border border-slate-200 bg-white p-4 text-center shadow-panel">
+              <span className="mx-auto grid h-9 w-9 place-items-center rounded-control bg-primary-tint text-primary">
+                <CheckCheck className="h-4 w-4" />
+              </span>
+              <p className="mt-2 text-sm font-semibold text-slate-700">You&apos;re all caught up</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                New activity on your connected accounts will show up here.
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

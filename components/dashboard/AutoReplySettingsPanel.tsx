@@ -79,7 +79,7 @@ const DEFAULT_SETTINGS: AutoReplySettingsData = {
     emojiUsage: "minimal",
     responseLength: "standard",
     greetingStyle: "first_name",
-    signOffStyle: "team_name",
+    signOffStyle: "none",
     customSignOff: "AutoPilot Support Team",
     linkCtaEnabled: true,
     maxRepliesPerContactEnabled: false,
