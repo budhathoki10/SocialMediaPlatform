@@ -150,7 +150,7 @@ async function getInstagramSenderProfile(senderId, accessTokens) {
         // URL if Cloudinary isn't configured or the upload fails.
         const cloudinaryProfilePictureUrl = await uploadProfilePictureFromUrl(profile?.profile_pic, {
           publicId: senderId,
-          folder: "instagram/senders",
+          folder: "AutoPilot/instagram/senders",
         });
 
         return {

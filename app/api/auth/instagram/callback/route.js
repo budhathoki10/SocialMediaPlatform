@@ -20,6 +20,35 @@ function appUrl(path) {
   return `${process.env.NEXTAUTH_URL || "http://localhost:3000"}${path}`;
 }
 
+// Having the webhook URL configured in the Meta App Dashboard is not enough —
+// under the native "Instagram API with Instagram Login" flow, each connected
+// IG account has to be explicitly subscribed to receive messaging/comment
+// events for our app. Without this call, POST /webhook never fires for that
+// account even though the token exchange above succeeded. Non-fatal: log and
+// let the connect flow finish, since the account is still usable for posting.
+async function subscribeInstagramAccountToWebhooks(igUserId, accessToken) {
+  try {
+    const response = await fetch(
+      `https://graph.instagram.com/v21.0/${igUserId}/subscribed_apps`,
+      {
+        method: "POST",
+        body: new URLSearchParams({
+          subscribed_fields: "messages,comments",
+          access_token: accessToken,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data?.success) {
+      console.error("Instagram webhook subscription failed:", response.status, data);
+    }
+  } catch (error) {
+    console.error("Instagram webhook subscription request failed:", error?.message || error);
+  }
+}
+
 function getTokenExpirationDate(expiresIn) {
   const seconds = Number(expiresIn);
 
@@ -132,7 +161,7 @@ export async function GET(req) {
   const platformUserId = igAccount.user_id || igAccount.id;
   const cloudinaryProfilePictureUrl = await uploadProfilePictureFromUrl(igAccount.profile_picture_url, {
     publicId: platformUserId,
-    folder: "instagram/profiles",
+    folder: "AutoPilot/instagram/profiles",
   });
 
   // save the instagram details in the connected accounts collection
@@ -159,6 +188,10 @@ export async function GET(req) {
     },
     { returnDocument: "after", upsert: true, runValidators: true }
   );
+
+  // graph.instagram.com calls use igAccount.id, not the user_id/platformUserId
+  // used for matching webhook payloads — see the note on Step 3 above.
+  await subscribeInstagramAccountToWebhooks(igAccount.id, longTokenData.access_token);
 
   await logActivity({
     userId: currentUser._id,
