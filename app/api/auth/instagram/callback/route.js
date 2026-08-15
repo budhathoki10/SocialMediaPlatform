@@ -12,6 +12,7 @@ import { NextResponse } from "next/server";
 
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { logActivity } from "@/lib/activity";
+import { uploadProfilePictureFromUrl } from "@/lib/cloudinary";
 import { connectDB } from "@/lib/db";
 import { ConnectedAccount, User, getKathmanduDate } from "@/lib/models";
 
@@ -124,20 +125,30 @@ export async function GET(req) {
 
   const expiresAt = getTokenExpirationDate(longTokenData.expires_in);
 
+  // Mirror Meta's short-lived profile picture CDN link into Cloudinary so it
+  // doesn't rot; public_id is the stable IG user id so reconnects overwrite
+  // the same asset instead of piling up storage. Falls back to Meta's own
+  // URL if Cloudinary isn't configured or the upload fails.
+  const platformUserId = igAccount.user_id || igAccount.id;
+  const cloudinaryProfilePictureUrl = await uploadProfilePictureFromUrl(igAccount.profile_picture_url, {
+    publicId: platformUserId,
+    folder: "instagram/profiles",
+  });
+
   // save the instagram details in the connected accounts collection
   await ConnectedAccount.findOneAndUpdate(
     { user_id: currentUser._id, platform: "instagram" },
     {
       $set: {
         access_token: longTokenData.access_token,
-        platform_user_id: igAccount.user_id || igAccount.id,
+        platform_user_id: platformUserId,
         platform_username: igAccount.username || igAccount.name || igAccount.id,
         name: igAccount.name || igAccount.username || "",
         biography: igAccount.biography || "",
         totalpost: igAccount.media_count || 0,
         followers: igAccount.followers_count || 0,
         following: igAccount.follows_count || 0,
-        profilePictureUrl: igAccount.profile_picture_url,
+        profilePictureUrl: cloudinaryProfilePictureUrl || igAccount.profile_picture_url,
         expires_at: expiresAt,
         connected_at: getKathmanduDate(),
         status: "active",
