@@ -45,3 +45,6 @@ next-env.d.ts
 
 # claude code (personal, machine-specific)
 .claude/settings.local.json
+
+# accidentally-cloned external skill repo (broken gitlink, not project code)
+/ui-ux-pro-max-skill
