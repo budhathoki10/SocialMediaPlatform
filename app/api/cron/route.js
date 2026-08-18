@@ -24,7 +24,7 @@ export async function GET(request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const queueResult = await processQueuedPostJobs({ maxRuntimeMs: 45_000 });
+  const queueResult = await processQueuedPostJobs({ maxRuntimeMs: 15_000 });
 
   await connectDB();
 
