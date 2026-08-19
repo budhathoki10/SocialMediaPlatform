@@ -66,7 +66,24 @@ export async function GET(request) {
       };
     }
 
-    results.push({ postId: post._id.toString(), ...result });
+    // A failed publish must NOT leave "scheduled" status, otherwise this same
+    // post keeps matching the `scheduled_time <= now` query above forever —
+    // every future cron tick re-attempts it and re-embeds its full error in
+    // this response, which is what was blowing past cron-job.org's response
+    // size limit on every single run.
+    if (!result.ok) {
+      await Post.updateOne({ _id: post._id }, { $set: { status: "failed" } });
+    }
+
+    // Keep the response small regardless of how large a single failure's
+    // raw error text is (LinkedIn/API error bodies can be verbose) — the
+    // cron caller only needs enough to know what happened, not the full body.
+    const trimmedResult =
+      typeof result.error === "string" && result.error.length > 300
+        ? { ...result, error: `${result.error.slice(0, 300)}…` }
+        : result;
+
+    results.push({ postId: post._id.toString(), ...trimmedResult });
   }
 
   return NextResponse.json({
