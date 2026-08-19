@@ -1,0 +1,67 @@
+services:
+  # Web service: Next.js + Express custom server (app.js). Handles all HTTP
+  # traffic — dashboard, API routes, GitHub/Instagram/WhatsApp webhooks.
+  # RUN_EMBEDDED_WORKER=false so it does NOT also start a BullMQ worker —
+  # that job now belongs solely to the "worker" service below.
+  - type: web
+    name: autopilot-web
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /express-health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUN_EMBEDDED_WORKER
+        value: "false"
+      - fromGroup: autopilot-shared
+
+  # Background worker: worker.js. No HTTP server, no Next.js — just a
+  # persistent process holding a BullMQ Worker connected to Redis, so
+  # GitHub post-generation jobs are picked up within milliseconds instead of
+  # waiting for the next /api/cron tick (see lib/working.js's
+  # startPostWorker vs processQueuedPostJobs for the difference).
+  - type: worker
+    name: autopilot-bullmq-worker
+    runtime: node
+    plan: starter
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm run worker
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - fromGroup: autopilot-shared
+
+# Shared config both services need. Values left blank (sync: false) must be
+# set once in the Render dashboard under Environment Groups — Render will
+# prompt for them on first deploy and keep them in sync across both services
+# from then on.
+envVarGroups:
+  - name: autopilot-shared
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        sync: false
+      # Point this at your existing Redis instance (e.g. Upstash) — or swap
+      # in a Render-managed Redis instance's internal connection string if
+      # you'd rather host Redis on Render too.
+      - key: REDIS_URL
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: NVIDIA_BASE_URL
+        value: https://integrate.api.nvidia.com/v1
+      - key: NVIDIA_MODEL
+        value: nvidia/nemotron-3-ultra-550b-a55b
+      - key: NVIDIA_TEMPERATURE
+        value: "0.7"
+      - key: NVIDIA_TOP_P
+        value: "0.95"
+      - key: NVIDIA_MAX_TOKENS
+        value: "4096"
