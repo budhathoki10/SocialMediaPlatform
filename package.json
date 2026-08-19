@@ -7,7 +7,6 @@
     "dev": "nodemon app.js",
     "build": "next build",
     "start": "node app.js",
-    "worker": "node worker.js",
     "lint": "eslint",
     "git:feature": "node scripts/git-feature-workflow.js",
     "migrate:activity-log": "node scripts/migrate-activity-log-backfill.js",

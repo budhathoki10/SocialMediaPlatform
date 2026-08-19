@@ -21,7 +21,6 @@ const nextApp = next({
 });
 const handleNextRequest = nextApp.getRequestHandler();
 const expressApp = express();
-let stopPostWorker;
 let postRetentionCleanupTimer;
 let scheduledPostCronTimer;
 let isScheduledPostCronRunning = false;
@@ -57,25 +56,16 @@ async function runScheduledPostCron(baseUrl) {
   }
 }
 
-// Set to "false" once the BullMQ worker runs as its own Render Background
-// Worker service (see worker.js) — otherwise this web process and that
-// worker service would both open a persistent listener on the same queue.
-// BullMQ itself handles that safely (jobs are claimed atomically), but it's
-// two idle Redis connections and worker processes doing the same job for no
-// reason. Defaults to "true" so a single all-in-one deployment (this repo's
-// original setup) keeps working without extra configuration.
-const shouldRunEmbeddedWorker = process.env.RUN_EMBEDDED_WORKER !== "false";
-
+// No embedded/persistent BullMQ worker here — the free-tier deployment has
+// no long-running process guarantee to hold one open reliably. The queue is
+// instead drained by processQueuedPostJobs() (lib/working.js), invoked via
+// /api/cron on each external cron ping (runScheduledPostCron below): a
+// short-lived worker that connects, drains whatever's queued, and closes
+// itself again. See lib/working.js for the full reasoning.
 async function main() {
   const database = await connectDB();
   const redis = await connectRedis();
   const retentionModule = await import("./lib/post-retention.js");
-
-  if (shouldRunEmbeddedWorker) {
-    const workerModule = await import("./lib/working.js");
-    workerModule.startPostWorker();
-    stopPostWorker = workerModule.stopPostWorker;
-  }
 
   await retentionModule.initializePostRetention();
 
@@ -128,7 +118,6 @@ async function main() {
 async function shutdown() {
   clearInterval(postRetentionCleanupTimer);
   clearInterval(scheduledPostCronTimer);
-  await stopPostWorker?.();
   await disconnectRedis();
   process.exit(0);
 }
