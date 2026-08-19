@@ -57,14 +57,26 @@ async function runScheduledPostCron(baseUrl) {
   }
 }
 
+// Set to "false" once the BullMQ worker runs as its own Render Background
+// Worker service (see worker.js) — otherwise this web process and that
+// worker service would both open a persistent listener on the same queue.
+// BullMQ itself handles that safely (jobs are claimed atomically), but it's
+// two idle Redis connections and worker processes doing the same job for no
+// reason. Defaults to "true" so a single all-in-one deployment (this repo's
+// original setup) keeps working without extra configuration.
+const shouldRunEmbeddedWorker = process.env.RUN_EMBEDDED_WORKER !== "false";
+
 async function main() {
   const database = await connectDB();
   const redis = await connectRedis();
-  const workerModule = await import("./lib/working.js");
   const retentionModule = await import("./lib/post-retention.js");
 
-  workerModule.startPostWorker();
-  stopPostWorker = workerModule.stopPostWorker;
+  if (shouldRunEmbeddedWorker) {
+    const workerModule = await import("./lib/working.js");
+    workerModule.startPostWorker();
+    stopPostWorker = workerModule.stopPostWorker;
+  }
+
   await retentionModule.initializePostRetention();
 
   const cleanRetainedQueueJobs = () => {
