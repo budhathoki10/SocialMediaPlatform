@@ -148,7 +148,7 @@ Post to user's selected platforms
 | AI | OpenAI API | Caption generation, auto-replies |
 | News Sources | HackerNews API, RSS (TechCrunch, Dev.to, ProductHunt) | Tech news feed |
 | Payments | Stripe | Free vs Pro subscriptions |
-| Hosting | Vercel (frontend) + Railway/Render (backend) | Deployment |
+| Hosting | Vercel (frontend) + Node.js backend, BullMQ queue drained via scheduled cron pings (no dedicated worker service) | Deployment |
 
 ---
 
@@ -269,7 +269,7 @@ Before development begins, the following accounts/API keys are needed:
 ### Week 10 — Polish, Testing & Deployment
 - Fix bugs, test all automation flows end-to-end
 - Add loading states, empty states, error handling
-- Deploy frontend to Vercel, backend to Railway/Render
+- Deploy frontend to Vercel, backend to a Node.js host with a scheduled cron ping keeping the BullMQ queue drained
 - Final testing with real connected accounts
 
 ---
