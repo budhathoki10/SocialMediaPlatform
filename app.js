@@ -29,6 +29,8 @@ async function runScheduledPostCron(baseUrl) {
   if (isScheduledPostCronRunning) return;
 
   isScheduledPostCronRunning = true;
+  
+
 
   try {
     const headers = process.env.CRON_SECRET
