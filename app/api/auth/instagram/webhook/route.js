@@ -1,8 +1,8 @@
 // this is the webhook where instagram sends the events when a user sends a message or comments on a post. This webhook will receive the events and create a draft in the database for the user to reply to.
-import { uploadProfilePictureFromUrl } from "@/lib/cloudinary";
 import { connectDB } from "@/lib/db";
-import { markInstagramReplySent, upsertInstagramDraft } from "@/lib/instagram-drafts";
+import { markInstagramReplySent, recordInstagramInboundEvent } from "@/lib/instagram-drafts";
 import { ConnectedAccount } from "@/lib/models";
+import { myQueue } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
 
@@ -122,52 +122,7 @@ async function findInstagramAccount(platformCandidates) {
   return null;
 }
 
-// fetch the user name, photo and other details of the sender from the Instagram Graph API using the senderId and the access token of the connected account. If the senderId is not provided or the access token is not valid, return null.
-async function getInstagramSenderProfile(senderId, accessTokens) {
-  const tokens = [...new Set(accessTokens.filter(Boolean))];
-
-  if (!senderId || tokens.length === 0) {
-    return null;
-  }
-
-  for (const accessToken of tokens) {
-    try {
-      const profileUrl = new URL(`https://graph.instagram.com/v25.0/${senderId}`);
-      profileUrl.searchParams.set("fields", "name,username,profile_pic");
-      profileUrl.searchParams.set("access_token", accessToken);
-
-      const response = await fetch(profileUrl, {
-        cache: "no-store", // do not cache the response, always get the latest data from Instagram
-        signal: AbortSignal.timeout(5_000),   //cancel the request if it takes more than 5 seconds
-      });
-
-      const profile = await response.json();
-
-      if (response.ok) {
-        // Mirror Meta's short-lived profile_pic CDN link into Cloudinary so it
-        // doesn't rot in the drafts inbox; public_id is the stable sender id
-        // so repeat events overwrite the same asset. Falls back to Meta's own
-        // URL if Cloudinary isn't configured or the upload fails.
-        const cloudinaryProfilePictureUrl = await uploadProfilePictureFromUrl(profile?.profile_pic, {
-          publicId: senderId,
-          folder: "AutoPilot/instagram/senders",
-        });
-
-        return {
-          name: profile?.name || profile?.username || null,
-          username: profile?.username || profile?.name || null,
-          profilePictureUrl: cloudinaryProfilePictureUrl || profile?.profile_pic || null,
-        };
-      }
-    } catch {
-      // Try the next configured token without failing the webhook.
-    }
-  }
-
-  console.warn("Unable to load Instagram sender profile.", { senderId });
-  return null;
-}
-//This GET handler is used by Instagram/Meta to verify that your webhook endpoint belongs to you 
+//This GET handler is used by Instagram/Meta to verify that your webhook endpoint belongs to you
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
 
@@ -237,12 +192,11 @@ export async function POST(req) {
         continue;
       }
 
-      const senderProfile = await getInstagramSenderProfile(
-        webhookEvent.senderId,
-        [account.access_token, process.env.INSTAGRAM_REPLIED_ACCESSTOKEN],
-      );
-
-      await upsertInstagramDraft({
+      // Record the message and hand the slow work (sender profile lookup and
+      // the model call) to the queue. Composing a reply inline took longer than
+      // Meta waits for a 200, so the function was killed before the draft was
+      // ever written and every event was lost.
+      const { draftId, isNew } = await recordInstagramInboundEvent({
         userId: account.user_id,
         connectedAccountId: account._id,
         platformUserId: account.platform_user_id,
@@ -250,11 +204,25 @@ export async function POST(req) {
         source: webhookEvent.source,
         platformCommentId: webhookEvent.platformCommentId,
         senderId: webhookEvent.senderId,
-        senderName: senderProfile?.name || null,
-        senderUsername: senderProfile?.username || webhookEvent.senderUsername,
-        senderProfilePictureUrl: senderProfile?.profilePictureUrl || null,
+        senderUsername: webhookEvent.senderUsername,
         message: webhookEvent.message,
       });
+
+      if (!isNew) {
+        continue;
+      }
+
+      await myQueue.add(
+        "instagramReply",
+        {
+          type: "instagram_reply",
+          userId: account.user_id.toString(),
+          connectedAccountId: account._id.toString(),
+          draftId: draftId.toString(),
+          senderId: webhookEvent.senderId,
+        },
+        { jobId: `ig-reply:${draftId}` },
+      );
     }
 
     return new Response("EVENT_RECEIVED", {
