@@ -24,7 +24,10 @@ export async function GET(request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const queueResult = await processQueuedPostJobs({ maxRuntimeMs: 15_000 });
+  // A single draft costs one model call (~15s), so a 15s window closed before
+  // any job could finish. 24s still leaves headroom inside cron-job.org's 30s
+  // request timeout; whatever doesn't drain is picked up on the next ping.
+  const queueResult = await processQueuedPostJobs({ maxRuntimeMs: 24_000 });
 
   await connectDB();
 

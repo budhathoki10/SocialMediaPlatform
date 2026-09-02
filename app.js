@@ -30,6 +30,8 @@ async function runScheduledPostCron(baseUrl) {
 
   isScheduledPostCronRunning = true;
 
+
+// just for test
   try {
     const headers = process.env.CRON_SECRET
       ? { Authorization: `Bearer ${process.env.CRON_SECRET}` }
