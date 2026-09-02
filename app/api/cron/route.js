@@ -1,7 +1,7 @@
 import { publishLinkedInPost } from "@/app/api/share/linkedin/route";
 import { connectDB } from "@/lib/db";
 import { Post, getKathmanduDate } from "@/lib/models";
-import { processQueuedPostJobs } from "@/lib/working";
+import { processQueuedPostJobs, requeueStuckInstagramDrafts } from "@/lib/working";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +24,13 @@ export async function GET(request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
+  // Recover any draft whose row was written but whose job never made it onto
+  // the queue, so it gets drained in the same pass below.
+  const requeued = await requeueStuckInstagramDrafts().catch((error) => {
+    console.error("Unable to re-queue stuck Instagram drafts:", error);
+    return 0;
+  });
+
   // A single draft costs one model call (~15s), so a 15s window closed before
   // any job could finish. 24s still leaves headroom inside cron-job.org's 30s
   // request timeout; whatever doesn't drain is picked up on the next ping.
@@ -45,6 +52,7 @@ export async function GET(request) {
       ok: true,
       message: "No posts due",
       queue: queueResult,
+      requeuedInstagramDrafts: requeued,
       count: 0,
       published: 0,
       failed: 0,
@@ -93,6 +101,7 @@ export async function GET(request) {
     ok: true,
     platform: "linkedin",
     queue: queueResult,
+    requeuedInstagramDrafts: requeued,
     count: results.length,
     published: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,

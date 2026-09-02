@@ -196,7 +196,7 @@ export async function POST(req) {
       // the model call) to the queue. Composing a reply inline took longer than
       // Meta waits for a 200, so the function was killed before the draft was
       // ever written and every event was lost.
-      const { draftId, isNew } = await recordInstagramInboundEvent({
+      const { draftId, needsReply } = await recordInstagramInboundEvent({
         userId: account.user_id,
         connectedAccountId: account._id,
         platformUserId: account.platform_user_id,
@@ -208,7 +208,11 @@ export async function POST(req) {
         message: webhookEvent.message,
       });
 
-      if (!isNew) {
+      // Queue whenever the row still has no reply, not just on first sight:
+      // if a previous delivery recorded the message but failed before it could
+      // queue, Meta's retry is the only chance to recover it. The job id makes
+      // a repeat add a no-op, so this can't produce duplicate work.
+      if (!needsReply) {
         continue;
       }
 
@@ -221,7 +225,9 @@ export async function POST(req) {
           draftId: draftId.toString(),
           senderId: webhookEvent.senderId,
         },
-        { jobId: `ig-reply:${draftId}` },
+        // BullMQ namespaces its Redis keys with ":" and rejects a custom job id
+        // containing one, so this separator must stay a dash.
+        { jobId: `ig-reply-${draftId}` },
       );
     }
 
