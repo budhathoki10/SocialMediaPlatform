@@ -2,11 +2,16 @@ import { publishLinkedInPost } from "@/app/api/share/linkedin/route";
 import { connectDB } from "@/lib/db";
 import { Post, getKathmanduDate } from "@/lib/models";
 import { processQueuedPostJobs, requeueStuckInstagramDrafts } from "@/lib/working";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const maxDuration = 60;
+
+// The run now outlives the request, so a minute-interval ping can arrive while
+// the previous run is still draining. Skip overlapping runs in this process so
+// two passes don't both pick up the same "scheduled" LinkedIn post.
+let isCronRunInProgress = false;
 
 function isAuthorizedCronRequest(request) {
   if (!process.env.CRON_SECRET) return true;
@@ -24,6 +29,33 @@ export async function GET(request) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
+  if (isCronRunInProgress) {
+    return NextResponse.json({ ok: true, started: false, message: "Previous run still in progress" });
+  }
+
+  isCronRunInProgress = true;
+
+  // Draining the queue can take 40s+ (worker.close() waits for an in-flight
+  // model call), which blew past cron-job.org's 30s request timeout on every
+  // ping. Respond immediately and do the work after the response is sent.
+  after(async () => {
+    try {
+      const summary = await runCron();
+
+      if (summary.published || summary.failed || summary.queue.completedCount || summary.queue.failedCount) {
+        console.log("Cron run result:", summary);
+      }
+    } catch (error) {
+      console.error("Cron run failed:", error);
+    } finally {
+      isCronRunInProgress = false;
+    }
+  });
+
+  return NextResponse.json({ ok: true, started: true });
+}
+
+async function runCron() {
   // Recover any draft whose row was written but whose job never made it onto
   // the queue, so it gets drained in the same pass below.
   const requeued = await requeueStuckInstagramDrafts().catch((error) => {
@@ -32,8 +64,8 @@ export async function GET(request) {
   });
 
   // A single draft costs one model call (~15s), so a 15s window closed before
-  // any job could finish. 24s still leaves headroom inside cron-job.org's 30s
-  // request timeout; whatever doesn't drain is picked up on the next ping.
+  // any job could finish. This runs after the response, so it is no longer
+  // bound by cron-job.org's timeout; whatever doesn't drain is picked up next run.
   const queueResult = await processQueuedPostJobs({ maxRuntimeMs: 24_000 });
 
   await connectDB();
@@ -48,15 +80,13 @@ export async function GET(request) {
     .lean();
 
   if (posts.length === 0) {
-    return NextResponse.json({
-      ok: true,
-      message: "No posts due",
+    return {
       queue: queueResult,
       requeuedInstagramDrafts: requeued,
       count: 0,
       published: 0,
       failed: 0,
-    });
+    };
   }
 
   const results = [];
@@ -97,8 +127,7 @@ export async function GET(request) {
     results.push({ postId: post._id.toString(), ...trimmedResult });
   }
 
-  return NextResponse.json({
-    ok: true,
+  return {
     platform: "linkedin",
     queue: queueResult,
     requeuedInstagramDrafts: requeued,
@@ -106,5 +135,5 @@ export async function GET(request) {
     published: results.filter((result) => result.ok).length,
     failed: results.filter((result) => !result.ok).length,
     results,
-  });
+  };
 }
